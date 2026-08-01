@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+
+    --color-eids-primary:   #00342b;
+    --color-eids-dark:      #002219;
+    --color-eids-surface:   #091a17;
+    --color-eids-card:      #0d2420;
+    --color-eids-accent:    #10b981;
+    --color-eids-light:     #34d399;
+    --color-eids-muted:     #6ee7b7;
+}

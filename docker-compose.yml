@@ -1,0 +1,23 @@
+services:
+  app:
+    image: muqrizmarzuki25/laraveldebian-php8.3:esilibus
+    container_name: eidsv2
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        composer install --no-interaction --optimize-autoloader --prefer-dist
+        npm install
+        exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+    ports:
+      - "2006:80"
+    volumes:
+      - ./:/var/www
+    restart: unless-stopped
+    networks:
+      - local-network
+
+networks:
+  local-network:
+    external: true
+    name: laravel-network
