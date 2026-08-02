@@ -149,6 +149,27 @@
                 </div>
             </div>
 
+            {{-- Action Required Widget --}}
+            @if($actionRequired->isNotEmpty())
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
+                    <div class="text-xs uppercase tracking-wider text-gray-500 font-bold mb-4 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-base text-amber-500">priority_high</span>
+                        Action Required ({{ $actionRequired->count() }})
+                    </div>
+                    <div class="space-y-2">
+                        @foreach($actionRequired as $project)
+                            @php $action = $project->nextActionFor(auth()->user()); @endphp
+                            <a href="{{ route('projects.show', $project) }}"
+                               class="flex items-center gap-2 p-2.5 rounded-xl hover:bg-gray-50 transition text-xs">
+                                <span class="material-symbols-outlined text-base text-eids-accent shrink-0">{{ $action['icon'] }}</span>
+                                <span class="font-bold text-gray-900 shrink-0">{{ $project->project_name }}</span>
+                                <span class="text-gray-500 truncate">— {{ $action['text'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             {{-- Global Defect Overview Widget --}}
             <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
                 <div class="text-xs uppercase tracking-wider text-gray-500 font-bold mb-4 flex items-center justify-between">

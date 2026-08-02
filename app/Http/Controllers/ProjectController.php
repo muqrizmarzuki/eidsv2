@@ -25,10 +25,22 @@ class ProjectController extends Controller
         $ratingMod       = (float) setting('rating_sederhana', 70);
         $meScore         = (float) setting('me_score', 2.0);
 
+        $actionRequired = collect();
+        if (in_array(auth()->user()->role, ['admin', 'lead_auditor', 'inspector'])) {
+            $actionRequired = $visible->clone()
+                ->with(['assignedInspector'])
+                ->get()
+                ->filter(function ($project) {
+                    $action = $project->nextActionFor(auth()->user());
+                    return !str_contains($action['text'], 'complete') && $action['text'] !== '';
+                })
+                ->take(5);
+        }
+
         return view('dashboard', compact(
             'total', 'active', 'completed', 'draft',
             'recent', 'avgScore', 'openDefects', 'resolvedDefects',
-            'ratingBaik', 'ratingMod', 'meScore'
+            'ratingBaik', 'ratingMod', 'meScore', 'actionRequired'
         ));
     }
 
