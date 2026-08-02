@@ -62,6 +62,9 @@ class ReportController extends Controller
     public function show(Project $project)
     {
         $this->guardProjectVisible($project);
+        if ($error = $this->reportBlockedReason($project)) {
+            return redirect()->route('projects.show', $project)->with('error', $error);
+        }
 
         $data = $this->buildScoreData($project);
         return view('reports.show', array_merge(compact('project'), $data));
@@ -70,11 +73,32 @@ class ReportController extends Controller
     public function pdf(Project $project)
     {
         $this->guardProjectVisible($project);
+        if ($error = $this->reportBlockedReason($project)) {
+            return redirect()->route('projects.show', $project)->with('error', $error);
+        }
 
         $data = $this->buildScoreData($project);
         $pdf  = Pdf::loadView('reports.pdf', array_merge(compact('project'), $data))
                    ->setPaper('a4', 'portrait');
 
         return $pdf->download("eids-report-{$project->project_no}.pdf");
+    }
+
+    /**
+     * The signed G-IDS report is a formal certificate — it must reflect a fully
+     * inspected project with every defect resolved, never a partial in-progress state.
+     */
+    private function reportBlockedReason(Project $project): ?string
+    {
+        if ($project->inspection_progress < 100) {
+            return 'The signed G-IDS report is not available yet — every sample unit must be inspected first.';
+        }
+
+        $openOrPending = $project->defects()->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
+        if ($openOrPending > 0) {
+            return "{$openOrPending} defect(s) still need to be resolved before the signed G-IDS report can be generated.";
+        }
+
+        return null;
     }
 }

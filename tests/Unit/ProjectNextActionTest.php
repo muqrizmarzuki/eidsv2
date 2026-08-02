@@ -49,17 +49,42 @@ class ProjectNextActionTest extends TestCase
         $this->assertNull($action['button_label']);
     }
 
+    public function test_admin_is_not_told_inspection_is_complete_when_only_partially_inspected(): void
+    {
+        // Regression: with zero defects raised so far (nothing has FAILed yet) and only
+        // 1 of 16 components assessed, the admin must NOT be told inspection is complete
+        // and offered to generate the signed PDF — that requires inspection_progress = 100.
+        $admin = User::factory()->create(['role' => 'admin']);
+        $inspector = User::factory()->create(['role' => 'inspector']);
+        $project = $this->baseProject(['assigned_to' => $inspector->id, 'calculated_samples' => 2]);
+        $sample1 = ProjectSample::create(['project_id' => $project->id, 'sample_index' => 1, 'location_name' => 'Master Bedroom']);
+        ProjectSample::create(['project_id' => $project->id, 'sample_index' => 2, 'location_name' => 'Kitchen']);
+        ComponentAssessment::create([
+            'project_id' => $project->id, 'sample_id' => $sample1->id,
+            'component_code' => 'A1_FLOOR', 'component_name' => 'Floor', 'weightage' => 18,
+            'overall_sample_status' => 'PASS',
+        ]);
+
+        $action = $project->fresh()->nextActionFor($admin);
+
+        $this->assertFalse($action['actionable']);
+        $this->assertStringNotContainsString('Inspection complete', $action['text']);
+        $this->assertNull($action['route']);
+    }
+
     public function test_admin_waiting_on_defects_is_not_actionable(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $inspector = User::factory()->create(['role' => 'inspector']);
-        $project = $this->baseProject(['assigned_to' => $inspector->id]);
+        $project = $this->baseProject(['assigned_to' => $inspector->id, 'calculated_samples' => 1]);
         $sample = ProjectSample::create(['project_id' => $project->id, 'sample_index' => 1, 'location_name' => 'Master Bedroom']);
-        ComponentAssessment::create([
-            'project_id' => $project->id, 'sample_id' => $sample->id,
-            'component_code' => 'A1_FLOOR', 'component_name' => 'Floor', 'weightage' => 18,
-            'overall_sample_status' => 'FAIL',
-        ]);
+        foreach (array_keys(config('eids.components')) as $i => $code) {
+            ComponentAssessment::create([
+                'project_id' => $project->id, 'sample_id' => $sample->id,
+                'component_code' => $code, 'component_name' => $code, 'weightage' => 10,
+                'overall_sample_status' => $i === 0 ? 'FAIL' : 'PASS',
+            ]);
+        }
         Defect::factory()->create(['project_id' => $project->id, 'status' => 'OPEN']);
 
         $action = $project->fresh()->nextActionFor($admin);

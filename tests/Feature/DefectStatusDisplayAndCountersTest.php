@@ -63,19 +63,20 @@ class DefectStatusDisplayAndCountersTest extends TestCase
         $response->assertViewHas('resolvedDefects', 1);
     }
 
-    public function test_report_show_counters_and_pending_verification_label(): void
+    public function test_report_show_is_blocked_while_any_defect_is_unresolved(): void
     {
+        // The formal report page brands itself "Formal G-IDS Inspection Certificate" with
+        // an "Export Signed PDF Certificate" action — it must never render (and never leak
+        // an OPEN/IN_PROGRESS/PENDING_VERIFICATION defect) while a defect is still unresolved.
+        // Friendly label rendering for the in-progress states is covered on ungated pages
+        // (dashboard, project show, summary) and directly against the PDF Blade view below.
         $inspector = User::factory()->create(['role' => 'inspector']);
         $project = $this->projectWithOneOfEachStatus($inspector);
 
         $response = $this->actingAs($inspector)->get("/reports/{$project->id}");
 
-        $response->assertOk();
-        $response->assertViewHas('openDefects', 3);
-        $response->assertViewHas('resolvedDefects', 1);
-        // I4: the defect table must render the friendly label, not the raw enum.
-        $response->assertSee('Pending Verification');
-        $response->assertDontSee('PENDING_VERIFICATION');
+        $response->assertRedirect("/projects/{$project->id}");
+        $response->assertSessionHas('error');
     }
 
     public function test_project_summary_counters_and_pending_verification_label(): void

@@ -121,6 +121,10 @@ class Project extends Model
                 $name = $this->assignedInspector->name ?? 'the assigned inspector';
                 return $waiting('grid_on', "Waiting on Inspector {$name} to begin the Components Grid inspection.");
             }
+            if (!$inspectionDone) {
+                $name = $this->assignedInspector->name ?? 'the assigned inspector';
+                return $waiting('grid_on', "Inspector {$name} is still inspecting — {$inspectedCount}/{$totalSamples} sample units done.");
+            }
             if ($openDefects > 0 || $pendingVerify > 0) {
                 $count = $openDefects + $pendingVerify;
                 return $waiting('warning', "{$count} defect(s) still open — waiting on Contractor & Inspector verification.");
