@@ -260,15 +260,15 @@ $$S_{\text{total}} = S_{\text{arch}} + S_{\text{ME}} + S_{\text{external}}$$
 
 ## 8. Demo / Testing Accounts
 
-Running `docker exec -w /var/www eidsv2 php artisan migrate:fresh --seed` loads a ready-to-test dataset: **2 projects and 5 accounts covering all 3 roles**, split into an "A" set (Project 1) and a "B" set (Project 2) so you can log in as different users and see the role-scoping working directly — e.g. Inspector A only ever sees Project 1, Inspector B only ever sees Project 2.
+Running `docker exec -w /var/www eidsv2 php artisan migrate:fresh --seed` loads a ready-to-test dataset: **3 projects and 5 accounts covering all 3 roles**, split into an "A" set (Project 1) and a "B" set (Project 2), plus a third fully-completed project so every phase of the lifecycle — including the ones that only show up at the very end — has something real to look at.
 
 | Role | Account | Password | Scope |
 | :--- | :--- | :--- | :--- |
-| Admin | `admin@eids.gov.my` | `password` | Sees everything; created both projects |
-| Inspector | `inspector.a@eids.gov.my` | `password` | Assigned to Project 1 only |
+| Admin | `admin@eids.gov.my` | `password` | Sees everything; created all three projects |
+| Inspector | `inspector.a@eids.gov.my` | `password` | Assigned to Project 1 and Project 3 |
 | Inspector | `inspector.b@eids.gov.my` | `password` | Assigned to Project 2 only |
 | Contractor | `contractor.a@eids.gov.my` | `password` | Assigned to Project 1 only — lands on **My Defects** |
-| Contractor | `contractor.b@eids.gov.my` | `password` | Assigned to Project 2 only — lands on **My Defects** |
+| Contractor | `contractor.b@eids.gov.my` | `password` | Assigned to Project 2 and Project 3 — lands on **My Defects** |
 
 **Project 1 — "Taman Merlimau Perdana" (PRJ-2026-001):** 4 sample rooms, 3 fully inspected + 1 left pending (so you can see the "Continue — 3/4 done" banner). One defect seeded in **every lifecycle state** so every action button can be tested immediately:
 
@@ -282,3 +282,5 @@ Running `docker exec -w /var/www eidsv2 php artisan migrate:fresh --seed` loads 
 Score: 84.80 — **MODERATE** (just under the GOOD threshold, useful for demonstrating the rating boundary).
 
 **Project 2 — "Desa Aman Villa" (PRJ-2026-002):** smaller, minimal setup — one `OPEN` defect only. Its main purpose is proving Contractor B / Inspector B never see Project 1's data. Score: 92.80 — **GOOD**.
+
+**Project 3 — "Kota Laksamana Heights" (PRJ-2026-003):** the only seeded project that's **fully signed off** (status `Completed`) — 100% inspected, both of its defects already `RESOLVED`. Use this one to see what everything else in this manual only *describes*: the unlocked certification-seal button in the stepper, the Case Ledger with all four rows stamped complete, and the actual **Official PDF Certificate** page. Score: 97.80 — **GOOD**.

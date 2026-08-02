@@ -117,6 +117,66 @@ class DatabaseSeeder extends Seeder
 
         $this->assessAllComponents($project2, $masterBedroom, failOn: ['A4_DOOR' => 'crack']);
         $this->makeDefectFor($project2, $masterBedroom, 'A4_DOOR', 'Door (Pintu)', 'low', 'OPEN');
+
+        // ── Project 3: fully signed off — the only seeded project that demonstrates
+        // the unlocked score gauge, the certification-seal stepper button, and the
+        // formal PDF certificate. Assigned to Inspector A / Contractor B so both
+        // accounts have at least one project in every phase of the lifecycle. ──
+        $project3 = Project::create([
+            'project_no'             => 'PRJ-2026-003',
+            'project_name'           => 'Kota Laksamana Heights',
+            'location'               => 'Bandar Hilir, Melaka',
+            'developer_name'         => 'Warisan Bina Sdn Bhd',
+            'contractor_name'        => 'Kukuh Sentosa Construction Sdn Bhd',
+            'building_type'          => 'banglo',
+            'total_units'            => 12,
+            'floor_area_sqm'         => 180.00,
+            'calculated_samples'     => 3,
+            'status'                 => 'selesai',
+            'created_by'             => $admin->id,
+            'assigned_to'            => $inspectorA->id,
+            'assigned_contractor_id' => $contractorB->id,
+        ]);
+
+        $p3Samples = [];
+        foreach (['Living Room', 'Master Bedroom', 'Kitchen'] as $index => $location) {
+            $p3Samples[] = ProjectSample::create([
+                'project_id'    => $project3->id,
+                'sample_index'  => $index + 1,
+                'location_name' => $location,
+            ]);
+        }
+        [$p3LivingRoom, $p3MasterBedroom, $p3Kitchen] = $p3Samples;
+
+        // One historical defect per sample, all resolved — proves a completed
+        // project can still have a full repair history without blocking sign-off.
+        $this->assessAllComponents($project3, $p3LivingRoom, failOn: ['A3_CEILING' => 'hollow']);
+        $this->assessAllComponents($project3, $p3MasterBedroom, failOn: ['A6_FIXTURES' => 'finishing']);
+        $this->assessAllComponents($project3, $p3Kitchen);
+
+        $this->makeDefectFor($project3, $p3LivingRoom, 'A3_CEILING', 'Ceiling (Siling)', 'low', 'RESOLVED');
+        $this->makeDefectFor($project3, $p3MasterBedroom, 'A6_FIXTURES', 'Internal Fixtures', 'low', 'RESOLVED');
+
+        $project3->update(['overall_score' => $this->computeScore($project3)]);
+    }
+
+    /**
+     * Recompute a project's overall_score from its actual assessments, using the
+     * same S_arch + M&E + External formula as InspectionController::recalculateScore().
+     */
+    private function computeScore(Project $project): float
+    {
+        $project->load('assessments');
+        $sArch = 0;
+        foreach (config('eids.components') as $code => $cfg) {
+            $assessments = $project->assessments->where('component_code', $code);
+            $total = $assessments->count();
+            if ($total === 0) continue;
+            $pass = $assessments->where('overall_sample_status', 'PASS')->count();
+            $sArch += ($pass / $total) * $cfg['weightage'];
+        }
+        $total = $sArch + (float) setting('me_score', 2.0) + (float) setting('external_score', 11.8);
+        return round($total, 2);
     }
 
     /**
