@@ -130,4 +130,37 @@ class DefectController extends Controller
         return redirect()->back()
             ->with('success', "Defect status updated to {$next}.");
     }
+
+    private const TRANSITIONS = [
+        'OPEN'                 => ['IN_PROGRESS'],
+        'IN_PROGRESS'          => ['PENDING_VERIFICATION'],
+        'PENDING_VERIFICATION' => ['RESOLVED', 'IN_PROGRESS'],
+        'RESOLVED'             => ['OPEN'],
+    ];
+
+    private const CONTRACTOR_ALLOWED_EDGES = [
+        'OPEN->IN_PROGRESS',
+        'IN_PROGRESS->PENDING_VERIFICATION',
+    ];
+
+    public function advanceStatus(Request $request, Defect $defect)
+    {
+        $this->guardDefectVisible($defect);
+
+        $data = $request->validate([
+            'to' => 'required|in:OPEN,IN_PROGRESS,PENDING_VERIFICATION,RESOLVED',
+        ]);
+
+        $allowedTargets = self::TRANSITIONS[$defect->status] ?? [];
+        abort_unless(in_array($data['to'], $allowedTargets, true), 422, 'Invalid status transition.');
+
+        if (auth()->user()->role === 'contractor') {
+            $edge = "{$defect->status}->{$data['to']}";
+            abort_unless(in_array($edge, self::CONTRACTOR_ALLOWED_EDGES, true), 403, 'Contractors cannot perform this transition.');
+        }
+
+        $defect->update(['status' => $data['to']]);
+
+        return redirect()->back()->with('success', "Defect status updated to {$data['to']}.");
+    }
 }
