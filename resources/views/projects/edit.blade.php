@@ -81,6 +81,7 @@
                     </select>
                 </div>
 
+                @if(auth()->user()->isAdmin() || auth()->user()->isLeadAuditor())
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Assigned Inspector</label>
                     <select name="assigned_to"
@@ -124,6 +125,15 @@
                         @endforelse
                     </div>
                 </div>
+                @else
+                <div class="sm:col-span-2 bg-eids-primary/5 border border-eids-primary/15 rounded-xl p-4 flex items-start gap-3">
+                    <span class="material-symbols-outlined text-eids-accent text-lg shrink-0">info</span>
+                    <p class="text-xs text-gray-700 font-medium">
+                        Assigned Inspector: <strong>{{ $project->assignedInspector?->name ?? 'Unassigned' }}</strong>.
+                        Only an Admin or Lead Auditor can reassign the inspector, contractor, or supervisors.
+                    </p>
+                </div>
+                @endif
 
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Total Project Units *</label>

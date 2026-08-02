@@ -118,11 +118,10 @@ class ProjectController extends Controller
         if (!auth()->user()->isAdmin() && !auth()->user()->isLeadAuditor()) {
             unset($data['assigned_contractor_id']);
             $supervisorIds = [];
-        }
-
-        // An Inspector's visibility is scoped strictly to assigned_to — leaving it
-        // blank would lock the creator out of the project they just made.
-        if (auth()->user()->role === 'inspector' && empty($data['assigned_to'])) {
+            // Only Admin/Lead Auditor may choose who a project is assigned to.
+            // A non-privileged creator (Inspector) is always assigned to themselves —
+            // their own visibility is scoped strictly to assigned_to, so anything else
+            // would lock them out of the project they just created.
             $data['assigned_to'] = auth()->id();
         }
 
@@ -181,6 +180,9 @@ class ProjectController extends Controller
 
         if (!auth()->user()->isAdmin() && !auth()->user()->isLeadAuditor()) {
             unset($data['assigned_contractor_id']);
+            // Only Admin/Lead Auditor may reassign a project — leave the existing
+            // assigned_to untouched for anyone else editing it.
+            unset($data['assigned_to']);
             $supervisorIds = null;
         }
 
