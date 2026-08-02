@@ -27,17 +27,14 @@
 @section('content')
 <div class="max-w-5xl mx-auto space-y-6">
 
+    {{-- Next Action Hero Card --}}
+    <x-next-action-card :action="$nextAction" />
+
     {{-- Pipeline Step Indicator --}}
-    {{-- Supervisors get a read-only status line (the nextActionFor banner) only, no interactive stepper. --}}
+    {{-- Supervisors get a read-only status line (the hero card above) only, no interactive stepper. --}}
     @unless(auth()->user()->role === 'supervisor')
         <x-workflow-step step="1" :project="$project" :role="auth()->user()->role" />
     @endunless
-
-    {{-- Next Action Banner --}}
-    <div class="bg-eids-primary/5 border border-eids-primary/15 rounded-2xl p-4 mb-6 flex items-center gap-3">
-        <span class="material-symbols-outlined text-eids-accent text-2xl shrink-0">{{ $nextAction['icon'] }}</span>
-        <span class="text-sm font-bold text-gray-900">{{ $nextAction['text'] }}</span>
-    </div>
 
     @php
         $statusMap = [
