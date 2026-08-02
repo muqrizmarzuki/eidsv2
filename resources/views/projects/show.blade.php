@@ -11,27 +11,7 @@
 @endsection
 
     @php
-        $doneAssessments = $project->assessments->count();
-        $totalAssessments = $project->calculated_samples * count(config('eids.components'));
-        $hasConfiguredSamples = $project->samples->contains(fn($s) => !str_starts_with($s->location_name, 'Sample '));
-
-        if ($doneAssessments === 0 && !$hasConfiguredSamples) {
-            $nextRoute = route('projects.samples', $project);
-            $nextLabel = 'Setup Sample Rooms →';
-            $nextIcon  = 'tune';
-        } elseif ($doneAssessments < $totalAssessments) {
-            $nextRoute = route('projects.components', $project);
-            $nextLabel = 'Inspect Components Grid →';
-            $nextIcon  = 'grid_on';
-        } elseif ($openDefects > 0) {
-            $nextRoute = route('defects.index', ['project_id' => $project->id]);
-            $nextLabel = 'Review Open Defects (' . $openDefects . ') →';
-            $nextIcon  = 'warning';
-        } else {
-            $nextRoute = route('projects.score', $project);
-            $nextLabel = 'View G-IDS Score →';
-            $nextIcon  = 'analytics';
-        }
+        $nextAction = $project->nextActionFor(auth()->user());
     @endphp
 
 @section('topbar-actions')
@@ -41,11 +21,6 @@
             <span class="material-symbols-outlined text-lg">edit</span>
             Edit
         </a>
-        <a href="{{ $nextRoute }}"
-           class="flex items-center gap-2 px-5 py-2.5 bg-eids-primary text-white text-sm font-bold rounded-xl hover:bg-eids-dark transition shadow-xs min-h-[44px]">
-            <span class="material-symbols-outlined text-lg">{{ $nextIcon }}</span>
-            {{ $nextLabel }}
-        </a>
     @endif
 @endsection
 
@@ -53,7 +28,13 @@
 <div class="max-w-5xl mx-auto space-y-6">
 
     {{-- Pipeline Step Indicator --}}
-    <x-workflow-step step="1" :project="$project" />
+    <x-workflow-step step="1" :project="$project" :role="auth()->user()->role" />
+
+    {{-- Next Action Banner --}}
+    <div class="bg-eids-primary/5 border border-eids-primary/15 rounded-2xl p-4 mb-6 flex items-center gap-3">
+        <span class="material-symbols-outlined text-eids-accent text-2xl shrink-0">{{ $nextAction['icon'] }}</span>
+        <span class="text-sm font-bold text-gray-900">{{ $nextAction['text'] }}</span>
+    </div>
 
     @php
         $statusMap = [

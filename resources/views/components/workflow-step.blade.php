@@ -1,6 +1,7 @@
 @props([
     'step' => 1,
     'project' => null,
+    'role' => null,
 ])
 
 @php
@@ -11,17 +12,19 @@
         4 => ['label' => 'Inspection',     'route' => 'projects.inspect', 'icon' => 'rule'],
         5 => ['label' => 'G-IDS Score',    'route' => 'projects.score', 'icon' => 'analytics'],
     ];
+    $isManager = in_array($role, ['admin', 'lead_auditor']);
 @endphp
 
 <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-4 mb-6">
     <div class="flex items-center justify-between overflow-x-auto gap-2 no-scrollbar py-1">
         @foreach($steps as $num => $info)
             @php
-                $isCurrent   = ($num === (int)$step);
-                $isCompleted = ($num < (int)$step);
-                $needsSample = $num === 4 && $project && $project->samples->isEmpty();
-                $isDisabled  = ($num > (int)$step && !$project) || $needsSample;
-                
+                $isCurrent      = ($num === (int)$step);
+                $isCompleted    = ($num < (int)$step);
+                $isNotMyStep    = $isManager && $num >= 3;
+                $needsSample    = $num === 4 && $project && $project->samples->isEmpty();
+                $isDisabled     = ($num > (int)$step && !$project) || $isNotMyStep || $needsSample;
+
                 $routeParams = $project ? [$project] : [];
                 if ($num === 4 && $project && $project->samples->first()) {
                     $routeParams = [$project, $project->samples->first()];
@@ -33,7 +36,9 @@
                     <div class="w-8 h-8 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center text-xs font-bold">
                         {{ $num }}
                     </div>
-                    <span class="text-xs font-medium text-gray-400 hidden lg:inline">{{ $info['label'] }}</span>
+                    <span class="text-xs font-medium text-gray-400 hidden lg:inline">
+                        {{ $isNotMyStep ? 'Handled by Inspector' : $info['label'] }}
+                    </span>
                 </div>
             @else
                 <a href="{{ route($info['route'], $routeParams) }}"
