@@ -117,21 +117,7 @@ class DefectController extends Controller
             ->with('success', 'Defect deleted.');
     }
 
-    public function toggleStatus(Defect $defect)
-    {
-        $next = match($defect->status) {
-            'OPEN'        => 'IN_PROGRESS',
-            'IN_PROGRESS' => 'RESOLVED',
-            'RESOLVED'    => 'OPEN',
-            default       => 'OPEN',
-        };
-        $defect->update(['status' => $next]);
-
-        return redirect()->back()
-            ->with('success', "Defect status updated to {$next}.");
-    }
-
-    private const TRANSITIONS = [
+private const TRANSITIONS = [
         'OPEN'                 => ['IN_PROGRESS'],
         'IN_PROGRESS'          => ['PENDING_VERIFICATION'],
         'PENDING_VERIFICATION' => ['RESOLVED', 'IN_PROGRESS'],

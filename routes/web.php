@@ -70,7 +70,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/defects/{defect}/edit',    [DefectController::class, 'edit'])->name('defects.edit');
         Route::put('/defects/{defect}',         [DefectController::class, 'update'])->name('defects.update');
         Route::delete('/defects/{defect}',      [DefectController::class, 'destroy'])->name('defects.destroy');
-        Route::post('/defects/{defect}/toggle', [DefectController::class, 'toggleStatus'])->name('defects.toggle');
     });
 
     Route::middleware('role:admin,lead_auditor,inspector,contractor')->group(function () {
