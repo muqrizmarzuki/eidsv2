@@ -104,42 +104,57 @@ class Project extends Model
         $openDefects       = $this->defects()->whereIn('status', ['OPEN', 'IN_PROGRESS'])->count();
         $pendingVerify     = $this->defects()->where('status', 'PENDING_VERIFICATION')->count();
 
+        $waiting = fn (string $icon, string $text) => [
+            'icon' => $icon, 'text' => $text, 'actionable' => false,
+            'route' => null, 'params' => [], 'button_label' => null,
+        ];
+        $actionable = fn (string $icon, string $text, string $route, array $params, string $buttonLabel) => [
+            'icon' => $icon, 'text' => $text, 'actionable' => true,
+            'route' => $route, 'params' => $params, 'button_label' => $buttonLabel,
+        ];
+
         if (in_array($user->role, ['admin', 'lead_auditor'])) {
             if (!$hasNamedLocations) {
-                return ['icon' => 'tune', 'text' => 'Finish naming sample locations.'];
+                return $actionable('tune', 'Finish naming sample locations.', 'projects.samples', ['project' => $this], 'Configure Samples');
             }
             if (!$inspectionStarted) {
                 $name = $this->assignedInspector->name ?? 'the assigned inspector';
-                return ['icon' => 'grid_on', 'text' => "Waiting on Inspector {$name} to begin the Components Grid inspection."];
+                return $waiting('grid_on', "Waiting on Inspector {$name} to begin the Components Grid inspection.");
             }
             if ($openDefects > 0 || $pendingVerify > 0) {
                 $count = $openDefects + $pendingVerify;
-                return ['icon' => 'warning', 'text' => "{$count} defect(s) still open — waiting on Contractor & Inspector verification."];
+                return $waiting('warning', "{$count} defect(s) still open — waiting on Contractor & Inspector verification.");
             }
-            return ['icon' => 'analytics', 'text' => 'Inspection complete — ready to generate the signed G-IDS PDF.'];
+            return $actionable('analytics', 'Inspection complete — ready to generate the signed G-IDS PDF.', 'reports.show', ['project' => $this], 'Generate PDF Report');
         }
 
         if ($user->role === 'inspector') {
             if ($pendingVerify > 0) {
-                return ['icon' => 'fact_check', 'text' => "{$pendingVerify} defect(s) awaiting your verification."];
+                return $actionable(
+                    'fact_check', "{$pendingVerify} defect(s) awaiting your verification.",
+                    'defects.index', ['project_id' => $this->id, 'status' => 'PENDING_VERIFICATION'], 'Review Defects'
+                );
             }
             if (!$inspectionStarted) {
-                return ['icon' => 'grid_on', 'text' => 'Start the Components Grid inspection.'];
+                return $actionable('grid_on', 'Start the Components Grid inspection.', 'projects.components', ['project' => $this], 'Start Inspecting Now');
             }
             if (!$inspectionDone) {
-                return ['icon' => 'grid_on', 'text' => "Continue — {$inspectedCount}/{$totalSamples} sample units done."];
+                return $actionable(
+                    'grid_on', "Continue — {$inspectedCount}/{$totalSamples} sample units done.",
+                    'projects.components', ['project' => $this], 'Continue Inspecting'
+                );
             }
-            return ['icon' => 'task_alt', 'text' => 'Inspection complete — notify your Lead Auditor.'];
+            return $actionable('task_alt', 'Inspection complete — notify your Lead Auditor.', 'projects.score', ['project' => $this], 'View G-IDS Score');
         }
 
         if ($user->role === 'supervisor') {
             if ($this->status === 'selesai') {
-                return ['icon' => 'description', 'text' => 'Certificate ready for download.'];
+                return $actionable('description', 'Certificate ready for download.', 'reports.show', ['project' => $this], 'Download Report');
             }
-            return ['icon' => 'schedule', 'text' => "In progress — {$inspectedCount}/{$totalSamples} sample units inspected."];
+            return $waiting('schedule', "In progress — {$inspectedCount}/{$totalSamples} sample units inspected.");
         }
 
-        return ['icon' => 'info', 'text' => ''];
+        return $waiting('info', '');
     }
 
     public function scopeVisibleTo($query, User $user)
