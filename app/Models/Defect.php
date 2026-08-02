@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use App\Models\User;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Defect extends Model implements HasMedia
 {
+    use HasFactory;
     use InteractsWithMedia;
 
     protected $fillable = [
@@ -79,5 +82,10 @@ class Defect extends Model implements HasMedia
             'RESOLVED'    => 'bg-emerald-100 text-emerald-700',
             default       => 'bg-gray-100 text-gray-700',
         };
+    }
+
+    public function scopeVisibleTo($query, User $user)
+    {
+        return $query->whereHas('project', fn ($q) => $q->visibleTo($user));
     }
 }

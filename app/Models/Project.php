@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Project extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'project_no', 'project_name', 'location', 'developer_name',
         'contractor_name', 'building_type', 'total_units', 'floor_area_sqm',
@@ -89,5 +92,17 @@ class Project extends Model
         if ($total === 0) return 0;
         $done = $this->assessments()->count();
         return (int) min(100, round(($done / $total) * 100));
+    }
+
+    public function scopeVisibleTo($query, User $user)
+    {
+        return match ($user->role) {
+            'admin'        => $query,
+            'lead_auditor' => $query->where('created_by', $user->id),
+            'inspector'    => $query->where('assigned_to', $user->id),
+            'supervisor'   => $query->whereHas('supervisors', fn ($q) => $q->where('user_id', $user->id)),
+            'contractor'   => $query->where('assigned_contractor_id', $user->id),
+            default        => $query->whereRaw('1 = 0'),
+        };
     }
 }
