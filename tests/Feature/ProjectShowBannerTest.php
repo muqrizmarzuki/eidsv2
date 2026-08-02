@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ComponentAssessment;
 use App\Models\Project;
 use App\Models\ProjectSample;
 use App\Models\User;
@@ -11,6 +12,20 @@ use Tests\TestCase;
 class ProjectShowBannerTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function fullyInspectedProject(array $overrides = []): Project
+    {
+        $project = Project::factory()->create(array_merge(['calculated_samples' => 1], $overrides));
+        $sample = ProjectSample::create(['project_id' => $project->id, 'sample_index' => 1, 'location_name' => 'Master Bedroom']);
+        foreach (array_keys(config('eids.components')) as $code) {
+            ComponentAssessment::create([
+                'project_id' => $project->id, 'sample_id' => $sample->id,
+                'component_code' => $code, 'component_name' => $code, 'weightage' => 10,
+                'overall_sample_status' => 'PASS',
+            ]);
+        }
+        return $project->fresh();
+    }
 
     public function test_admin_sees_the_next_action_banner_on_project_show(): void
     {
@@ -104,5 +119,53 @@ class ProjectShowBannerTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Components Grid');
+    }
+
+    public function test_score_button_is_locked_when_inspection_incomplete(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $project = Project::factory()->create();
+        ProjectSample::create(['project_id' => $project->id, 'sample_index' => 1, 'location_name' => 'Sample 1']);
+
+        $response = $this->actingAs($admin)->get("/projects/{$project->id}");
+
+        $response->assertSee('Unlocks once inspection is complete');
+    }
+
+    public function test_score_button_unlocks_for_admin_once_inspection_complete(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $project = $this->fullyInspectedProject(['overall_score' => 92.5]);
+
+        $response = $this->actingAs($admin)->get("/projects/{$project->id}");
+
+        // The stepper's Score button renders "{score} &middot; {rating}" — a compound string
+        // unique to it (unrelated to the page's other, always-present quick-link to the score route).
+        $response->assertSee('92.5 &middot; GOOD', false);
+    }
+
+    public function test_score_button_unlocks_for_inspector_once_inspection_complete(): void
+    {
+        $inspector = User::factory()->create(['role' => 'inspector']);
+        $project = $this->fullyInspectedProject(['assigned_to' => $inspector->id, 'overall_score' => 60]);
+
+        $response = $this->actingAs($inspector)->get("/projects/{$project->id}");
+
+        $response->assertSee('60.0 &middot; WEAK', false);
+    }
+
+    public function test_admin_viewing_the_score_page_itself_sees_it_unlocked_not_handled_by_inspector(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $project = $this->fullyInspectedProject(['overall_score' => 92.5]);
+
+        $response = $this->actingAs($admin)->get("/projects/{$project->id}/score");
+
+        $response->assertOk();
+        // Admin is normally locked out of steps 3-4 ("Handled by Inspector"), but the Score
+        // button is a special case: once ready, it unlocks for every role that can see it —
+        // including while Admin is already sitting on the score page itself.
+        $response->assertDontSee('Unlocks once inspection is complete');
+        $response->assertSee('92.5 &middot; GOOD', false);
     }
 }
