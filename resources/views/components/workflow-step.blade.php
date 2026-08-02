@@ -19,7 +19,8 @@
             @php
                 $isCurrent   = ($num === (int)$step);
                 $isCompleted = ($num < (int)$step);
-                $isDisabled  = ($num > (int)$step && !$project);
+                $needsSample = $num === 4 && $project && $project->samples->isEmpty();
+                $isDisabled  = ($num > (int)$step && !$project) || $needsSample;
                 
                 $routeParams = $project ? [$project] : [];
                 if ($num === 4 && $project && $project->samples->first()) {
