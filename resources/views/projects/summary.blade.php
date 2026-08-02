@@ -229,8 +229,8 @@
                             {{ ucfirst($defect->severity) }}
                         </span>
                         <span class="flex-1 truncate text-gray-600">{{ $defect->component_name }}</span>
-                        <span class="{{ $defect->status === 'OPEN' ? 'text-red-400' : 'text-emerald-500' }} font-medium">
-                            {{ $defect->status }}
+                        <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium {{ $defect->status_badge_class }}">
+                            {{ $defect->status_label }}
                         </span>
                     </div>
                 @endforeach

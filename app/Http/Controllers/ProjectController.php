@@ -19,7 +19,7 @@ class ProjectController extends Controller
         $draft           = $visible->clone()->where('status', 'draf')->count();
         $recent          = $visible->clone()->with(['creator', 'assignedInspector'])->latest()->take(8)->get();
         $avgScore        = $visible->clone()->where('overall_score', '>', 0)->avg('overall_score') ?? 0;
-        $openDefects     = Defect::visibleTo(auth()->user())->where('status', 'OPEN')->count();
+        $openDefects     = Defect::visibleTo(auth()->user())->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
         $resolvedDefects = Defect::visibleTo(auth()->user())->where('status', 'RESOLVED')->count();
         $ratingBaik      = (float) setting('rating_baik', 85);
         $ratingMod       = (float) setting('rating_sederhana', 70);
@@ -80,7 +80,7 @@ class ProjectController extends Controller
         $this->guardProjectVisible($project);
 
         $project->load(['samples', 'defects', 'creator', 'assignedInspector']);
-        $openDefects     = $project->defects->where('status', 'OPEN')->count();
+        $openDefects     = $project->defects->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
         $resolvedDefects = $project->defects->where('status', 'RESOLVED')->count();
 
         return view('projects.show', compact('project', 'openDefects', 'resolvedDefects'));

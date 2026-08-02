@@ -180,7 +180,6 @@
                             @foreach($project->defects as $defect)
                                 @php
                                     $sevCls = ['low' => 'bg-gray-100 text-gray-700 border-gray-300', 'medium' => 'bg-amber-100 text-amber-900 border-amber-300', 'high' => 'bg-red-100 text-red-900 border-red-300'];
-                                    $stCls  = ['OPEN' => 'bg-red-100 text-red-900 border-red-300', 'IN_PROGRESS' => 'bg-amber-100 text-amber-900 border-amber-300', 'RESOLVED' => 'bg-emerald-100 text-emerald-900 border-emerald-300'];
                                 @endphp
                                 <tr class="hover:bg-gray-50/50 transition">
                                     <td class="px-6 py-3.5">
@@ -194,8 +193,8 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-3.5 text-center">
-                                        <span class="inline-flex px-2.5 py-1 border rounded-full font-extrabold uppercase tracking-wider text-[10px] {{ $stCls[$defect->status] ?? '' }}">
-                                            {{ $defect->status }}
+                                        <span class="inline-flex px-2.5 py-1 border rounded-full font-extrabold uppercase tracking-wider text-[10px] {{ $defect->status_badge_class }}">
+                                            {{ $defect->status_label }}
                                         </span>
                                     </td>
                                 </tr>

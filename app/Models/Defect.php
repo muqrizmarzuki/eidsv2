@@ -73,6 +73,17 @@ class Defect extends Model implements HasMedia
         };
     }
 
+    public function getStatusLabelAttribute(): string
+    {
+        return match($this->status) {
+            'OPEN'                 => 'Open',
+            'IN_PROGRESS'          => 'In Progress',
+            'PENDING_VERIFICATION' => 'Pending Verification',
+            'RESOLVED'             => 'Resolved',
+            default                => $this->status,
+        };
+    }
+
     public function getStatusBadgeClassAttribute(): string
     {
         return match($this->status) {

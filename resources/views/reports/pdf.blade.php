@@ -51,7 +51,6 @@
     $ratingMap = ['GOOD' => 'Good', 'MODERATE' => 'Moderate', 'WEAK' => 'Weak'];
     $typeMap   = ['teres' => 'Terrace', 'semi_d' => 'Semi-D', 'banglo' => 'Bungalow'];
     $badgeCls  = ['GOOD' => 'badge-good', 'MODERATE' => 'badge-moderate', 'WEAK' => 'badge-weak'];
-    $stLabel   = ['OPEN' => 'Open', 'IN_PROGRESS' => 'In Progress', 'RESOLVED' => 'Resolved'];
     $sevCls    = ['low' => 'muted', 'medium' => 'fail', 'high' => 'fail'];
 @endphp
 
@@ -154,7 +153,7 @@
                         <td>{{ $defect->location }}</td>
                         <td>{{ Str::limit($defect->defect_description, 80) }}</td>
                         <td class="text-center {{ $sevCls[$defect->severity] ?? '' }}">{{ ucfirst($defect->severity) }}</td>
-                        <td class="text-center">{{ $stLabel[$defect->status] ?? $defect->status }}</td>
+                        <td class="text-center">{{ $defect->status_label }}</td>
                     </tr>
                 @endforeach
             </tbody>

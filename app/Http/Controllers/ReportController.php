@@ -37,7 +37,7 @@ class ReportController extends Controller
         $sArch           = collect($rows)->sum('sComp');
         $totalScore      = $sArch + $meScore + $extScore;
         $rating          = $totalScore >= $ratingBaik ? 'GOOD' : ($totalScore >= $ratingMod ? 'MODERATE' : 'WEAK');
-        $openDefects     = $project->defects->where('status', 'OPEN')->count();
+        $openDefects     = $project->defects->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
         $resolvedDefects = $project->defects->where('status', 'RESOLVED')->count();
 
         return compact('rows', 'sArch', 'meScore', 'extScore', 'totalScore',
@@ -46,7 +46,8 @@ class ReportController extends Controller
 
     public function index()
     {
-        $projects = Project::where('overall_score', '>', 0)
+        $projects = Project::visibleTo(auth()->user())
+            ->where('overall_score', '>', 0)
             ->with('creator')
             ->withCount('defects')
             ->orderByDesc('updated_at')

@@ -34,14 +34,14 @@ class DefectController extends Controller
         }
 
         $defects  = $query->paginate(20)->withQueryString();
-        $projects = Project::orderBy('project_name')->get(['id', 'project_name', 'project_no']);
+        $projects = Project::visibleTo(auth()->user())->orderBy('project_name')->get(['id', 'project_name', 'project_no']);
 
         return view('defects.index', compact('defects', 'projects'));
     }
 
     public function create()
     {
-        $projects = Project::orderBy('project_name')->get(['id', 'project_name', 'project_no']);
+        $projects = Project::visibleTo(auth()->user())->orderBy('project_name')->get(['id', 'project_name', 'project_no']);
         return view('defects.create', compact('projects'));
     }
 
@@ -56,6 +56,8 @@ class DefectController extends Controller
             'status'             => 'required|in:OPEN,IN_PROGRESS,PENDING_VERIFICATION,RESOLVED',
             'photo'              => 'nullable|image|max:5120',
         ]);
+
+        $this->guardProjectVisible(Project::findOrFail($data['project_id']));
 
         if ($request->hasFile('photo')) {
             $data['photo_path'] = $request->file('photo')->store('defect_photos', 'public');
@@ -75,7 +77,7 @@ class DefectController extends Controller
     {
         $this->guardDefectVisible($defect);
 
-        $projects = Project::orderBy('project_name')->get(['id', 'project_name', 'project_no']);
+        $projects = Project::visibleTo(auth()->user())->orderBy('project_name')->get(['id', 'project_name', 'project_no']);
         return view('defects.edit', compact('defect', 'projects'));
     }
 
@@ -89,9 +91,14 @@ class DefectController extends Controller
             'location'           => 'required|string|max:255',
             'defect_description' => 'required|string',
             'severity'           => 'required|in:low,medium,high',
-            'status'             => 'required|in:OPEN,IN_PROGRESS,PENDING_VERIFICATION,RESOLVED',
             'photo'              => 'nullable|image|max:5120',
         ]);
+
+        $this->guardProjectVisible(Project::findOrFail($data['project_id']));
+
+        // Status transitions are owned exclusively by advanceStatus() and its
+        // TRANSITIONS map — the edit form must never move a defect's status.
+        unset($data['status']);
 
         if ($request->hasFile('photo')) {
             $data['photo_path'] = $request->file('photo')->store('defect_photos', 'public');

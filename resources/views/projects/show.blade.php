@@ -28,7 +28,10 @@
 <div class="max-w-5xl mx-auto space-y-6">
 
     {{-- Pipeline Step Indicator --}}
-    <x-workflow-step step="1" :project="$project" :role="auth()->user()->role" />
+    {{-- Supervisors get a read-only status line (the nextActionFor banner) only, no interactive stepper. --}}
+    @unless(auth()->user()->role === 'supervisor')
+        <x-workflow-step step="1" :project="$project" :role="auth()->user()->role" />
+    @endunless
 
     {{-- Next Action Banner --}}
     <div class="bg-eids-primary/5 border border-eids-primary/15 rounded-2xl p-4 mb-6 flex items-center gap-3">
@@ -93,9 +96,11 @@
                     </div>
                     <div class="text-xs text-gray-500 mt-2 flex justify-between items-center font-medium">
                         <span>{{ $project->samples->whereNotNull('pass_rate')->count() }} of {{ $project->samples->count() }} sample unit(s) inspected</span>
-                        <a href="{{ route('projects.components', $project) }}" class="text-eids-accent hover:text-eids-primary font-bold flex items-center gap-1">
-                            Inspect Component Grid <span class="material-symbols-outlined text-sm">arrow_forward</span>
-                        </a>
+                        @if(auth()->user()->canInspect())
+                            <a href="{{ route('projects.components', $project) }}" class="text-eids-accent hover:text-eids-primary font-bold flex items-center gap-1">
+                                Inspect Component Grid <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>

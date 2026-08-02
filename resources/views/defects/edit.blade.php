@@ -69,14 +69,15 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Defect Status *</label>
-                        <select name="status" required
-                                class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
-                            <option value="OPEN"        {{ old('status', $defect->status) === 'OPEN'        ? 'selected' : '' }}>Open</option>
-                            <option value="IN_PROGRESS" {{ old('status', $defect->status) === 'IN_PROGRESS' ? 'selected' : '' }}>In Progress</option>
-                            <option value="PENDING_VERIFICATION" {{ old('status', $defect->status) === 'PENDING_VERIFICATION' ? 'selected' : '' }}>Pending Verification</option>
-                            <option value="RESOLVED"    {{ old('status', $defect->status) === 'RESOLVED'    ? 'selected' : '' }}>Resolved</option>
-                        </select>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Defect Status</label>
+                        <div class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 flex items-center">
+                            <span class="inline-flex px-3 py-1 border rounded-full text-xs font-extrabold {{ $defect->status_badge_class }}">
+                                {{ $defect->status_label }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500 font-medium mt-1.5">
+                            Status is advanced through the defect workflow, not this form.
+                        </p>
                     </div>
                 </div>
 

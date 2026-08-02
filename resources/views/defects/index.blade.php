@@ -115,10 +115,17 @@
                                 </td>
                                 <td class="px-4 py-4 hidden md:table-cell">
                                     @if($defect->project)
-                                        <a href="{{ route('projects.show', $defect->project) }}"
-                                           class="text-xs font-bold text-eids-accent hover:text-eids-primary transition">
-                                            {{ $defect->project->project_no }}
-                                        </a>
+                                        @if($role === 'contractor')
+                                            {{-- Contractors cannot reach projects.show, so render plain text. --}}
+                                            <span class="text-xs font-bold text-gray-900">
+                                                {{ $defect->project->project_no }}
+                                            </span>
+                                        @else
+                                            <a href="{{ route('projects.show', $defect->project) }}"
+                                               class="text-xs font-bold text-eids-accent hover:text-eids-primary transition">
+                                                {{ $defect->project->project_no }}
+                                            </a>
+                                        @endif
                                         <div class="text-xs text-gray-600 mt-0.5 truncate max-w-36 font-semibold">{{ $defect->project->project_name }}</div>
                                     @else
                                         <span class="text-gray-400 text-xs">—</span>

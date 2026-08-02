@@ -212,7 +212,7 @@ class InspectionController extends Controller
         $sArch           = collect($rows)->sum('sComp');
         $totalScore      = $sArch + $meScore + $extScore;
         $rating          = $totalScore >= $ratingBaik ? 'GOOD' : ($totalScore >= $ratingMod ? 'MODERATE' : 'WEAK');
-        $openDefects     = $project->defects->where('status', 'OPEN')->count();
+        $openDefects     = $project->defects->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
         $resolvedDefects = $project->defects->where('status', 'RESOLVED')->count();
 
         return view('projects.summary', compact(

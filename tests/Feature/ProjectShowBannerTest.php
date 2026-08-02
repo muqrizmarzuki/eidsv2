@@ -42,4 +42,36 @@ class ProjectShowBannerTest extends TestCase
 
         $response->assertDontSee('Handled by Inspector');
     }
+
+    public function test_supervisor_sees_the_banner_but_no_interactive_stepper(): void
+    {
+        $supervisor = User::factory()->create(['role' => 'supervisor']);
+        $project = Project::factory()->create();
+        $project->supervisors()->attach($supervisor->id);
+        ProjectSample::create(['project_id' => $project->id, 'sample_index' => 1, 'location_name' => 'Sample 1']);
+
+        $response = $this->actingAs($supervisor)->get("/projects/{$project->id}");
+
+        $response->assertOk();
+        // Read-only status line (nextActionFor banner) still renders.
+        $response->assertSee('sample units inspected');
+        // None of the stepper's step labels render. ("G-IDS Score" is deliberately not
+        // asserted on — that string also appears in non-stepper content on this page.)
+        $response->assertDontSee('Sample Setup');
+        $response->assertDontSee('Components Grid');
+        $response->assertDontSee('Handled by Inspector');
+        // Nor any of the stepper's navigation links.
+        $response->assertDontSee('href="' . route('projects.samples', $project) . '"', false);
+        $response->assertDontSee('href="' . route('projects.components', $project) . '"', false);
+    }
+
+    public function test_inspector_still_sees_the_interactive_stepper(): void
+    {
+        $inspector = User::factory()->create(['role' => 'inspector']);
+        $project = Project::factory()->create(['assigned_to' => $inspector->id]);
+
+        $response = $this->actingAs($inspector)->get("/projects/{$project->id}");
+
+        $response->assertSee('Sample Setup');
+    }
 }
