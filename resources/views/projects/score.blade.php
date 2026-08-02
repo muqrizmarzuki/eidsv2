@@ -10,6 +10,10 @@
     <span class="text-gray-900 font-bold">G-IDS Score</span>
 @endsection
 
+@php
+    $nextAction = $project->nextActionFor(auth()->user());
+@endphp
+
 @section('topbar-actions')
     @if(auth()->user()->canInspect())
         <a href="{{ route('projects.components', $project) }}"
@@ -27,6 +31,9 @@
 
 @section('content')
 <div class="max-w-5xl mx-auto">
+
+    {{-- Next Action Hero Card --}}
+    <x-next-action-card :action="$nextAction" />
 
     {{-- Pipeline Step Indicator --}}
     @unless(auth()->user()->role === 'supervisor')
