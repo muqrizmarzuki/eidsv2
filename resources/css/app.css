@@ -6,11 +6,41 @@
 @theme {
     --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
 
-    --color-eids-primary:   #00342b;
-    --color-eids-dark:      #002219;
-    --color-eids-surface:   #091a17;
-    --color-eids-card:      #0d2420;
-    --color-eids-accent:    #10b981;
-    --color-eids-light:     #34d399;
-    --color-eids-muted:     #6ee7b7;
+    /* E-IDS Design System Color Palette (The Precision Inspector's Ledger) */
+    --color-eids-primary:       #00342b;
+    --color-eids-dark:          #002720;
+    --color-eids-surface:       #ffffff;
+    --color-eids-bg:            #f9fafb;
+    --color-eids-accent:        #059669;
+    --color-eids-light:         #34d399;
+    --color-eids-muted:         #6ee7b7;
+
+    /* Status Colors */
+    --color-status-pass:        #10b981;
+    --color-status-pass-bg:     #d1fae5;
+    --color-status-fail:        #ef4444;
+    --color-status-fail-bg:     #fee2e2;
+    --color-status-warn:        #f59e0b;
+    --color-status-warn-bg:     #fef3c7;
+}
+
+/* Custom Scrollbar for inspection grid & tables */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Touch Ergonomics Floor */
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Focus States */
+*:focus-visible {
+    outline: 2px solid #059669;
+    outline-offset: 2px;
 }

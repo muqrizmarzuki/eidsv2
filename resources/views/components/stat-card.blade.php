@@ -8,24 +8,24 @@
 
 @php
     $colors = [
-        'emerald' => ['bg' => 'bg-emerald-50',  'icon' => 'text-emerald-600',  'border' => 'border-emerald-100'],
-        'blue'    => ['bg' => 'bg-blue-50',     'icon' => 'text-blue-600',     'border' => 'border-blue-100'],
-        'amber'   => ['bg' => 'bg-amber-50',    'icon' => 'text-amber-600',    'border' => 'border-amber-100'],
-        'red'     => ['bg' => 'bg-red-50',      'icon' => 'text-red-600',      'border' => 'border-red-100'],
-        'gray'    => ['bg' => 'bg-gray-50',     'icon' => 'text-gray-500',     'border' => 'border-gray-100'],
+        'emerald' => ['bg' => 'bg-emerald-500/10', 'icon' => 'text-emerald-700', 'border' => 'border-emerald-200', 'ring' => 'group-hover:border-emerald-400'],
+        'blue'    => ['bg' => 'bg-blue-500/10',    'icon' => 'text-blue-700',    'border' => 'border-blue-200',    'ring' => 'group-hover:border-blue-400'],
+        'amber'   => ['bg' => 'bg-amber-500/10',   'icon' => 'text-amber-700',   'border' => 'border-amber-200',   'ring' => 'group-hover:border-amber-400'],
+        'red'     => ['bg' => 'bg-red-500/10',     'icon' => 'text-red-700',     'border' => 'border-red-200',     'ring' => 'group-hover:border-red-400'],
+        'gray'    => ['bg' => 'bg-gray-500/10',    'icon' => 'text-gray-700',    'border' => 'border-gray-200',    'ring' => 'group-hover:border-gray-400'],
     ];
     $c = $colors[$color] ?? $colors['emerald'];
 @endphp
 
-<div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
-    <div class="w-12 h-12 rounded-xl {{ $c['bg'] }} {{ $c['border'] }} border flex items-center justify-center shrink-0">
-        <span class="material-symbols-outlined filled {{ $c['icon'] }} text-xl">{{ $icon }}</span>
+<div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5 flex items-center gap-4 group transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+    <div class="w-12 h-12 rounded-xl {{ $c['bg'] }} {{ $c['border'] }} border flex items-center justify-center shrink-0 transition-colors {{ $c['ring'] }}">
+        <span class="material-symbols-outlined filled {{ $c['icon'] }} text-2xl">{{ $icon }}</span>
     </div>
-    <div class="min-w-0">
-        <div class="text-xs text-gray-400 uppercase tracking-wider font-medium truncate">{{ $label }}</div>
-        <div class="text-2xl font-bold text-gray-900 leading-tight">{{ $value }}</div>
+    <div class="min-w-0 flex-1">
+        <div class="text-xs text-gray-500 uppercase tracking-wider font-bold truncate mb-0.5">{{ $label }}</div>
+        <div class="text-2xl lg:text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{{ $value }}</div>
         @if($sub)
-            <div class="text-xs text-gray-400 mt-0.5">{{ $sub }}</div>
+            <div class="text-xs text-gray-500 font-medium mt-1 truncate">{{ $sub }}</div>
         @endif
     </div>
 </div>

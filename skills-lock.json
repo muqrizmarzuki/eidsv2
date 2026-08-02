@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": ".agents/skills/impeccable/SKILL.md",
       "computedHash": "49d27a2048ad44a8457fc78852a1b2e2d6935df23283197cce160cb6ea0b4211"
+    },
+    "interface-design": {
+      "source": "Dammyjay93/interface-design",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/interface-design/SKILL.md",
+      "computedHash": "340cc79a1558f09371aa3eb689952a8b777c1d7362c24226e99693606a80828e"
     }
   }
 }

@@ -10,7 +10,7 @@ class DefectController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Defect::with(['project'])->latest();
+        $query = Defect::with(['project', 'media'])->latest();
 
         if ($request->filled('project_id')) {
             $query->where('project_id', $request->project_id);
@@ -61,7 +61,11 @@ class DefectController extends Controller
             $data['photo_path'] = $request->file('photo')->store('defect_photos', 'public');
         }
 
-        Defect::create($data);
+        $defect = Defect::create($data);
+
+        if ($request->hasFile('photo')) {
+            $defect->addMediaFromRequest('photo')->toMediaCollection('photos');
+        }
 
         return redirect()->route('defects.index')
             ->with('success', 'Defect recorded successfully.');
@@ -90,6 +94,10 @@ class DefectController extends Controller
         }
 
         $defect->update($data);
+
+        if ($request->hasFile('photo')) {
+            $defect->addMediaFromRequest('photo')->toMediaCollection('photos');
+        }
 
         return redirect()->route('defects.index')
             ->with('success', 'Defect updated successfully.');

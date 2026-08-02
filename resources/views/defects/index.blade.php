@@ -1,19 +1,19 @@
 @extends('layouts.app')
 
-@section('title', 'Defects')
+@section('title', 'Defects Register')
 
 @section('breadcrumb')
-    <a href="{{ route('dashboard') }}" class="hover:text-gray-600">Dashboard</a>
+    <a href="{{ route('dashboard') }}" class="hover:text-gray-800 transition">Dashboard</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
-    <span class="text-gray-700 font-medium">Defects</span>
+    <span class="text-gray-900 font-bold">Defects Register</span>
 @endsection
 
 @section('topbar-actions')
     @if(auth()->user()->canInspect())
         <a href="{{ route('defects.create') }}"
-           class="flex items-center gap-1.5 px-4 py-2 bg-eids-primary text-white text-sm font-medium rounded-lg hover:bg-eids-dark transition">
-            <span class="material-symbols-outlined text-base">add</span>
-            New Defect
+           class="flex items-center gap-2 px-4 py-2.5 bg-eids-primary text-white text-sm font-bold rounded-xl hover:bg-eids-dark transition shadow-xs min-h-[44px]">
+            <span class="material-symbols-outlined text-lg">add</span>
+            New Defect Log
         </a>
     @endif
 @endsection
@@ -21,13 +21,13 @@
 @section('content')
 
     {{-- Filters --}}
-    <form method="GET" class="flex flex-wrap gap-3 mb-5">
-        <div class="relative flex-1 min-w-48">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-lg">search</span>
-            <input name="search" value="{{ request('search') }}" placeholder="Search component, location or description..."
-                   class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white">
+    <form method="GET" class="flex flex-wrap gap-3 mb-6 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
+        <div class="relative flex-1 min-w-56">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-lg">search</span>
+            <input name="search" value="{{ request('search') }}" placeholder="Search component, location or defect notes..."
+                   class="w-full pl-10 pr-4 py-2.5 min-h-[44px] text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-eids-accent bg-gray-50/50 focus:bg-white transition">
         </div>
-        <select name="project_id" class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white">
+        <select name="project_id" class="px-4 py-2.5 min-h-[44px] text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium max-w-xs">
             <option value="">All Projects</option>
             @foreach($projects as $proj)
                 <option value="{{ $proj->id }}" {{ request('project_id') == $proj->id ? 'selected' : '' }}>
@@ -35,120 +35,128 @@
                 </option>
             @endforeach
         </select>
-        <select name="severity" class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white">
-            <option value="">All Severity</option>
+        <select name="severity" class="px-4 py-2.5 min-h-[44px] text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
+            <option value="">All Severities</option>
             <option value="low"    {{ request('severity') === 'low'    ? 'selected' : '' }}>Low</option>
             <option value="medium" {{ request('severity') === 'medium' ? 'selected' : '' }}>Medium</option>
             <option value="high"   {{ request('severity') === 'high'   ? 'selected' : '' }}>High</option>
         </select>
-        <select name="status" class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white">
-            <option value="">All Status</option>
+        <select name="status" class="px-4 py-2.5 min-h-[44px] text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
+            <option value="">All Statuses</option>
             <option value="OPEN"        {{ request('status') === 'OPEN'        ? 'selected' : '' }}>Open</option>
             <option value="IN_PROGRESS" {{ request('status') === 'IN_PROGRESS' ? 'selected' : '' }}>In Progress</option>
             <option value="RESOLVED"    {{ request('status') === 'RESOLVED'    ? 'selected' : '' }}>Resolved</option>
         </select>
-        <button type="submit" class="px-4 py-2 bg-eids-primary text-white text-sm rounded-lg hover:bg-eids-dark transition">Filter</button>
+        <button type="submit" class="px-5 py-2.5 min-h-[44px] bg-eids-primary text-white text-sm font-bold rounded-xl hover:bg-eids-dark transition shadow-xs flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-base">filter_list</span> Filter
+        </button>
         @if(request()->hasAny(['search','project_id','severity','status']))
-            <a href="{{ route('defects.index') }}" class="px-4 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition">Clear</a>
+            <a href="{{ route('defects.index') }}" class="px-4 py-2.5 min-h-[44px] text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-1">
+                <span class="material-symbols-outlined text-base">close</span> Clear
+            </a>
         @endif
     </form>
 
-    {{-- Table --}}
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    {{-- Defects Table --}}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
         @if($defects->isEmpty())
-            <div class="flex flex-col items-center justify-center py-20 text-center">
-                <span class="material-symbols-outlined text-gray-200 text-6xl mb-3">warning</span>
-                <p class="text-sm text-gray-400 font-medium">No defects found</p>
-                <p class="text-xs text-gray-300 mt-1">Defects are auto-generated when a component is marked FAIL during inspection.</p>
+            <div class="flex flex-col items-center justify-center py-20 text-center px-6">
+                <div class="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mb-3 text-amber-700">
+                    <span class="material-symbols-outlined text-4xl">warning</span>
+                </div>
+                <p class="text-base text-gray-900 font-bold">No defects logged</p>
+                <p class="text-xs text-gray-500 mt-1 max-w-sm">Defects are auto-created when a component check is marked FAIL during site inspection or added manually.</p>
             </div>
         @else
-            <table class="w-full text-sm">
-                <thead class="bg-gray-50 border-b border-gray-100 text-xs text-gray-400 uppercase tracking-wider">
-                    <tr>
-                        <th class="px-5 py-3.5 text-left font-medium">Defect</th>
-                        <th class="px-4 py-3.5 text-left font-medium hidden md:table-cell">Project</th>
-                        <th class="px-4 py-3.5 text-left font-medium hidden sm:table-cell">Severity</th>
-                        <th class="px-4 py-3.5 text-left font-medium">Status</th>
-                        <th class="px-4 py-3.5 text-right font-medium">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50">
-                    @foreach($defects as $defect)
-                        @php
-                            $sevCls = [
-                                'low'    => 'bg-gray-100 text-gray-500',
-                                'medium' => 'bg-amber-100 text-amber-700',
-                                'high'   => 'bg-red-100 text-red-600',
-                            ];
-                            $stCls  = [
-                                'OPEN'        => 'bg-red-100 text-red-700',
-                                'IN_PROGRESS' => 'bg-amber-100 text-amber-700',
-                                'RESOLVED'    => 'bg-emerald-100 text-emerald-700',
-                            ];
-                            $stLabel = [
-                                'OPEN' => 'Open', 'IN_PROGRESS' => 'In Progress', 'RESOLVED' => 'Resolved'
-                            ];
-                        @endphp
-                        <tr class="hover:bg-gray-50/50 transition">
-                            <td class="px-5 py-4">
-                                <div class="font-semibold text-gray-800 text-sm">{{ $defect->component_name }}</div>
-                                <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-xs">location_on</span>
-                                    {{ $defect->location }}
-                                </div>
-                                <div class="text-xs text-gray-400 mt-1 line-clamp-1 max-w-xs">{{ $defect->defect_description }}</div>
-                            </td>
-                            <td class="px-4 py-4 hidden md:table-cell">
-                                @if($defect->project)
-                                    <a href="{{ route('projects.show', $defect->project) }}"
-                                       class="text-xs text-eids-accent hover:underline font-medium">
-                                        {{ $defect->project->project_no }}
-                                    </a>
-                                    <div class="text-xs text-gray-400 mt-0.5 truncate max-w-36">{{ $defect->project->project_name }}</div>
-                                @else
-                                    <span class="text-gray-300 text-xs">—</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-4 hidden sm:table-cell">
-                                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium {{ $sevCls[$defect->severity] ?? 'bg-gray-100 text-gray-500' }}">
-                                    {{ $defect->severity_label }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-4">
-                                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium {{ $stCls[$defect->status] ?? '' }}">
-                                    {{ $stLabel[$defect->status] ?? $defect->status }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-4">
-                                <div class="flex items-center justify-end gap-1">
-                                    @if(auth()->user()->canInspect())
-                                        {{-- Toggle status --}}
-                                        <form method="POST" action="{{ route('defects.toggle', $defect) }}">
-                                            @csrf
-                                            <button type="submit"
-                                                    class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition"
-                                                    title="Advance Status">
-                                                <span class="material-symbols-outlined text-base">update</span>
-                                            </button>
-                                        </form>
-                                        <a href="{{ route('defects.edit', $defect) }}"
-                                           class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition" title="Edit">
-                                            <span class="material-symbols-outlined text-base">edit</span>
-                                        </a>
-                                        <button
-                                            @click="$dispatch('open-confirm', { id: 'delete-confirm', action: '{{ route('defects.destroy', $defect) }}', method: 'DELETE' })"
-                                            class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
-                                            <span class="material-symbols-outlined text-base">delete</span>
-                                        </button>
-                                    @endif
-                                </div>
-                            </td>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider font-bold">
+                        <tr>
+                            <th class="px-6 py-4 text-left">Defect / Location</th>
+                            <th class="px-4 py-4 text-left hidden md:table-cell">Project</th>
+                            <th class="px-4 py-4 text-left hidden sm:table-cell">Severity</th>
+                            <th class="px-4 py-4 text-left">Status</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach($defects as $defect)
+                            @php
+                                $sevCls = [
+                                    'low'    => 'bg-gray-100 text-gray-700 border-gray-300',
+                                    'medium' => 'bg-amber-100 text-amber-900 border-amber-300',
+                                    'high'   => 'bg-red-100 text-red-900 border-red-300',
+                                ];
+                                $stCls  = [
+                                    'OPEN'        => 'bg-red-100 text-red-900 border-red-300',
+                                    'IN_PROGRESS' => 'bg-amber-100 text-amber-900 border-amber-300',
+                                    'RESOLVED'    => 'bg-emerald-100 text-emerald-900 border-emerald-300',
+                                ];
+                                $stLabel = [
+                                    'OPEN' => 'Open', 'IN_PROGRESS' => 'In Progress', 'RESOLVED' => 'Resolved'
+                                ];
+                            @endphp
+                            <tr class="hover:bg-gray-50/80 transition group">
+                                <td class="px-6 py-4">
+                                    <div class="font-extrabold text-gray-900 text-sm">{{ $defect->component_name }}</div>
+                                    <div class="text-xs text-gray-600 mt-0.5 flex items-center gap-1 font-medium">
+                                        <span class="material-symbols-outlined text-xs text-eids-accent">location_on</span>
+                                        {{ $defect->location }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1 line-clamp-1 max-w-xs font-medium">{{ $defect->defect_description }}</div>
+                                </td>
+                                <td class="px-4 py-4 hidden md:table-cell">
+                                    @if($defect->project)
+                                        <a href="{{ route('projects.show', $defect->project) }}"
+                                           class="text-xs font-bold text-eids-accent hover:text-eids-primary transition">
+                                            {{ $defect->project->project_no }}
+                                        </a>
+                                        <div class="text-xs text-gray-600 mt-0.5 truncate max-w-36 font-semibold">{{ $defect->project->project_name }}</div>
+                                    @else
+                                        <span class="text-gray-400 text-xs">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-4 hidden sm:table-cell">
+                                    <span class="inline-flex px-3 py-1 border rounded-full text-xs font-extrabold {{ $sevCls[$defect->severity] ?? 'bg-gray-100 text-gray-600' }}">
+                                        {{ $defect->severity_label }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4">
+                                    <span class="inline-flex px-3 py-1 border rounded-full text-xs font-extrabold {{ $stCls[$defect->status] ?? '' }}">
+                                        {{ $stLabel[$defect->status] ?? $defect->status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center justify-end gap-1">
+                                        @if(auth()->user()->canInspect())
+                                            {{-- Toggle Status Button --}}
+                                            <form method="POST" action="{{ route('defects.toggle', $defect) }}">
+                                                @csrf
+                                                <button type="submit"
+                                                        class="p-2 text-gray-500 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition min-h-[36px] flex items-center justify-center"
+                                                        title="Advance Status (OPEN -> IN_PROGRESS -> RESOLVED)">
+                                                    <span class="material-symbols-outlined text-lg">update</span>
+                                                </button>
+                                            </form>
+                                            <a href="{{ route('defects.edit', $defect) }}"
+                                               class="p-2 text-gray-500 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition min-h-[36px] flex items-center justify-center" title="Edit Defect">
+                                                <span class="material-symbols-outlined text-lg">edit</span>
+                                            </a>
+                                            <button
+                                                @click="$dispatch('open-confirm', { id: 'delete-confirm', action: '{{ route('defects.destroy', $defect) }}', method: 'DELETE' })"
+                                                class="p-2 text-gray-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition min-h-[36px] flex items-center justify-center" title="Delete Defect">
+                                                <span class="material-symbols-outlined text-lg">delete</span>
+                                            </button>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
             @if($defects->hasPages())
-                <div class="px-5 py-4 border-t border-gray-50">{{ $defects->links() }}</div>
+                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50/50">{{ $defects->links() }}</div>
             @endif
         @endif
     </div>

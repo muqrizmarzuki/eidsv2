@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Defect;
 use App\Models\Project;
 use App\Models\ProjectSample;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ProjectController extends Controller
@@ -15,7 +16,7 @@ class ProjectController extends Controller
         $active          = Project::where('status', 'dalam_pemeriksaan')->count();
         $completed       = Project::where('status', 'selesai')->count();
         $draft           = Project::where('status', 'draf')->count();
-        $recent          = Project::latest()->take(8)->get();
+        $recent          = Project::with(['creator', 'assignedInspector'])->latest()->take(8)->get();
         $avgScore        = Project::where('overall_score', '>', 0)->avg('overall_score') ?? 0;
         $openDefects     = Defect::where('status', 'OPEN')->count();
         $resolvedDefects = Defect::where('status', 'RESOLVED')->count();
@@ -32,7 +33,7 @@ class ProjectController extends Controller
 
     public function index(Request $request)
     {
-        $query = Project::with('creator')->latest();
+        $query = Project::with(['creator', 'assignedInspector'])->latest();
 
         if ($request->filled('search')) {
             $s = $request->search;
@@ -51,14 +52,19 @@ class ProjectController extends Controller
             $query->where('building_type', $request->type);
         }
 
-        $projects = $query->paginate(15)->withQueryString();
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->assigned_to);
+        }
 
-        return view('projects.index', compact('projects'));
+        $projects = $query->paginate(15)->withQueryString();
+        $inspectors = User::whereIn('role', ['admin', 'lead_auditor', 'inspector'])->orderBy('name')->get();
+
+        return view('projects.index', compact('projects', 'inspectors'));
     }
 
     public function show(Project $project)
     {
-        $project->load(['samples', 'defects', 'creator']);
+        $project->load(['samples', 'defects', 'creator', 'assignedInspector']);
         $openDefects     = $project->defects->where('status', 'OPEN')->count();
         $resolvedDefects = $project->defects->where('status', 'RESOLVED')->count();
 
@@ -67,7 +73,8 @@ class ProjectController extends Controller
 
     public function create()
     {
-        return view('projects.create');
+        $inspectors = User::whereIn('role', ['admin', 'lead_auditor', 'inspector'])->orderBy('name')->get();
+        return view('projects.create', compact('inspectors'));
     }
 
     public function store(Request $request)
@@ -82,6 +89,7 @@ class ProjectController extends Controller
             'total_units'     => 'required|integer|min:1',
             'floor_area_sqm'  => 'required|numeric|min:1',
             'status'          => 'required|in:draf,dalam_pemeriksaan,selesai',
+            'assigned_to'     => 'nullable|exists:users,id',
         ]);
 
         $data['calculated_samples'] = max(1, (int) ceil($data['floor_area_sqm'] / (float) setting('sample_divisor', 60)));
@@ -105,7 +113,8 @@ class ProjectController extends Controller
 
     public function edit(Project $project)
     {
-        return view('projects.edit', compact('project'));
+        $inspectors = User::whereIn('role', ['admin', 'lead_auditor', 'inspector'])->orderBy('name')->get();
+        return view('projects.edit', compact('project', 'inspectors'));
     }
 
     public function update(Request $request, Project $project)
@@ -120,6 +129,7 @@ class ProjectController extends Controller
             'total_units'     => 'required|integer|min:1',
             'floor_area_sqm'  => 'required|numeric|min:1',
             'status'          => 'required|in:draf,dalam_pemeriksaan,selesai',
+            'assigned_to'     => 'nullable|exists:users,id',
         ]);
 
         $project->update($data);
@@ -157,6 +167,13 @@ class ProjectController extends Controller
         foreach ($data['locations'] as $id => $name) {
             ProjectSample::where('id', $id)->where('project_id', $project->id)
                 ->update(['location_name' => $name]);
+        }
+
+        $user = auth()->user();
+
+        if ($user->isAdmin() || $user->isLeadAuditor()) {
+            return redirect()->route('projects.show', $project)
+                ->with('success', 'Sample locations saved. The assigned inspector can now begin the component inspection.');
         }
 
         return redirect()->route('projects.components', $project)

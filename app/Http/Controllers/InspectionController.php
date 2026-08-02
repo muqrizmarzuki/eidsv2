@@ -122,8 +122,12 @@ class InspectionController extends Controller
             $assessment = ComponentAssessment::create($payload);
         }
 
+        if ($request->hasFile('photo')) {
+            $assessment->addMediaFromRequest('photo')->toMediaCollection('photos');
+        }
+
         if ($overallStatus === 'FAIL') {
-            Defect::updateOrCreate(
+            $defect = Defect::updateOrCreate(
                 ['assessment_id' => $assessment->id],
                 [
                     'project_id'         => $project->id,
@@ -135,6 +139,15 @@ class InspectionController extends Controller
                     'status'             => 'OPEN',
                 ]
             );
+
+            if ($request->hasFile('photo')) {
+                $defect->addMediaFromRequest('photo')->toMediaCollection('photos');
+            } elseif ($assessment->hasMedia('photos')) {
+                $mediaItem = $assessment->getFirstMedia('photos');
+                if ($mediaItem) {
+                    $mediaItem->copy($defect, 'photos');
+                }
+            }
         } else {
             Defect::where('assessment_id', $assessment->id)->delete();
         }

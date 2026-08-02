@@ -9,7 +9,7 @@ class Project extends Model
     protected $fillable = [
         'project_no', 'project_name', 'location', 'developer_name',
         'contractor_name', 'building_type', 'total_units', 'floor_area_sqm',
-        'calculated_samples', 'overall_score', 'status', 'created_by',
+        'calculated_samples', 'overall_score', 'status', 'created_by', 'assigned_to',
     ];
 
     protected $casts = [
@@ -37,6 +37,11 @@ class Project extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function assignedInspector()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 
     public function getStatusLabelAttribute(): string

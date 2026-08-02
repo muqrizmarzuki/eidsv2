@@ -3,13 +3,13 @@
 @section('title', 'Edit Project')
 
 @section('breadcrumb')
-    <a href="{{ route('dashboard') }}" class="hover:text-gray-600">Dashboard</a>
+    <a href="{{ route('dashboard') }}" class="hover:text-gray-800 transition">Dashboard</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
-    <a href="{{ route('projects.index') }}" class="hover:text-gray-600">Projects</a>
+    <a href="{{ route('projects.index') }}" class="hover:text-gray-800 transition">Projects</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
-    <a href="{{ route('projects.show', $project) }}" class="hover:text-gray-600 truncate max-w-32">{{ $project->project_name }}</a>
+    <a href="{{ route('projects.show', $project) }}" class="hover:text-gray-800 transition truncate max-w-32">{{ $project->project_name }}</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
-    <span class="text-gray-700 font-medium">Edit</span>
+    <span class="text-gray-900 font-bold">Edit</span>
 @endsection
 
 @section('content')
@@ -19,62 +19,62 @@
         @method('PUT')
 
         {{-- Project Info --}}
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-5">
-            <h2 class="font-semibold text-gray-800 mb-5 flex items-center gap-2">
-                <span class="material-symbols-outlined text-eids-accent">info</span>
-                Project Information
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 mb-6">
+            <h2 class="font-extrabold text-gray-900 mb-5 flex items-center gap-2 text-sm border-b border-gray-100 pb-3">
+                <span class="material-symbols-outlined text-eids-accent text-lg">info</span>
+                Project Specifications &amp; Details
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Project Reference No. *</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Project Reference No. *</label>
                     <input type="text" name="project_no" value="{{ old('project_no', $project->project_no) }}" required
-                           class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent {{ $errors->has('project_no') ? 'border-red-400' : 'border-gray-200' }}">
-                    @error('project_no')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                           class="w-full min-h-[44px] px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-medium {{ $errors->has('project_no') ? 'border-red-400 bg-red-50' : 'border-gray-200' }}">
+                    @error('project_no')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Project Name *</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Project Name *</label>
                     <input type="text" name="project_name" value="{{ old('project_name', $project->project_name) }}" required
-                           class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent {{ $errors->has('project_name') ? 'border-red-400' : 'border-gray-200' }}">
-                    @error('project_name')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                           class="w-full min-h-[44px] px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-medium {{ $errors->has('project_name') ? 'border-red-400 bg-red-50' : 'border-gray-200' }}">
+                    @error('project_name')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Location</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Site Location / Address</label>
                     <input type="text" name="location" value="{{ old('location', $project->location) }}"
-                           class="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent">
+                           class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-medium">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Developer *</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Developer Name *</label>
                     <input type="text" name="developer_name" value="{{ old('developer_name', $project->developer_name) }}" required
-                           class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent {{ $errors->has('developer_name') ? 'border-red-400' : 'border-gray-200' }}">
-                    @error('developer_name')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                           class="w-full min-h-[44px] px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-medium {{ $errors->has('developer_name') ? 'border-red-400 bg-red-50' : 'border-gray-200' }}">
+                    @error('developer_name')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Contractor *</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Contractor Name *</label>
                     <input type="text" name="contractor_name" value="{{ old('contractor_name', $project->contractor_name) }}" required
-                           class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent {{ $errors->has('contractor_name') ? 'border-red-400' : 'border-gray-200' }}">
-                    @error('contractor_name')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                           class="w-full min-h-[44px] px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-medium {{ $errors->has('contractor_name') ? 'border-red-400 bg-red-50' : 'border-gray-200' }}">
+                    @error('contractor_name')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Building Type *</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Building Type *</label>
                     <select name="building_type" required
-                            class="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white">
-                        <option value="teres"  {{ old('building_type', $project->building_type) === 'teres'  ? 'selected' : '' }}>Terrace</option>
-                        <option value="semi_d" {{ old('building_type', $project->building_type) === 'semi_d' ? 'selected' : '' }}>Semi-D</option>
+                            class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
+                        <option value="teres"  {{ old('building_type', $project->building_type) === 'teres'  ? 'selected' : '' }}>Terrace House</option>
+                        <option value="semi_d" {{ old('building_type', $project->building_type) === 'semi_d' ? 'selected' : '' }}>Semi-Detached (Semi-D)</option>
                         <option value="banglo" {{ old('building_type', $project->building_type) === 'banglo' ? 'selected' : '' }}>Bungalow</option>
                     </select>
-                    @error('building_type')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                    @error('building_type')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Status *</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Project Status *</label>
                     <select name="status" required
-                            class="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white">
+                            class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
                         <option value="draf"              {{ old('status', $project->status) === 'draf'              ? 'selected' : '' }}>Draft</option>
                         <option value="dalam_pemeriksaan" {{ old('status', $project->status) === 'dalam_pemeriksaan' ? 'selected' : '' }}>In Inspection</option>
                         <option value="selesai"           {{ old('status', $project->status) === 'selesai'           ? 'selected' : '' }}>Completed</option>
@@ -82,52 +82,78 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Total Units *</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Assigned Inspector</label>
+                    <select name="assigned_to"
+                            class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
+                        <option value="">Unassigned (Open for all inspectors)</option>
+                        @foreach($inspectors as $inspector)
+                            <option value="{{ $inspector->id }}" {{ old('assigned_to', $project->assigned_to) == $inspector->id ? 'selected' : '' }}>
+                                {{ $inspector->name }} ({{ $inspector->getRoleLabel() }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('assigned_to')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Total Project Units *</label>
                     <input type="number" name="total_units" value="{{ old('total_units', $project->total_units) }}" min="1" required
-                           class="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent">
-                    @error('total_units')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                           class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-medium">
+                    @error('total_units')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
             </div>
         </div>
 
-        {{-- GFA (read-only note) --}}
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-            <h2 class="font-semibold text-gray-800 mb-1 flex items-center gap-2">
-                <span class="material-symbols-outlined text-eids-accent">calculate</span>
-                Sample Configuration
+        {{-- GFA & Sample configuration note --}}
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 mb-8">
+            <h2 class="font-extrabold text-gray-900 mb-1 flex items-center gap-2 text-sm">
+                <span class="material-symbols-outlined text-eids-accent text-lg">calculate</span>
+                Sample Unit Area Configuration
             </h2>
-            <p class="text-xs text-gray-400 mb-5">Changing GFA will update the score calculation but will NOT add or remove existing sample units.</p>
+            <p class="text-xs text-gray-500 font-medium mb-5">Updating Gross Floor Area recalculates target samples but preserves existing sample unit inspections.</p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Gross Floor Area (m²) *</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Gross Floor Area (GFA m²) *</label>
                     <input type="number" name="floor_area_sqm" step="0.01" min="1"
                            value="{{ old('floor_area_sqm', $project->floor_area_sqm) }}" required
-                           class="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent">
-                    @error('floor_area_sqm')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                           class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-mono font-medium">
+                    @error('floor_area_sqm')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
-                <div class="bg-eids-primary/5 border border-eids-primary/10 rounded-xl p-4">
-                    <div class="text-xs text-gray-500 mb-1">Current Sample Count</div>
-                    <div class="text-3xl font-bold text-eids-primary">{{ $project->samples->count() }}</div>
-                    <div class="text-xs text-gray-400 mt-1">
-                        Calculated: {{ $project->calculated_samples }} required
+                <div class="bg-eids-primary/5 border border-eids-primary/15 rounded-xl p-4.5">
+                    <div class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-1">Current Active Sample Count</div>
+                    <div class="text-3xl font-extrabold text-eids-primary font-mono">{{ $project->samples->count() }}</div>
+                    <div class="text-xs text-gray-600 mt-1 font-medium">
+                        Calculated required: {{ $project->calculated_samples }} sample units
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="flex justify-end gap-3">
-            <a href="{{ route('projects.show', $project) }}"
-               class="px-5 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                Cancel
-            </a>
-            <button type="submit"
-                    class="px-6 py-2.5 bg-eids-primary text-white text-sm font-semibold rounded-lg hover:bg-eids-dark transition flex items-center gap-2">
-                <span class="material-symbols-outlined text-base">save</span>
-                Save Changes
-            </button>
+        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex-wrap gap-3">
+            @if(auth()->user()->isAdmin())
+                <button type="button"
+                        @click="$dispatch('open-confirm', { id: 'delete-confirm', action: '{{ route('projects.destroy', $project) }}', method: 'DELETE' })"
+                        class="min-h-[44px] px-5 py-2.5 text-xs font-bold text-red-700 border border-red-200 rounded-xl hover:bg-red-50 transition flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-base">delete</span>
+                    Delete Project
+                </button>
+            @else
+                <div></div>
+            @endif
+            <div class="flex items-center gap-3">
+                <a href="{{ route('projects.show', $project) }}"
+                   class="min-h-[44px] px-5 py-2.5 text-xs font-bold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center justify-center">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-sm font-extrabold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md">
+                    <span class="material-symbols-outlined text-base">save</span>
+                    Save Project Changes
+                </button>
+            </div>
         </div>
     </form>
 </div>

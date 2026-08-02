@@ -3,37 +3,47 @@
 @section('title', 'Configure Samples')
 
 @section('breadcrumb')
-    <a href="{{ route('dashboard') }}" class="hover:text-gray-600">Dashboard</a>
+    <a href="{{ route('dashboard') }}" class="hover:text-gray-800 transition">Dashboard</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
-    <a href="{{ route('projects.index') }}" class="hover:text-gray-600">Projects</a>
+    <a href="{{ route('projects.index') }}" class="hover:text-gray-800 transition">Projects</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
-    <a href="{{ route('projects.show', $project) }}" class="hover:text-gray-600 truncate max-w-36">{{ $project->project_name }}</a>
+    <a href="{{ route('projects.show', $project) }}" class="hover:text-gray-800 transition truncate max-w-36">{{ $project->project_name }}</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
-    <span class="text-gray-700 font-medium">Samples</span>
+    <span class="text-gray-900 font-bold">Configure Samples</span>
 @endsection
 
+@php
+    $endsAtSamples = auth()->user()->isAdmin() || auth()->user()->isLeadAuditor();
+@endphp
+
 @section('topbar-actions')
-    <a href="{{ route('projects.components', $project) }}"
-       class="flex items-center gap-1.5 px-4 py-2 bg-eids-primary text-white text-sm font-medium rounded-lg hover:bg-eids-dark transition shadow-xs">
-        <span class="material-symbols-outlined text-base">checklist</span>
-        Next: Components Grid &rarr;
-    </a>
+    @unless($endsAtSamples)
+        <a href="{{ route('projects.components', $project) }}"
+           class="flex items-center gap-2 px-5 py-2.5 bg-eids-primary text-white text-sm font-bold rounded-xl hover:bg-eids-dark transition shadow-xs min-h-[44px]">
+            <span class="material-symbols-outlined text-lg">grid_on</span>
+            Next: Components Grid &rarr;
+        </a>
+    @endunless
 @endsection
 
 @section('content')
-<div class="max-w-3xl mx-auto">
+<div class="max-w-5xl mx-auto">
 
     {{-- Pipeline Step Indicator --}}
     <x-workflow-step step="2" :project="$project" />
 
     {{-- Info Banner --}}
-    <div class="bg-eids-primary/5 border border-eids-primary/10 rounded-2xl p-4 mb-5 flex items-start gap-3">
-        <span class="material-symbols-outlined text-eids-accent text-xl shrink-0 mt-0.5">info</span>
+    <div class="bg-eids-primary/5 border border-eids-primary/15 rounded-2xl p-5 mb-6 flex items-start gap-3.5 shadow-2xs">
+        <span class="material-symbols-outlined text-eids-accent text-2xl shrink-0 mt-0.5">info</span>
         <div>
-            <div class="font-bold text-gray-800 text-sm">Sample Units Configuration</div>
-            <div class="text-xs text-gray-600 mt-1 leading-relaxed">
-                Formula: N = max(1, ceil(GFA &divide; {{ $divisor }})) = <strong>{{ $project->calculated_samples }} sample units</strong>.
-                Assign a room or location name to each sample unit before proceeding to the inspection grid.
+            <div class="font-extrabold text-gray-900 text-sm">Sample Units Configuration</div>
+            <div class="text-xs text-gray-700 mt-1 leading-relaxed font-medium">
+                Formula: N = max(1, ceil(GFA &divide; {{ $divisor }})) = <strong class="text-eids-primary font-bold">{{ $project->calculated_samples }} sample units</strong>.
+                @if($endsAtSamples)
+                    Assign a room or location name to each sample unit. The assigned inspector will perform the component inspection separately.
+                @else
+                    Assign a room or location name to each sample unit before proceeding to the component inspection grid.
+                @endif
             </div>
         </div>
     </div>
@@ -42,21 +52,21 @@
         @csrf
 
         {{-- Sample units card --}}
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-50">
-                <h2 class="font-bold text-gray-900 text-sm flex items-center gap-2">
-                    <span class="material-symbols-outlined text-eids-accent text-base">home_work</span>
-                    Sample Units ({{ $project->samples->count() }})
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-eids-accent text-lg">home_work</span>
+                    Sample Units Location Assignment ({{ $project->samples->count() }})
                 </h2>
-                <span class="text-xs text-gray-400 font-mono">GFA: {{ number_format($project->floor_area_sqm, 2) }} m²</span>
+                <span class="text-xs text-gray-500 font-mono font-semibold">GFA: {{ number_format($project->floor_area_sqm, 2) }} m²</span>
             </div>
 
             @if($project->samples->isEmpty())
-                <div class="py-16 text-center text-sm text-gray-400">
+                <div class="py-16 text-center text-sm text-gray-500 font-medium">
                     No samples have been generated. Please recreate this project.
                 </div>
             @else
-                <div class="divide-y divide-gray-50">
+                <div class="divide-y divide-gray-100">
                     @foreach($project->samples as $index => $sample)
                         @php
                             $current    = old("locations.{$sample->id}", $sample->location_name);
@@ -65,7 +75,7 @@
                             $initSelect = $inDefaults ? $current : ($defaultLocations[0] ?? '');
                             $initCustom = $inDefaults ? '' : $current;
                         @endphp
-                        <div class="flex items-center gap-4 px-5 py-4"
+                        <div class="flex items-center gap-4 px-6 py-4.5"
                              x-data="{
                                  mode: '{{ $initMode }}',
                                  sel: '{{ addslashes($initSelect) }}',
@@ -76,7 +86,7 @@
                              }">
 
                             {{-- Index badge --}}
-                            <div class="w-9 h-9 rounded-full bg-eids-primary/10 text-eids-primary flex items-center justify-center text-xs font-bold shrink-0">
+                            <div class="w-10 h-10 rounded-full bg-eids-primary/10 text-eids-primary border border-eids-primary/20 flex items-center justify-center text-xs font-extrabold shrink-0 shadow-2xs">
                                 #{{ $sample->sample_index }}
                             </div>
 
@@ -87,11 +97,11 @@
                                     <div class="flex flex-1 gap-2">
                                         <select x-model="sel"
                                                 @change="if(sel === '__custom__') switchCustom()"
-                                                class="flex-1 min-h-[44px] px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white">
+                                                class="flex-1 min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
                                             @foreach($defaultLocations as $loc)
                                                 <option value="{{ $loc }}">{{ $loc }}</option>
                                             @endforeach
-                                            <option value="__custom__">Custom Location Name...</option>
+                                            <option value="__custom__">+ Custom Location Name...</option>
                                         </select>
                                     </div>
                                 </template>
@@ -100,28 +110,28 @@
                                 <template x-if="mode === 'custom'">
                                     <div class="flex flex-1 gap-2">
                                         <input x-ref="txt" type="text" x-model="txt"
-                                               placeholder="Enter custom location name"
-                                               class="flex-1 min-h-[44px] px-3.5 py-2.5 border border-eids-accent/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent">
+                                               placeholder="Enter custom location name..."
+                                               class="flex-1 min-h-[44px] px-4 py-2.5 border border-eids-accent rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-medium">
                                         @if(!empty($defaultLocations))
                                             <button type="button" @click="switchSelect()"
-                                                    class="min-h-[44px] px-3.5 py-2 text-xs font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition whitespace-nowrap">
-                                                Use Default
+                                                    class="min-h-[44px] px-4 py-2.5 text-xs font-bold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition whitespace-nowrap">
+                                                Use Default List
                                             </button>
                                         @endif
                                     </div>
                                 </template>
 
-                                {{-- Hidden input that always submits the actual value --}}
+                                {{-- Hidden input submitting the location value --}}
                                 <input type="hidden" name="locations[{{ $sample->id }}]" :value="val">
                             </div>
 
                             {{-- Status badge --}}
                             @if(!is_null($sample->pass_rate))
-                                <span class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full shrink-0">
+                                <span class="text-xs font-extrabold text-emerald-800 bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-full shrink-0">
                                     Inspected
                                 </span>
                             @else
-                                <span class="text-xs font-medium text-gray-400 bg-gray-50 border border-gray-100 px-3 py-1 rounded-full shrink-0">
+                                <span class="text-xs font-bold text-gray-500 bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-full shrink-0">
                                     Pending
                                 </span>
                             @endif
@@ -131,23 +141,23 @@
             @endif
         </div>
 
-        {{-- Component Preview (placed above primary actions) --}}
-        <div class="mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-50">
-                <h2 class="font-bold text-gray-900 text-sm flex items-center gap-2">
-                    <span class="material-symbols-outlined text-eids-accent text-base">checklist</span>
-                    Architectural Components to Inspect ({{ count($components) }})
+        {{-- Component Preview Card --}}
+        <div class="mb-6 bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-eids-accent text-lg">checklist</span>
+                    Architectural Components Framework ({{ count($components) }} Components)
                 </h2>
             </div>
-            <div class="divide-y divide-gray-50">
+            <div class="divide-y divide-gray-100">
                 @foreach($components as $code => $comp)
-                    <div class="flex items-center justify-between px-5 py-3">
+                    <div class="flex items-center justify-between px-6 py-3.5">
                         <div class="flex items-center gap-3">
-                            <span class="font-mono text-xs font-bold text-gray-500">{{ $code }}</span>
-                            <span class="text-sm font-medium text-gray-700">{{ $comp['name'] }}</span>
+                            <span class="font-mono text-xs font-extrabold text-eids-primary bg-eids-primary/10 px-2.5 py-1 rounded-md">{{ $code }}</span>
+                            <span class="text-sm font-semibold text-gray-800">{{ $comp['name'] }}</span>
                         </div>
-                        <span class="text-xs font-bold text-eids-primary bg-eids-primary/5 px-2.5 py-0.5 rounded-full">
-                            {{ $comp['weightage'] }}%
+                        <span class="text-xs font-extrabold text-eids-primary bg-eids-accent/15 border border-eids-accent/30 px-3 py-1 rounded-full">
+                            {{ $comp['weightage'] }}% Weightage
                         </span>
                     </div>
                 @endforeach
@@ -155,15 +165,19 @@
         </div>
 
         {{-- Primary Action buttons --}}
-        <div class="flex justify-between items-center gap-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sticky bottom-4 z-10">
+        <div class="flex justify-between items-center gap-4 bg-white rounded-2xl border border-gray-200 shadow-md p-4 sticky bottom-4 z-20">
             <a href="{{ route('projects.show', $project) }}"
-               class="min-h-[44px] px-5 py-2.5 text-xs font-bold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition flex items-center gap-1.5">
-                &larr; Back to Project
+               class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
+                &larr; Return to Project
             </a>
             <button type="submit"
-                    class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-sm font-bold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-eids-accent">
-                <span class="material-symbols-outlined text-base">save</span>
-                Save &amp; Continue to Grid &rarr;
+                    class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-sm font-extrabold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-eids-accent">
+                <span class="material-symbols-outlined text-lg">save</span>
+                @if($endsAtSamples)
+                    Save Locations
+                @else
+                    Save &amp; Continue to Grid &rarr;
+                @endif
             </button>
         </div>
     </form>

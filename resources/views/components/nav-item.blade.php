@@ -16,13 +16,13 @@
 @endphp
 
 <a href="{{ $href }}"
-   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150
+   class="flex items-center gap-3 px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm font-semibold transition-all duration-150 relative group
           {{ $isActive
-              ? 'bg-white/15 text-white shadow-sm'
-              : 'text-white/60 hover:bg-white/8 hover:text-white' }}">
-    <span class="material-symbols-outlined text-lg {{ $isActive ? 'filled' : '' }}">{{ $icon }}</span>
-    <span>{{ $label }}</span>
+              ? 'bg-white/15 text-white shadow-xs font-bold border border-white/10'
+              : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
+    <span class="material-symbols-outlined text-xl shrink-0 transition-transform group-hover:scale-110 {{ $isActive ? 'filled text-eids-light' : 'text-white/60' }}">{{ $icon }}</span>
+    <span class="truncate">{{ $label }}</span>
     @if($isActive)
-        <span class="ml-auto w-1.5 h-1.5 rounded-full bg-eids-accent"></span>
+        <span class="ml-auto w-2 h-2 rounded-full bg-eids-light shadow-xs animate-pulse"></span>
     @endif
 </a>
