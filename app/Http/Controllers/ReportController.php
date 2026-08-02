@@ -60,12 +60,16 @@ class ReportController extends Controller
 
     public function show(Project $project)
     {
+        $this->guardProjectVisible($project);
+
         $data = $this->buildScoreData($project);
         return view('reports.show', array_merge(compact('project'), $data));
     }
 
     public function pdf(Project $project)
     {
+        $this->guardProjectVisible($project);
+
         $data = $this->buildScoreData($project);
         $pdf  = Pdf::loadView('reports.pdf', array_merge(compact('project'), $data))
                    ->setPaper('a4', 'portrait');

@@ -13,6 +13,8 @@ class InspectionController extends Controller
 {
     public function components(Project $project)
     {
+        $this->guardProjectVisible($project);
+
         $project->load(['samples.assessments']);
         $components = config('eids.components');
 
@@ -21,6 +23,8 @@ class InspectionController extends Controller
 
     public function inspect(Project $project, ProjectSample $sample)
     {
+        $this->guardProjectVisible($project);
+
         abort_if($sample->project_id !== $project->id, 404);
 
         $components    = config('eids.components');
@@ -54,6 +58,8 @@ class InspectionController extends Controller
 
     public function storeAssessment(Request $request, Project $project, ProjectSample $sample)
     {
+        $this->guardProjectVisible($project);
+
         abort_if($sample->project_id !== $project->id, 404);
 
         $components    = config('eids.components');
@@ -169,6 +175,8 @@ class InspectionController extends Controller
 
     public function score(Project $project)
     {
+        $this->guardProjectVisible($project);
+
         $project->load('assessments');
         $components = config('eids.components');
         $meScore    = (float) setting('me_score', 2.0);
@@ -190,6 +198,8 @@ class InspectionController extends Controller
 
     public function summary(Project $project)
     {
+        $this->guardProjectVisible($project);
+
         $project->load(['samples.assessments', 'defects', 'creator']);
         $components = config('eids.components');
         $meScore    = (float) setting('me_score', 2.0);

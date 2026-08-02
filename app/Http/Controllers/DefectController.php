@@ -73,12 +73,16 @@ class DefectController extends Controller
 
     public function edit(Defect $defect)
     {
+        $this->guardDefectVisible($defect);
+
         $projects = Project::orderBy('project_name')->get(['id', 'project_name', 'project_no']);
         return view('defects.edit', compact('defect', 'projects'));
     }
 
     public function update(Request $request, Defect $defect)
     {
+        $this->guardDefectVisible($defect);
+
         $data = $request->validate([
             'project_id'         => 'required|exists:projects,id',
             'component_name'     => 'required|string|max:255',
@@ -105,6 +109,8 @@ class DefectController extends Controller
 
     public function destroy(Defect $defect)
     {
+        $this->guardDefectVisible($defect);
+
         $defect->delete();
 
         return redirect()->route('defects.index')

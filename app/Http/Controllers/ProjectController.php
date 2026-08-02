@@ -65,6 +65,8 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
+        $this->guardProjectVisible($project);
+
         $project->load(['samples', 'defects', 'creator', 'assignedInspector']);
         $openDefects     = $project->defects->where('status', 'OPEN')->count();
         $resolvedDefects = $project->defects->where('status', 'RESOLVED')->count();
@@ -114,12 +116,16 @@ class ProjectController extends Controller
 
     public function edit(Project $project)
     {
+        $this->guardProjectVisible($project);
+
         $inspectors = User::whereIn('role', ['admin', 'lead_auditor', 'inspector'])->orderBy('name')->get();
         return view('projects.edit', compact('project', 'inspectors'));
     }
 
     public function update(Request $request, Project $project)
     {
+        $this->guardProjectVisible($project);
+
         $data = $request->validate([
             'project_no'      => 'required|string|max:255|unique:projects,project_no,' . $project->id,
             'project_name'    => 'required|string|max:255',
@@ -141,6 +147,8 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
+        $this->guardProjectVisible($project);
+
         $name = $project->project_name;
         $project->delete();
 
@@ -150,6 +158,8 @@ class ProjectController extends Controller
 
     public function samples(Project $project)
     {
+        $this->guardProjectVisible($project);
+
         $project->load('samples');
         $divisor          = (float) setting('sample_divisor', 60);
         $components       = config('eids.components');
@@ -160,6 +170,8 @@ class ProjectController extends Controller
 
     public function storeSamples(Request $request, Project $project)
     {
+        $this->guardProjectVisible($project);
+
         $data = $request->validate([
             'locations'   => 'required|array',
             'locations.*' => 'required|string|max:255',
