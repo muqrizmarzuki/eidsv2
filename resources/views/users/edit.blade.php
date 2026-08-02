@@ -48,11 +48,9 @@
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Role Assignment *</label>
                         <select name="role" required
                                 class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
-                            <option value="inspector"    {{ old('role', $user->role) === 'inspector'    ? 'selected' : '' }}>Inspector</option>
-                            <option value="lead_auditor" {{ old('role', $user->role) === 'lead_auditor' ? 'selected' : '' }}>Lead Auditor</option>
-                            <option value="supervisor"   {{ old('role', $user->role) === 'supervisor'   ? 'selected' : '' }}>Supervisor</option>
-                            <option value="contractor"   {{ old('role', $user->role) === 'contractor'   ? 'selected' : '' }}>Contractor</option>
-                            <option value="admin"        {{ old('role', $user->role) === 'admin'        ? 'selected' : '' }}>Admin</option>
+                            <option value="inspector"  {{ old('role', $user->role) === 'inspector'  ? 'selected' : '' }}>Inspector</option>
+                            <option value="contractor" {{ old('role', $user->role) === 'contractor' ? 'selected' : '' }}>Contractor</option>
+                            <option value="admin"      {{ old('role', $user->role) === 'admin'      ? 'selected' : '' }}>Admin</option>
                         </select>
                     </div>
                 </div>

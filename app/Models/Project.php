@@ -53,11 +53,6 @@ class Project extends Model
         return $this->belongsTo(User::class, 'assigned_contractor_id');
     }
 
-    public function supervisors()
-    {
-        return $this->belongsToMany(User::class, 'project_supervisor');
-    }
-
     public function getStatusLabelAttribute(): string
     {
         return match($this->status) {
@@ -113,7 +108,7 @@ class Project extends Model
             'route' => $route, 'params' => $params, 'button_label' => $buttonLabel,
         ];
 
-        if (in_array($user->role, ['admin', 'lead_auditor'])) {
+        if ($user->role === 'admin') {
             if (!$hasNamedLocations) {
                 return $actionable('tune', 'Finish naming sample locations.', 'projects.samples', ['project' => $this], 'Configure Samples');
             }
@@ -148,14 +143,7 @@ class Project extends Model
                     'projects.components', ['project' => $this], 'Continue Inspecting'
                 );
             }
-            return $actionable('task_alt', 'Inspection complete — notify your Lead Auditor.', 'projects.score', ['project' => $this], 'View G-IDS Score');
-        }
-
-        if ($user->role === 'supervisor') {
-            if ($this->status === 'selesai') {
-                return $actionable('description', 'Certificate ready for download.', 'reports.show', ['project' => $this], 'Download Report');
-            }
-            return $waiting('schedule', "In progress — {$inspectedCount}/{$totalSamples} sample units inspected.");
+            return $actionable('task_alt', 'Inspection complete — notify your Admin.', 'projects.score', ['project' => $this], 'View G-IDS Score');
         }
 
         return $waiting('info', '');
@@ -164,12 +152,10 @@ class Project extends Model
     public function scopeVisibleTo($query, User $user)
     {
         return match ($user->role) {
-            'admin'        => $query,
-            'lead_auditor' => $query->where('created_by', $user->id),
-            'inspector'    => $query->where('assigned_to', $user->id),
-            'supervisor'   => $query->whereHas('supervisors', fn ($q) => $q->where('user_id', $user->id)),
-            'contractor'   => $query->where('assigned_contractor_id', $user->id),
-            default        => $query->whereRaw('1 = 0'),
+            'admin'      => $query,
+            'inspector'  => $query->where('assigned_to', $user->id),
+            'contractor' => $query->where('assigned_contractor_id', $user->id),
+            default      => $query->whereRaw('1 = 0'),
         };
     }
 }

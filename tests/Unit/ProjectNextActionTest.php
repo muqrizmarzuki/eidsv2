@@ -16,7 +16,7 @@ class ProjectNextActionTest extends TestCase
 
     private function baseProject(array $overrides = []): Project
     {
-        $creator = User::factory()->create(['role' => 'lead_auditor']);
+        $creator = User::factory()->create(['role' => 'admin']);
         return Project::factory()->create(array_merge(['created_by' => $creator->id], $overrides));
     }
 
@@ -180,34 +180,10 @@ class ProjectNextActionTest extends TestCase
 
         $action = $project->fresh()->nextActionFor($inspector);
 
-        $this->assertStringContainsString('notify your Lead Auditor', $action['text']);
+        $this->assertStringContainsString('notify your Admin', $action['text']);
         $this->assertTrue($action['actionable']);
         $this->assertSame('projects.score', $action['route']);
         $this->assertSame('View G-IDS Score', $action['button_label']);
     }
 
-    public function test_supervisor_sees_a_read_only_progress_line(): void
-    {
-        $supervisor = User::factory()->create(['role' => 'supervisor']);
-        $project = $this->baseProject();
-        ProjectSample::create(['project_id' => $project->id, 'sample_index' => 1, 'location_name' => 'Master Bedroom']);
-
-        $action = $project->fresh()->nextActionFor($supervisor);
-
-        $this->assertStringContainsString('sample units inspected', $action['text']);
-        $this->assertFalse($action['actionable']);
-    }
-
-    public function test_supervisor_sees_download_action_when_certificate_ready(): void
-    {
-        $supervisor = User::factory()->create(['role' => 'supervisor']);
-        $project = $this->baseProject(['status' => 'selesai']);
-
-        $action = $project->fresh()->nextActionFor($supervisor);
-
-        $this->assertStringContainsString('Certificate ready', $action['text']);
-        $this->assertTrue($action['actionable']);
-        $this->assertSame('reports.show', $action['route']);
-        $this->assertSame('Download Report', $action['button_label']);
-    }
 }

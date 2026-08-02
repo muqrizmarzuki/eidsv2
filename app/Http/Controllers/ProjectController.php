@@ -26,7 +26,7 @@ class ProjectController extends Controller
         $meScore         = (float) setting('me_score', 2.0);
 
         $actionRequired = collect();
-        if (in_array(auth()->user()->role, ['admin', 'lead_auditor', 'inspector'])) {
+        if (in_array(auth()->user()->role, ['admin', 'inspector'])) {
             $actionRequired = $visible->clone()
                 ->with(['assignedInspector'])
                 ->get()
@@ -70,7 +70,7 @@ class ProjectController extends Controller
         }
 
         $projects = $query->paginate(15)->withQueryString();
-        $inspectors = User::whereIn('role', ['admin', 'lead_auditor', 'inspector'])->orderBy('name')->get();
+        $inspectors = User::whereIn('role', ['admin', 'inspector'])->orderBy('name')->get();
 
         return view('projects.index', compact('projects', 'inspectors'));
     }
@@ -88,10 +88,9 @@ class ProjectController extends Controller
 
     public function create()
     {
-        $inspectors  = User::whereIn('role', ['admin', 'lead_auditor', 'inspector'])->orderBy('name')->get();
+        $inspectors  = User::whereIn('role', ['admin', 'inspector'])->orderBy('name')->get();
         $contractors = User::where('role', 'contractor')->orderBy('name')->get();
-        $supervisors = User::where('role', 'supervisor')->orderBy('name')->get();
-        return view('projects.create', compact('inspectors', 'contractors', 'supervisors'));
+        return view('projects.create', compact('inspectors', 'contractors'));
     }
 
     public function store(Request $request)
@@ -108,21 +107,15 @@ class ProjectController extends Controller
             'status'          => 'required|in:draf,dalam_pemeriksaan',
             'assigned_to'     => 'nullable|exists:users,id',
             'assigned_contractor_id' => 'nullable|exists:users,id',
-            'supervisor_ids'         => 'nullable|array',
-            'supervisor_ids.*'       => 'exists:users,id',
         ]);
 
-        $supervisorIds = $data['supervisor_ids'] ?? [];
-        unset($data['supervisor_ids']);
-
-        if (!auth()->user()->isAdmin() && !auth()->user()->isLeadAuditor()) {
-            // Inspector may still choose the Assigned Contractor; Supervisors and the
-            // Assigned Inspector field remain Admin/Lead-Auditor-only.
-            $supervisorIds = [];
-            // Only Admin/Lead Auditor may choose who a project is assigned to.
-            // A non-privileged creator (Inspector) is always assigned to themselves —
-            // their own visibility is scoped strictly to assigned_to, so anything else
-            // would lock them out of the project they just created.
+        if (!auth()->user()->isAdmin()) {
+            // Inspector may still choose the Assigned Contractor; the Assigned Inspector
+            // field remains Admin-only.
+            // Only Admin may choose who a project is assigned to. A non-privileged
+            // creator (Inspector) is always assigned to themselves — their own
+            // visibility is scoped strictly to assigned_to, so anything else would
+            // lock them out of the project they just created.
             $data['assigned_to'] = auth()->id();
         }
 
@@ -130,7 +123,6 @@ class ProjectController extends Controller
         $data['created_by']         = auth()->id();
 
         $project = Project::create($data);
-        $project->supervisors()->sync($supervisorIds);
 
         // Auto-generate sample slots
         $locations = json_decode(setting('default_locations', '[]'), true) ?: config('eids.default_locations');
@@ -150,10 +142,9 @@ class ProjectController extends Controller
     {
         $this->guardProjectVisible($project);
 
-        $inspectors  = User::whereIn('role', ['admin', 'lead_auditor', 'inspector'])->orderBy('name')->get();
+        $inspectors  = User::whereIn('role', ['admin', 'inspector'])->orderBy('name')->get();
         $contractors = User::where('role', 'contractor')->orderBy('name')->get();
-        $supervisors = User::where('role', 'supervisor')->orderBy('name')->get();
-        return view('projects.edit', compact('project', 'inspectors', 'contractors', 'supervisors'));
+        return view('projects.edit', compact('project', 'inspectors', 'contractors'));
     }
 
     public function update(Request $request, Project $project)
@@ -172,12 +163,7 @@ class ProjectController extends Controller
             'status'          => 'required|in:draf,dalam_pemeriksaan,selesai',
             'assigned_to'     => 'nullable|exists:users,id',
             'assigned_contractor_id' => 'nullable|exists:users,id',
-            'supervisor_ids'         => 'nullable|array',
-            'supervisor_ids.*'       => 'exists:users,id',
         ]);
-
-        $supervisorIds = $request->has('supervisors_submitted') ? ($data['supervisor_ids'] ?? []) : null;
-        unset($data['supervisor_ids']);
 
         if ($data['status'] === 'selesai' && $project->status !== 'selesai') {
             // Completing a project is only allowed through the explicit "Mark as Completed"
@@ -186,20 +172,14 @@ class ProjectController extends Controller
             $data['status'] = $project->status;
         }
 
-        if (!auth()->user()->isAdmin() && !auth()->user()->isLeadAuditor()) {
-            // Inspector may still change the Assigned Contractor; Supervisors and the
-            // Assigned Inspector field remain Admin/Lead-Auditor-only.
-            // Only Admin/Lead Auditor may reassign who the project belongs to — leave
-            // the existing assigned_to untouched for anyone else editing it.
+        if (!auth()->user()->isAdmin()) {
+            // Inspector may still change the Assigned Contractor; the Assigned Inspector
+            // field remains Admin-only. Only Admin may reassign who the project belongs
+            // to — leave the existing assigned_to untouched for anyone else editing it.
             unset($data['assigned_to']);
-            $supervisorIds = null;
         }
 
         $project->update($data);
-
-        if ($supervisorIds !== null) {
-            $project->supervisors()->sync($supervisorIds);
-        }
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Project updated successfully.');
@@ -208,7 +188,7 @@ class ProjectController extends Controller
     public function markComplete(Project $project)
     {
         $this->guardProjectVisible($project);
-        abort_unless(auth()->user()->isAdmin() || auth()->user()->isLeadAuditor(), 403);
+        abort_unless(auth()->user()->isAdmin(), 403);
 
         if ($project->status === 'selesai') {
             return redirect()->route('projects.show', $project);
@@ -270,7 +250,7 @@ class ProjectController extends Controller
 
         $user = auth()->user();
 
-        if ($user->isAdmin() || $user->isLeadAuditor()) {
+        if ($user->isAdmin()) {
             return redirect()->route('projects.show', $project)
                 ->with('success', 'Sample locations saved. The assigned inspector can now begin the component inspection.');
         }

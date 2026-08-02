@@ -85,7 +85,7 @@
                     </select>
                 </div>
 
-                @if(auth()->user()->isAdmin() || auth()->user()->isLeadAuditor())
+                @if(auth()->user()->isAdmin())
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Assigned Inspector</label>
                     <select name="assigned_to"
@@ -104,7 +104,7 @@
                     <span class="material-symbols-outlined text-eids-accent text-lg shrink-0">info</span>
                     <p class="text-xs text-gray-700 font-medium">
                         This project will be assigned to you ({{ auth()->user()->name }}) as the inspector.
-                        Only an Admin or Lead Auditor can assign it to someone else.
+                        Only an Admin can assign it to someone else.
                     </p>
                 </div>
                 @endif
@@ -122,24 +122,6 @@
                     </select>
                     @error('assigned_contractor_id')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
-
-                @if(auth()->user()->isAdmin() || auth()->user()->isLeadAuditor())
-                <div class="sm:col-span-2">
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Supervisors / Client Viewers</label>
-                    <div class="flex flex-wrap gap-3 p-3 border border-gray-200 rounded-xl">
-                        <input type="hidden" name="supervisors_submitted" value="1">
-                        @forelse($supervisors as $supervisor)
-                            <label class="flex items-center gap-1.5 text-sm font-medium">
-                                <input type="checkbox" name="supervisor_ids[]" value="{{ $supervisor->id }}"
-                                       {{ collect(old('supervisor_ids', []))->contains($supervisor->id) ? 'checked' : '' }}>
-                                {{ $supervisor->name }}
-                            </label>
-                        @empty
-                            <span class="text-xs text-gray-400 italic">No supervisor accounts yet.</span>
-                        @endforelse
-                    </div>
-                </div>
-                @endif
 
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Total Project Units *</label>

@@ -36,9 +36,7 @@
     <x-next-action-card :action="$nextAction" />
 
     {{-- Pipeline Step Indicator --}}
-    @unless(auth()->user()->role === 'supervisor')
-        <x-workflow-step step="5" :project="$project" :role="auth()->user()->role" />
-    @endunless
+    <x-workflow-step step="5" :project="$project" :role="auth()->user()->role" />
 
     {{-- Score Hero Section --}}
     @php

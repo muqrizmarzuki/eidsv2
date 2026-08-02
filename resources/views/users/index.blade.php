@@ -25,7 +25,7 @@
                     <span class="material-symbols-outlined text-4xl">group</span>
                 </div>
                 <p class="text-base text-gray-900 font-bold">No user accounts found</p>
-                <p class="text-xs text-gray-500 mt-1">Create user accounts to grant access to inspectors, auditors, and supervisors.</p>
+                <p class="text-xs text-gray-500 mt-1">Create user accounts to grant access to inspectors and contractors.</p>
             </div>
         @else
             <div class="overflow-x-auto">
@@ -43,10 +43,9 @@
                         @foreach($users as $user)
                             @php
                                 $roleCls = [
-                                    'admin'        => 'bg-purple-100 text-purple-900 border-purple-300',
-                                    'lead_auditor' => 'bg-blue-100 text-blue-900 border-blue-300',
-                                    'inspector'    => 'bg-emerald-100 text-emerald-900 border-emerald-300',
-                                    'supervisor'   => 'bg-amber-100 text-amber-900 border-amber-300',
+                                    'admin'      => 'bg-purple-100 text-purple-900 border-purple-300',
+                                    'inspector'  => 'bg-emerald-100 text-emerald-900 border-emerald-300',
+                                    'contractor' => 'bg-amber-100 text-amber-900 border-amber-300',
                                 ];
                             @endphp
                             <tr class="hover:bg-gray-50/80 transition {{ $user->id === auth()->id() ? 'bg-eids-primary/5' : '' }}">

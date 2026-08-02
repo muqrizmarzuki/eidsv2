@@ -13,7 +13,7 @@
 @endsection
 
 @php
-    $endsAtSamples = auth()->user()->isAdmin() || auth()->user()->isLeadAuditor();
+    $endsAtSamples = auth()->user()->isAdmin();
 @endphp
 
 @section('topbar-actions')

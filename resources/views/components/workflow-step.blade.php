@@ -11,7 +11,7 @@
         3 => ['label' => 'Components Grid','route' => 'projects.components'],
         4 => ['label' => 'Inspection',     'route' => 'projects.inspect'],
     ];
-    $isManager = in_array($role, ['admin', 'lead_auditor']);
+    $isManager = ($role === 'admin');
 
     $scoreReady = (bool) ($project && $project->inspection_progress >= 100);
     $ratingColorMap = [

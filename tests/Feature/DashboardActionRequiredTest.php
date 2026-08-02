@@ -23,13 +23,4 @@ class DashboardActionRequiredTest extends TestCase
         $response->assertSee('Action Required');
         $response->assertSee('Needs Action');
     }
-
-    public function test_supervisor_dashboard_has_no_action_required_widget(): void
-    {
-        $supervisor = User::factory()->create(['role' => 'supervisor']);
-
-        $response = $this->actingAs($supervisor)->get('/dashboard');
-
-        $response->assertDontSee('Action Required');
-    }
 }

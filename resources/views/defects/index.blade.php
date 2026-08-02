@@ -101,8 +101,8 @@
                                     'PENDING_VERIFICATION' => 'Pending Verification', 'RESOLVED' => 'Resolved',
                                 ];
                                 $role = auth()->user()->role;
-                                $canAdvance = in_array($role, ['admin', 'lead_auditor', 'inspector', 'contractor']);
-                                $canConfirmOrReject = in_array($role, ['admin', 'lead_auditor', 'inspector']);
+                                $canAdvance = in_array($role, ['admin', 'inspector', 'contractor']);
+                                $canConfirmOrReject = in_array($role, ['admin', 'inspector']);
                             @endphp
                             <tr class="hover:bg-gray-50/80 transition group">
                                 <td class="px-6 py-4">

@@ -24,17 +24,17 @@ Route::post('/logout', [AuthController::class, 'logout'])
 Route::middleware('auth')->group(function () {
 
     // Dashboard — everyone except Contractor (their surface is My Defects only)
-    Route::middleware('role:admin,lead_auditor,inspector,supervisor')->group(function () {
+    Route::middleware('role:admin,inspector')->group(function () {
         Route::get('/dashboard', [ProjectController::class, 'dashboard'])->name('dashboard');
     });
 
     // Projects — static routes FIRST to avoid {project} swallowing them
-    Route::middleware('role:admin,lead_auditor,inspector')->group(function () {
+    Route::middleware('role:admin,inspector')->group(function () {
         Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
         Route::post('/projects',       [ProjectController::class, 'store'])->name('projects.store');
     });
 
-    Route::middleware('role:admin,lead_auditor,inspector,supervisor')->group(function () {
+    Route::middleware('role:admin,inspector')->group(function () {
         Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
 
         // Projects with {project} parameter
@@ -49,11 +49,11 @@ Route::middleware('auth')->group(function () {
         Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     });
 
-    Route::middleware('role:admin,lead_auditor')->group(function () {
+    Route::middleware('role:admin')->group(function () {
         Route::post('/projects/{project}/complete', [ProjectController::class, 'markComplete'])->name('projects.complete');
     });
 
-    Route::middleware('role:admin,lead_auditor,inspector')->group(function () {
+    Route::middleware('role:admin,inspector')->group(function () {
         Route::get('/projects/{project}/edit',  [ProjectController::class, 'edit'])->name('projects.edit');
         Route::put('/projects/{project}',       [ProjectController::class, 'update'])->name('projects.update');
 
@@ -68,10 +68,10 @@ Route::middleware('auth')->group(function () {
     });
 
     // Defects — static create route before parameterized routes. Index is open to
-    // all 5 roles (Contractor's "My Defects" reuses it, scoped by Defect::visibleTo()).
+    // all 3 roles (Contractor's "My Defects" reuses it, scoped by Defect::visibleTo()).
     Route::get('/defects', [DefectController::class, 'index'])->name('defects.index');
 
-    Route::middleware('role:admin,lead_auditor,inspector')->group(function () {
+    Route::middleware('role:admin,inspector')->group(function () {
         Route::get('/defects/create',           [DefectController::class, 'create'])->name('defects.create');
         Route::post('/defects',                 [DefectController::class, 'store'])->name('defects.store');
         Route::get('/defects/{defect}/edit',    [DefectController::class, 'edit'])->name('defects.edit');
@@ -79,12 +79,12 @@ Route::middleware('auth')->group(function () {
         Route::delete('/defects/{defect}',      [DefectController::class, 'destroy'])->name('defects.destroy');
     });
 
-    Route::middleware('role:admin,lead_auditor,inspector,contractor')->group(function () {
+    Route::middleware('role:admin,inspector,contractor')->group(function () {
         Route::post('/defects/{defect}/advance', [DefectController::class, 'advanceStatus'])->name('defects.advance');
     });
 
     // Reports — Contractor excluded (no Dashboard/Projects/Reports access)
-    Route::middleware('role:admin,lead_auditor,inspector,supervisor')->group(function () {
+    Route::middleware('role:admin,inspector')->group(function () {
         Route::get('/reports',               [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/{project}',     [ReportController::class, 'show'])->name('reports.show');
         Route::get('/reports/{project}/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');

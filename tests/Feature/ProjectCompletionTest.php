@@ -40,17 +40,6 @@ class ProjectCompletionTest extends TestCase
         $this->assertSame('selesai', $project->fresh()->status);
     }
 
-    public function test_lead_auditor_can_mark_a_ready_project_as_completed(): void
-    {
-        $leadAuditor = User::factory()->create(['role' => 'lead_auditor']);
-        $project = $this->fullyInspectedProject(['created_by' => $leadAuditor->id]);
-
-        $response = $this->actingAs($leadAuditor)->post("/projects/{$project->id}/complete");
-
-        $response->assertRedirect("/projects/{$project->id}");
-        $this->assertSame('selesai', $project->fresh()->status);
-    }
-
     public function test_cannot_complete_when_inspection_is_not_finished(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -84,17 +73,6 @@ class ProjectCompletionTest extends TestCase
 
         $response->assertForbidden();
         $this->assertNotSame('selesai', $project->fresh()->status);
-    }
-
-    public function test_supervisor_cannot_mark_a_project_as_completed(): void
-    {
-        $supervisor = User::factory()->create(['role' => 'supervisor']);
-        $project = $this->fullyInspectedProject();
-        $project->supervisors()->attach($supervisor->id);
-
-        $response = $this->actingAs($supervisor)->post("/projects/{$project->id}/complete");
-
-        $response->assertForbidden();
     }
 
     public function test_editing_a_project_cannot_manually_set_status_to_completed(): void

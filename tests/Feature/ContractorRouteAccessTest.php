@@ -26,12 +26,12 @@ class ContractorRouteAccessTest extends TestCase
         $this->actingAs($contractor)->get('/defects')->assertOk();
     }
 
-    public function test_supervisor_still_reaches_dashboard_projects_and_reports(): void
+    public function test_inspector_still_reaches_dashboard_projects_and_reports(): void
     {
-        $supervisor = User::factory()->create(['role' => 'supervisor']);
+        $inspector = User::factory()->create(['role' => 'inspector']);
 
-        $this->actingAs($supervisor)->get('/dashboard')->assertOk();
-        $this->actingAs($supervisor)->get('/projects')->assertOk();
-        $this->actingAs($supervisor)->get('/reports')->assertOk();
+        $this->actingAs($inspector)->get('/dashboard')->assertOk();
+        $this->actingAs($inspector)->get('/projects')->assertOk();
+        $this->actingAs($inspector)->get('/reports')->assertOk();
     }
 }

@@ -31,10 +31,7 @@
     <x-next-action-card :action="$nextAction" />
 
     {{-- Pipeline Step Indicator --}}
-    {{-- Supervisors get a read-only status line (the hero card above) only, no interactive stepper. --}}
-    @unless(auth()->user()->role === 'supervisor')
-        <x-workflow-step step="1" :project="$project" :role="auth()->user()->role" />
-    @endunless
+    <x-workflow-step step="1" :project="$project" :role="auth()->user()->role" />
 
     @php
         $statusMap = [
@@ -161,7 +158,7 @@
                     {{-- Phase 4 --}}
                     @php
                         $readyToComplete = $project->status !== 'selesai' && $project->inspection_progress >= 100 && $openDefects === 0;
-                        $canMarkComplete = auth()->user()->isAdmin() || auth()->user()->isLeadAuditor();
+                        $canMarkComplete = auth()->user()->isAdmin();
                     @endphp
                     <div class="p-4 rounded-xl border {{ $project->status === 'selesai' ? 'border-emerald-300 bg-emerald-50/60' : ($readyToComplete ? 'border-eids-accent/40 bg-eids-primary/5' : 'border-gray-200 bg-gray-50/60') }}">
                         <div class="flex items-center gap-2 mb-1.5">
@@ -184,7 +181,7 @@
                                 </button>
                             </form>
                         @elseif($readyToComplete)
-                            <p class="mt-2.5 text-[11px] font-bold text-eids-primary">Ready &mdash; awaiting Lead Auditor sign-off.</p>
+                            <p class="mt-2.5 text-[11px] font-bold text-eids-primary">Ready &mdash; awaiting Admin sign-off.</p>
                         @else
                             <p class="mt-2.5 text-[11px] text-gray-500 font-medium">Unlocks once inspection is done and all defects are resolved.</p>
                         @endif
