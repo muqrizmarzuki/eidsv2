@@ -43,154 +43,169 @@
         $typeMap = ['teres' => 'Terrace', 'semi_d' => 'Semi-D', 'banglo' => 'Bungalow'];
     @endphp
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {{-- Left Column --}}
-        <div class="lg:col-span-2 space-y-6">
-
-            {{-- Header Card --}}
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
-                <div class="flex items-start justify-between gap-4 flex-wrap">
-                    <div>
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="inline-flex px-3 py-1 border rounded-full text-xs font-bold {{ $sCls }}">{{ $sLabel }}</span>
-                            <span class="text-xs text-gray-500 font-mono font-semibold">{{ $project->project_no }}</span>
-                        </div>
-                        <h1 class="text-2xl font-extrabold text-gray-900 leading-tight tracking-tight">{{ $project->project_name }}</h1>
-                        @if($project->location)
-                            <div class="flex items-center gap-1.5 mt-1.5 text-sm text-gray-600 font-medium">
-                                <span class="material-symbols-outlined text-base text-eids-accent">location_on</span>
-                                {{ $project->location }}
-                            </div>
-                        @endif
-                    </div>
-                    @if($project->overall_score > 0)
-                        @php
-                            $sc = $project->overall_score;
-                            $scColor = $sc >= 85 ? 'text-emerald-700' : ($sc >= 70 ? 'text-amber-700' : 'text-red-700');
-                            $scBg    = $sc >= 85 ? 'bg-emerald-50 border-emerald-200' : ($sc >= 70 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200');
-                            $rating  = $sc >= 85 ? 'GOOD' : ($sc >= 70 ? 'MODERATE' : 'WEAK');
-                        @endphp
-                        <div class="text-center border rounded-2xl px-6 py-3.5 {{ $scBg }} shadow-xs">
-                            <div class="text-3xl lg:text-4xl font-extrabold {{ $scColor }}">{{ number_format($sc, 1) }}<span class="text-lg">%</span></div>
-                            <div class="text-xs font-extrabold tracking-wider uppercase {{ $scColor }} mt-0.5">{{ $rating }} RATING</div>
-                        </div>
-                    @endif
+    {{-- Header Card --}}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="inline-flex px-3 py-1 border rounded-full text-xs font-bold {{ $sCls }}">{{ $sLabel }}</span>
+                    <span class="text-xs text-gray-500 font-mono font-semibold">{{ $project->project_no }}</span>
                 </div>
-
-                {{-- Progress Bar --}}
-                <div class="mt-6 pt-5 border-t border-gray-100">
-                    <div class="flex justify-between text-xs text-gray-600 font-bold mb-2">
-                        <span>Inspection Progress</span>
-                        <span>{{ $project->inspection_progress }}%</span>
+                <h1 class="text-2xl font-extrabold text-gray-900 leading-tight tracking-tight">{{ $project->project_name }}</h1>
+                @if($project->location)
+                    <div class="flex items-center gap-1.5 mt-1.5 text-sm text-gray-600 font-medium">
+                        <span class="material-symbols-outlined text-base text-eids-accent">location_on</span>
+                        {{ $project->location }}
                     </div>
-                    <div class="h-3 bg-gray-100 rounded-full overflow-hidden border border-gray-200/50">
-                        <div class="h-full bg-eids-accent rounded-full transition-all duration-300"
-                             style="width: {{ $project->inspection_progress }}%"></div>
-                    </div>
-                    <div class="text-xs text-gray-500 mt-2 flex justify-between items-center font-medium">
-                        <span>{{ $project->samples->whereNotNull('pass_rate')->count() }} of {{ $project->samples->count() }} sample unit(s) inspected</span>
-                        @if(auth()->user()->canInspect())
-                            <a href="{{ route('projects.components', $project) }}" class="text-eids-accent hover:text-eids-primary font-bold flex items-center gap-1">
-                                Inspect Component Grid <span class="material-symbols-outlined text-sm">arrow_forward</span>
-                            </a>
-                        @endif
-                    </div>
-                </div>
+                @endif
             </div>
-
-            {{-- Operational Role Handoff & Phase Status Card --}}
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
-                <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
-                    <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
-                        <span class="material-symbols-outlined text-eids-accent text-lg">schema</span>
-                        Operational Role Handoff &amp; Project Phase
-                    </h2>
-                    <span class="text-xs font-extrabold text-eids-primary bg-eids-primary/10 px-3 py-1 rounded-full">
-                        Current: {{ $project->status_label }}
-                    </span>
+            @if($project->overall_score > 0)
+                @php
+                    $sc = $project->overall_score;
+                    $scColor = $sc >= 85 ? 'text-emerald-700' : ($sc >= 70 ? 'text-amber-700' : 'text-red-700');
+                    $scBg    = $sc >= 85 ? 'bg-emerald-50 border-emerald-200' : ($sc >= 70 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200');
+                    $rating  = $sc >= 85 ? 'GOOD' : ($sc >= 70 ? 'MODERATE' : 'WEAK');
+                @endphp
+                <div class="text-center border rounded-2xl px-6 py-3.5 {{ $scBg }} shadow-xs">
+                    <div class="text-3xl lg:text-4xl font-extrabold {{ $scColor }}">{{ number_format($sc, 1) }}<span class="text-lg">%</span></div>
+                    <div class="text-xs font-extrabold tracking-wider uppercase {{ $scColor }} mt-0.5">{{ $rating }} RATING</div>
                 </div>
+            @endif
+        </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {{-- Phase 1 --}}
-                    <div class="p-4 rounded-xl border border-gray-200 bg-gray-50/60 relative">
-                        <div class="flex items-center gap-2 mb-1.5">
-                            <span class="w-6 h-6 rounded-full bg-eids-primary text-white text-[11px] font-extrabold flex items-center justify-center">1</span>
-                            <span class="text-xs font-extrabold text-gray-900">Setup &amp; Assignment</span>
-                        </div>
-                        <p class="text-[11px] text-gray-600 font-medium">Created by: <strong>{{ $project->creator?->name ?? 'Admin' }}</strong></p>
-                        <p class="text-[11px] text-gray-600 font-medium mt-0.5">Assigned to: <strong>{{ $project->assignedInspector?->name ?? 'Unassigned' }}</strong></p>
-                        @if(auth()->user()->canInspect())
-                            <a href="{{ route('projects.samples', $project) }}" class="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-eids-accent hover:underline">
-                                Configure Rooms &rarr;
-                            </a>
-                        @endif
-                    </div>
-
-                    {{-- Phase 2 --}}
-                    <div class="p-4 rounded-xl border {{ $project->inspection_progress > 0 ? 'border-emerald-200 bg-emerald-50/40' : 'border-gray-200 bg-gray-50/60' }}">
-                        <div class="flex items-center gap-2 mb-1.5">
-                            <span class="w-6 h-6 rounded-full {{ $project->inspection_progress > 0 ? 'bg-emerald-600' : 'bg-gray-400' }} text-white text-[11px] font-extrabold flex items-center justify-center">2</span>
-                            <span class="text-xs font-extrabold text-gray-900">Field Inspection</span>
-                        </div>
-                        <p class="text-[11px] text-gray-600 font-medium">Progress: <strong>{{ $project->inspection_progress }}%</strong></p>
-                        <p class="text-[11px] text-gray-600 font-medium mt-0.5">Assessed: <strong>{{ $project->assessments->count() }} checks</strong></p>
-                        @if(auth()->user()->canInspect())
-                            <a href="{{ route('projects.components', $project) }}" class="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:underline">
-                                Open Components Grid &rarr;
-                            </a>
-                        @endif
-                    </div>
-
-                    {{-- Phase 3 --}}
-                    <div class="p-4 rounded-xl border {{ $openDefects > 0 ? 'border-red-200 bg-red-50/40' : ($resolvedDefects > 0 ? 'border-emerald-200 bg-emerald-50/40' : 'border-gray-200 bg-gray-50/60') }}">
-                        <div class="flex items-center gap-2 mb-1.5">
-                            <span class="w-6 h-6 rounded-full {{ $openDefects > 0 ? 'bg-red-600' : ($resolvedDefects > 0 ? 'bg-emerald-600' : 'bg-gray-400') }} text-white text-[11px] font-extrabold flex items-center justify-center">3</span>
-                            <span class="text-xs font-extrabold text-gray-900">Defect Rectification</span>
-                        </div>
-                        <p class="text-[11px] text-gray-600 font-medium">Open: <strong class="text-red-700">{{ $openDefects }}</strong> · Resolved: <strong class="text-emerald-700">{{ $resolvedDefects }}</strong></p>
-                        <p class="text-[11px] text-gray-500 mt-0.5">Contractor QC Repair Phase</p>
-                        <a href="{{ route('defects.index', ['project_id' => $project->id]) }}" class="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-gray-800 hover:underline">
-                            View Defect Register &rarr;
-                        </a>
-                    </div>
-
-                    {{-- Phase 4 --}}
-                    @php
-                        $readyToComplete = $project->status !== 'selesai' && $project->inspection_progress >= 100 && $openDefects === 0;
-                        $canMarkComplete = auth()->user()->isAdmin();
-                    @endphp
-                    <div class="p-4 rounded-xl border {{ $project->status === 'selesai' ? 'border-emerald-300 bg-emerald-50/60' : ($readyToComplete ? 'border-eids-accent/40 bg-eids-primary/5' : 'border-gray-200 bg-gray-50/60') }}">
-                        <div class="flex items-center gap-2 mb-1.5">
-                            <span class="w-6 h-6 rounded-full {{ $project->status === 'selesai' ? 'bg-emerald-700' : ($readyToComplete ? 'bg-eids-primary' : 'bg-gray-400') }} text-white text-[11px] font-extrabold flex items-center justify-center">4</span>
-                            <span class="text-xs font-extrabold text-gray-900">Final Certificate</span>
-                        </div>
-                        <p class="text-[11px] text-gray-600 font-medium">G-IDS Score: <strong>{{ number_format($project->overall_score, 1) }}%</strong></p>
-                        <p class="text-[11px] text-gray-500 mt-0.5">Rating: <strong>{{ $project->rating }}</strong></p>
-
-                        @if($project->status === 'selesai')
-                            <a href="{{ route('reports.show', $project) }}" class="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-eids-primary hover:underline">
-                                Official PDF Certificate &rarr;
-                            </a>
-                        @elseif($readyToComplete && $canMarkComplete)
-                            <form method="POST" action="{{ route('projects.complete', $project) }}" class="mt-2.5">
-                                @csrf
-                                <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-[36px] bg-eids-primary text-white text-[11px] font-extrabold rounded-lg hover:bg-eids-dark transition">
-                                    <span class="material-symbols-outlined text-sm">verified</span>
-                                    Mark as Completed
-                                </button>
-                            </form>
-                        @elseif($readyToComplete)
-                            <p class="mt-2.5 text-[11px] font-bold text-eids-primary">Ready &mdash; awaiting Admin sign-off.</p>
-                        @else
-                            <p class="mt-2.5 text-[11px] text-gray-500 font-medium">Unlocks once inspection is done and all defects are resolved.</p>
-                        @endif
-                    </div>
-                </div>
+        {{-- Progress Bar --}}
+        <div class="mt-6 pt-5 border-t border-gray-100">
+            <div class="flex justify-between text-xs text-gray-600 font-bold mb-2">
+                <span>Inspection Progress</span>
+                <span>{{ $project->inspection_progress }}%</span>
             </div>
+            <div class="h-3 bg-gray-100 rounded-full overflow-hidden border border-gray-200/50">
+                <div class="h-full bg-eids-accent rounded-full transition-all duration-300"
+                     style="width: {{ $project->inspection_progress }}%"></div>
+            </div>
+            <div class="text-xs text-gray-500 mt-2 flex justify-between items-center font-medium">
+                <span>{{ $project->samples->whereNotNull('pass_rate')->count() }} of {{ $project->samples->count() }} sample unit(s) inspected</span>
+                @if(auth()->user()->canInspect())
+                    <a href="{{ route('projects.components', $project) }}" class="text-eids-accent hover:text-eids-primary font-bold flex items-center gap-1">
+                        Inspect Component Grid <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </a>
+                @endif
+            </div>
+        </div>
+    </div>
 
-            {{-- Project Specifications --}}
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
+    {{-- Case Ledger: the single source of truth for phase / responsible party / status --}}
+    @php
+        $readyToComplete = $project->status !== 'selesai' && $project->inspection_progress >= 100 && $openDefects === 0;
+        $canMarkComplete = auth()->user()->isAdmin();
+
+        $ledger = [
+            [
+                'state' => 'done',
+                'name'  => 'Setup & Assignment',
+                'meta'  => 'Created by <strong class="text-gray-800">' . ($project->creator?->name ?? 'Admin') . '</strong> · Assigned to <strong class="text-gray-800">' . ($project->assignedInspector?->name ?? 'Unassigned') . '</strong>',
+                'link'  => auth()->user()->canInspect() ? ['label' => 'Configure Rooms', 'route' => route('projects.samples', $project)] : null,
+            ],
+            [
+                'state' => $project->inspection_progress >= 100 ? 'done' : ($project->inspection_progress > 0 ? 'active' : 'pending'),
+                'name'  => 'Field Inspection',
+                'meta'  => 'Progress <strong class="text-gray-800">' . $project->inspection_progress . '%</strong> · ' . $project->assessments->count() . ' checks assessed',
+                'link'  => auth()->user()->canInspect() ? ['label' => 'Open Components Grid', 'route' => route('projects.components', $project)] : null,
+            ],
+            [
+                'state' => $openDefects > 0 ? 'attention' : ($resolvedDefects > 0 ? 'done' : 'pending'),
+                'name'  => 'Defect Rectification',
+                'meta'  => 'Open <strong class="' . ($openDefects > 0 ? 'text-red-700' : 'text-gray-800') . '">' . $openDefects . '</strong> · Resolved <strong class="text-emerald-700">' . $resolvedDefects . '</strong>',
+                'link'  => ['label' => 'View Defect Register', 'route' => route('defects.index', ['project_id' => $project->id])],
+            ],
+            [
+                'state' => $project->status === 'selesai' ? 'done' : ($readyToComplete ? 'active' : 'pending'),
+                'name'  => 'Final Certificate',
+                'meta'  => 'Score <strong class="text-gray-800">' . number_format($project->overall_score, 1) . '%</strong> · Rating <strong class="text-gray-800">' . $project->rating . '</strong>',
+                'link'  => null,
+            ],
+        ];
+    @endphp
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
+        <div class="flex items-center justify-between mb-1 pb-4 border-b border-gray-100">
+            <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
+                <span class="material-symbols-outlined text-eids-accent text-lg">schema</span>
+                Case Ledger
+            </h2>
+            <span class="text-xs font-extrabold text-eids-primary bg-eids-primary/10 px-3 py-1 rounded-full">
+                Current: {{ $project->status_label }}
+            </span>
+        </div>
+
+        <div>
+            @foreach($ledger as $i => $row)
+                @php
+                    $num = str_pad($i + 1, 2, '0', STR_PAD_LEFT);
+                    $chipCls = match($row['state']) {
+                        'done'      => 'bg-emerald-50 border-emerald-300 text-emerald-700',
+                        'active'    => 'bg-eids-primary border-eids-primary text-white',
+                        'attention' => 'bg-red-50 border-red-300 text-red-700',
+                        default     => 'bg-white border-gray-200 text-gray-400',
+                    };
+                    $rowBg = match($row['state']) {
+                        'active'    => 'bg-eids-primary/5',
+                        'attention' => 'bg-red-50/40',
+                        default     => '',
+                    };
+                @endphp
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3.5 {{ $i > 0 ? 'border-t border-dashed border-gray-200' : '' }} {{ $rowBg }} -mx-6 px-6">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <span class="relative shrink-0 font-mono text-[11px] font-extrabold tabular-nums rounded px-1.5 py-0.5 border {{ $chipCls }}">
+                            {{ $num }}
+                            @if($row['state'] === 'done')
+                                <span class="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-white shadow-2xs flex items-center justify-center -rotate-12">
+                                    <svg viewBox="0 0 10 10" class="w-2.5 h-2.5" fill="none">
+                                        <path d="M2 5.2L4 7.2L8 2.8" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </span>
+                            @endif
+                        </span>
+
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-extrabold text-gray-900">{{ $row['name'] }}</div>
+                            <div class="text-xs text-gray-500 font-medium mt-0.5">{!! $row['meta'] !!}</div>
+                        </div>
+                    </div>
+
+                    <div class="shrink-0 pl-9 sm:pl-0 sm:text-right">
+                        @if($i === 3)
+                            @if($project->status === 'selesai')
+                                <a href="{{ route('reports.show', $project) }}" class="inline-flex items-center gap-1 text-xs font-bold text-eids-primary hover:underline">
+                                    Official PDF Certificate &rarr;
+                                </a>
+                            @elseif($readyToComplete && $canMarkComplete)
+                                <form method="POST" action="{{ route('projects.complete', $project) }}">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-[36px] bg-eids-primary text-white text-xs font-extrabold rounded-lg hover:bg-eids-dark transition">
+                                        <span class="material-symbols-outlined text-sm">verified</span>
+                                        Mark as Completed
+                                    </button>
+                                </form>
+                            @elseif($readyToComplete)
+                                <span class="text-xs font-bold text-eids-primary">Awaiting Admin sign-off</span>
+                            @else
+                                <span class="text-xs text-gray-400 font-medium">Locked</span>
+                            @endif
+                        @elseif($row['link'])
+                            <a href="{{ $row['link']['route'] }}" class="inline-flex items-center gap-1 text-xs font-bold text-eids-accent hover:text-eids-primary hover:underline">
+                                {{ $row['link']['label'] }} &rarr;
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+
+    <div class="space-y-6">
+
+        {{-- Project Specifications --}}
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
                 <h2 class="font-extrabold text-gray-900 mb-5 flex items-center gap-2 text-sm">
                     <span class="material-symbols-outlined text-eids-accent text-lg">info</span>
                     Project Specifications & G-IDS Parameters
@@ -298,101 +313,19 @@
                     </div>
                 @endif
             </div>
-        </div>
-
-        {{-- Right Column --}}
-        <div class="space-y-6">
-
-            {{-- Sequential Quick Actions --}}
-            @if(auth()->user()->canInspect())
-                <div class="bg-eids-primary rounded-2xl p-6 shadow-md text-white border border-white/10">
-                    <div class="text-eids-light text-xs uppercase tracking-wider font-bold mb-4 flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-base">alt_route</span>
-                        Inspection Workflow Steps
-                    </div>
-                    <div class="space-y-3">
-                        <a href="{{ route('projects.samples', $project) }}"
-                           class="flex items-center gap-3 w-full p-3.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition text-sm font-semibold border border-white/10 min-h-[44px]">
-                            <span class="w-7 h-7 rounded-full bg-white/20 text-white text-xs font-extrabold flex items-center justify-center shrink-0">1</span>
-                            <div class="min-w-0 flex-1">
-                                <div class="font-bold">1. Configure Samples</div>
-                                <div class="text-[11px] text-white/70 font-normal">Assign room &amp; location names</div>
-                            </div>
-                            <span class="material-symbols-outlined text-white/50 text-base">chevron_right</span>
-                        </a>
-
-                        <a href="{{ route('projects.components', $project) }}"
-                           class="flex items-center gap-3 w-full p-3.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition text-sm font-semibold border border-white/10 min-h-[44px]">
-                            <span class="w-7 h-7 rounded-full bg-white/20 text-white text-xs font-extrabold flex items-center justify-center shrink-0">2</span>
-                            <div class="min-w-0 flex-1">
-                                <div class="font-bold">2. Components Grid</div>
-                                <div class="text-[11px] text-white/70 font-normal">Inspect 5 checks per component</div>
-                            </div>
-                            <span class="material-symbols-outlined text-white/50 text-base">chevron_right</span>
-                        </a>
-
-                        <a href="{{ route('projects.score', $project) }}"
-                           class="flex items-center gap-3 w-full p-3.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition text-sm font-semibold border border-white/10 min-h-[44px]">
-                            <span class="w-7 h-7 rounded-full bg-white/20 text-white text-xs font-extrabold flex items-center justify-center shrink-0">3</span>
-                            <div class="min-w-0 flex-1">
-                                <div class="font-bold">3. G-IDS Score Breakdown</div>
-                                <div class="text-[11px] text-white/70 font-normal">Review S_comp &amp; final rating</div>
-                            </div>
-                            <span class="material-symbols-outlined text-white/50 text-base">chevron_right</span>
-                        </a>
-
-                        <a href="{{ route('reports.show', $project) }}"
-                           class="flex items-center gap-3 w-full p-3.5 bg-eids-accent/30 hover:bg-eids-accent/40 text-eids-light rounded-xl transition text-sm font-bold border border-eids-accent/40 min-h-[44px]">
-                            <span class="w-7 h-7 rounded-full bg-eids-light/20 text-eids-light text-xs font-extrabold flex items-center justify-center shrink-0">4</span>
-                            <div class="min-w-0 flex-1">
-                                <div>4. Download PDF Report</div>
-                                <div class="text-[11px] text-eids-light/80 font-normal">Signed G-IDS inspection certificate</div>
-                            </div>
-                            <span class="material-symbols-outlined text-eids-light text-base">description</span>
-                        </a>
-                    </div>
-                </div>
-            @endif
-
-            {{-- Defect Summary --}}
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="text-xs uppercase tracking-wider text-gray-500 font-bold flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-red-500 text-base">warning</span>
-                        Defects Breakdown
-                    </div>
-                    <a href="{{ route('defects.index', ['project_id' => $project->id]) }}"
-                       class="text-xs text-eids-accent hover:text-eids-primary font-bold">View All</a>
-                </div>
-                <div class="grid grid-cols-2 gap-3 mb-2">
-                    <div class="bg-red-50 border border-red-200 rounded-xl p-3.5 text-center">
-                        <div class="text-2xl font-extrabold text-red-700">{{ $openDefects }}</div>
-                        <div class="text-xs font-bold text-red-600 mt-0.5">Open Defects</div>
-                    </div>
-                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-center">
-                        <div class="text-2xl font-extrabold text-emerald-700">{{ $resolvedDefects }}</div>
-                        <div class="text-xs font-bold text-emerald-600 mt-0.5">Resolved</div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Danger Zone --}}
-            @if(auth()->user()->isAdmin())
-                <div class="bg-white rounded-2xl border border-red-200 shadow-xs p-6">
-                    <div class="text-xs uppercase tracking-wider text-red-600 font-extrabold mb-2 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-base">delete_forever</span>
-                        Danger Zone
-                    </div>
-                    <p class="text-xs text-gray-600 mb-4 leading-relaxed">Permanently delete this project and all associated sample assessments and defect logs.</p>
-                    <button
-                        @click="$dispatch('open-confirm', { id: 'delete-confirm', action: '{{ route('projects.destroy', $project) }}', method: 'DELETE' })"
-                        class="w-full min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 border border-red-300 text-red-700 text-xs font-extrabold rounded-xl hover:bg-red-50 transition shadow-2xs">
-                        <span class="material-symbols-outlined text-base">delete</span>
-                        Delete Project Permanently
-                    </button>
-                </div>
-            @endif
-        </div>
     </div>
+
+    {{-- Danger Zone: deliberately quiet — a rare, destructive action, not a competing card --}}
+    @if(auth()->user()->isAdmin())
+        <div class="flex items-center justify-between gap-4 px-1 pt-2">
+            <p class="text-xs text-gray-400">Deleting a project permanently removes all its sample assessments and defect logs.</p>
+            <button
+                @click="$dispatch('open-confirm', { id: 'delete-confirm', action: '{{ route('projects.destroy', $project) }}', method: 'DELETE' })"
+                class="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 hover:underline">
+                <span class="material-symbols-outlined text-base">delete</span>
+                Delete this project
+            </button>
+        </div>
+    @endif
 </div>
 @endsection
