@@ -42,18 +42,27 @@ class ProjectAssignmentFormTest extends TestCase
         $this->assertCount(2, $project->supervisors);
     }
 
-    public function test_inspector_cannot_set_contractor_or_supervisors_via_edit(): void
+    public function test_inspector_can_set_contractor_but_not_assigned_to_or_supervisors_via_edit(): void
     {
-        $inspector = User::factory()->create(['role' => 'inspector']);
+        $inspectorA = User::factory()->create(['role' => 'inspector']);
+        $inspectorB = User::factory()->create(['role' => 'inspector']);
         $contractor = User::factory()->create(['role' => 'contractor']);
-        $project = Project::factory()->create(['assigned_to' => $inspector->id]);
+        $supervisor = User::factory()->create(['role' => 'supervisor']);
+        $project = Project::factory()->create(['assigned_to' => $inspectorA->id]);
+        $project->supervisors()->sync([$supervisor->id]);
 
-        $this->actingAs($inspector)->put("/projects/{$project->id}", $this->validPayload([
+        $this->actingAs($inspectorA)->put("/projects/{$project->id}", $this->validPayload([
             'project_no'             => $project->project_no,
             'assigned_contractor_id' => $contractor->id,
+            'assigned_to'            => $inspectorB->id,
+            'supervisors_submitted'  => '1',
+            'supervisor_ids'         => [],
         ]));
 
-        $this->assertNull($project->fresh()->assigned_contractor_id);
+        $fresh = $project->fresh();
+        $this->assertSame($contractor->id, $fresh->assigned_contractor_id, 'Inspector should be able to set the Assigned Contractor.');
+        $this->assertSame($inspectorA->id, $fresh->assigned_to, 'Inspector must not be able to reassign the project to someone else.');
+        $this->assertCount(1, $fresh->supervisors, 'Inspector must not be able to change Supervisors.');
     }
 
     public function test_admin_can_clear_all_supervisors_via_edit(): void

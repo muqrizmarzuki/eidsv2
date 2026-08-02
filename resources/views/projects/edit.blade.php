@@ -95,6 +95,15 @@
                     </select>
                     @error('assigned_to')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
+                @else
+                <div class="bg-eids-primary/5 border border-eids-primary/15 rounded-xl p-4 flex items-start gap-3">
+                    <span class="material-symbols-outlined text-eids-accent text-lg shrink-0">info</span>
+                    <p class="text-xs text-gray-700 font-medium">
+                        Assigned Inspector: <strong>{{ $project->assignedInspector?->name ?? 'Unassigned' }}</strong>.
+                        Only an Admin or Lead Auditor can reassign it.
+                    </p>
+                </div>
+                @endif
 
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Assigned Contractor</label>
@@ -110,6 +119,7 @@
                     @error('assigned_contractor_id')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
+                @if(auth()->user()->isAdmin() || auth()->user()->isLeadAuditor())
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Supervisors / Client Viewers</label>
                     <div class="flex flex-wrap gap-3 p-3 border border-gray-200 rounded-xl">
@@ -124,14 +134,6 @@
                             <span class="text-xs text-gray-400 italic">No supervisor accounts yet.</span>
                         @endforelse
                     </div>
-                </div>
-                @else
-                <div class="sm:col-span-2 bg-eids-primary/5 border border-eids-primary/15 rounded-xl p-4 flex items-start gap-3">
-                    <span class="material-symbols-outlined text-eids-accent text-lg shrink-0">info</span>
-                    <p class="text-xs text-gray-700 font-medium">
-                        Assigned Inspector: <strong>{{ $project->assignedInspector?->name ?? 'Unassigned' }}</strong>.
-                        Only an Admin or Lead Auditor can reassign the inspector, contractor, or supervisors.
-                    </p>
                 </div>
                 @endif
 

@@ -116,7 +116,8 @@ class ProjectController extends Controller
         unset($data['supervisor_ids']);
 
         if (!auth()->user()->isAdmin() && !auth()->user()->isLeadAuditor()) {
-            unset($data['assigned_contractor_id']);
+            // Inspector may still choose the Assigned Contractor; Supervisors and the
+            // Assigned Inspector field remain Admin/Lead-Auditor-only.
             $supervisorIds = [];
             // Only Admin/Lead Auditor may choose who a project is assigned to.
             // A non-privileged creator (Inspector) is always assigned to themselves —
@@ -179,9 +180,10 @@ class ProjectController extends Controller
         unset($data['supervisor_ids']);
 
         if (!auth()->user()->isAdmin() && !auth()->user()->isLeadAuditor()) {
-            unset($data['assigned_contractor_id']);
-            // Only Admin/Lead Auditor may reassign a project — leave the existing
-            // assigned_to untouched for anyone else editing it.
+            // Inspector may still change the Assigned Contractor; Supervisors and the
+            // Assigned Inspector field remain Admin/Lead-Auditor-only.
+            // Only Admin/Lead Auditor may reassign who the project belongs to — leave
+            // the existing assigned_to untouched for anyone else editing it.
             unset($data['assigned_to']);
             $supervisorIds = null;
         }
