@@ -144,6 +144,8 @@
                                                class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition min-h-[36px] flex items-center justify-center" title="Edit Project">
                                                 <span class="material-symbols-outlined text-lg">edit</span>
                                             </a>
+                                        @endif
+                                        @if(auth()->user()->isAdmin())
                                             <button
                                                 @click="$dispatch('open-confirm', { id: 'delete-confirm', action: '{{ route('projects.destroy', $project) }}', method: 'DELETE' })"
                                                 class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition min-h-[36px] flex items-center justify-center" title="Delete Project">

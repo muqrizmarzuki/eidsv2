@@ -45,10 +45,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/projects/{project}/summary', [InspectionController::class, 'summary'])->name('projects.summary');
     });
 
+    Route::middleware('role:admin')->group(function () {
+        Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+    });
+
     Route::middleware('role:admin,lead_auditor,inspector')->group(function () {
         Route::get('/projects/{project}/edit',  [ProjectController::class, 'edit'])->name('projects.edit');
         Route::put('/projects/{project}',       [ProjectController::class, 'update'])->name('projects.update');
-        Route::delete('/projects/{project}',    [ProjectController::class, 'destroy'])->name('projects.destroy');
 
         // Sample generation
         Route::get('/projects/{project}/samples',  [ProjectController::class, 'samples'])->name('projects.samples');
