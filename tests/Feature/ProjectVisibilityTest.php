@@ -64,4 +64,19 @@ class ProjectVisibilityTest extends TestCase
         $visible = Project::visibleTo($contractor)->get();
         $this->assertCount(1, $visible);
     }
+
+    public function test_user_with_unrecognized_role_sees_nothing(): void
+    {
+        // `role` is a DB-level enum (admin/lead_auditor/inspector/supervisor/contractor),
+        // so a User with a bogus role can never be persisted — Eloquent's ->create()
+        // would throw a CHECK-constraint violation. We build an unpersisted instance
+        // instead: scopeVisibleTo's default arm only reads $user->role, so this still
+        // exercises the exact code path a real "role not covered by any match arm"
+        // scenario would hit, without fighting the DB constraint that guards against
+        // it in production.
+        $bogusRoleUser = User::factory()->make(['role' => 'auditor_trainee']);
+        Project::factory()->count(2)->create();
+
+        $this->assertCount(0, Project::visibleTo($bogusRoleUser)->get());
+    }
 }
