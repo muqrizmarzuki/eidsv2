@@ -120,6 +120,12 @@ class ProjectController extends Controller
             $supervisorIds = [];
         }
 
+        // An Inspector's visibility is scoped strictly to assigned_to — leaving it
+        // blank would lock the creator out of the project they just made.
+        if (auth()->user()->role === 'inspector' && empty($data['assigned_to'])) {
+            $data['assigned_to'] = auth()->id();
+        }
+
         $data['calculated_samples'] = max(1, (int) ceil($data['floor_area_sqm'] / (float) setting('sample_divisor', 60)));
         $data['created_by']         = auth()->id();
 
