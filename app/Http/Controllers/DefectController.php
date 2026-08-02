@@ -53,7 +53,7 @@ class DefectController extends Controller
             'location'           => 'required|string|max:255',
             'defect_description' => 'required|string',
             'severity'           => 'required|in:low,medium,high',
-            'status'             => 'required|in:OPEN,IN_PROGRESS,RESOLVED',
+            'status'             => 'required|in:OPEN,IN_PROGRESS,PENDING_VERIFICATION,RESOLVED',
             'photo'              => 'nullable|image|max:5120',
         ]);
 
@@ -85,7 +85,7 @@ class DefectController extends Controller
             'location'           => 'required|string|max:255',
             'defect_description' => 'required|string',
             'severity'           => 'required|in:low,medium,high',
-            'status'             => 'required|in:OPEN,IN_PROGRESS,RESOLVED',
+            'status'             => 'required|in:OPEN,IN_PROGRESS,PENDING_VERIFICATION,RESOLVED',
             'photo'              => 'nullable|image|max:5120',
         ]);
 
