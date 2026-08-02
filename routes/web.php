@@ -23,8 +23,10 @@ Route::post('/logout', [AuthController::class, 'logout'])
 // ── Authenticated routes ──────────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
 
-    // Dashboard
-    Route::get('/dashboard', [ProjectController::class, 'dashboard'])->name('dashboard');
+    // Dashboard — everyone except Contractor (their surface is My Defects only)
+    Route::middleware('role:admin,lead_auditor,inspector,supervisor')->group(function () {
+        Route::get('/dashboard', [ProjectController::class, 'dashboard'])->name('dashboard');
+    });
 
     // Projects — static routes FIRST to avoid {project} swallowing them
     Route::middleware('role:admin,lead_auditor,inspector')->group(function () {
@@ -32,10 +34,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/projects',       [ProjectController::class, 'store'])->name('projects.store');
     });
 
-    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::middleware('role:admin,lead_auditor,inspector,supervisor')->group(function () {
+        Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
 
-    // Projects with {project} parameter — all authenticated users can view
-    Route::get('/projects/{project}',       [ProjectController::class, 'show'])->name('projects.show');
+        // Projects with {project} parameter
+        Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+
+        // Score & summary
+        Route::get('/projects/{project}/score',   [InspectionController::class, 'score'])->name('projects.score');
+        Route::get('/projects/{project}/summary', [InspectionController::class, 'summary'])->name('projects.summary');
+    });
 
     Route::middleware('role:admin,lead_auditor,inspector')->group(function () {
         Route::get('/projects/{project}/edit',  [ProjectController::class, 'edit'])->name('projects.edit');
@@ -52,11 +60,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/projects/{project}/inspect/{sample}',          [InspectionController::class, 'storeAssessment'])->name('projects.inspect.store');
     });
 
-    // Score & summary — all authenticated users can view
-    Route::get('/projects/{project}/score',   [InspectionController::class, 'score'])->name('projects.score');
-    Route::get('/projects/{project}/summary', [InspectionController::class, 'summary'])->name('projects.summary');
-
-    // Defects — static create route before parameterized routes
+    // Defects — static create route before parameterized routes. Index is open to
+    // all 5 roles (Contractor's "My Defects" reuses it, scoped by Defect::visibleTo()).
     Route::get('/defects', [DefectController::class, 'index'])->name('defects.index');
 
     Route::middleware('role:admin,lead_auditor,inspector')->group(function () {
@@ -68,10 +73,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/defects/{defect}/toggle', [DefectController::class, 'toggleStatus'])->name('defects.toggle');
     });
 
-    // Reports — index before parameterized routes
-    Route::get('/reports',               [ReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/{project}',     [ReportController::class, 'show'])->name('reports.show');
-    Route::get('/reports/{project}/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
+    Route::middleware('role:admin,lead_auditor,inspector,contractor')->group(function () {
+        Route::post('/defects/{defect}/advance', [DefectController::class, 'advanceStatus'])->name('defects.advance');
+    });
+
+    // Reports — Contractor excluded (no Dashboard/Projects/Reports access)
+    Route::middleware('role:admin,lead_auditor,inspector,supervisor')->group(function () {
+        Route::get('/reports',               [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/{project}',     [ReportController::class, 'show'])->name('reports.show');
+        Route::get('/reports/{project}/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
+    });
 
     // Users & Settings — admin only
     Route::middleware('role:admin')->group(function () {
