@@ -38,6 +38,16 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function isLeadAuditor(): bool
+    {
+        return $this->role === 'lead_auditor';
+    }
+
+    public function isContractor(): bool
+    {
+        return $this->role === 'contractor';
+    }
+
     public function canInspect(): bool
     {
         return in_array($this->role, ['admin', 'lead_auditor', 'inspector']);
@@ -55,6 +65,7 @@ class User extends Authenticatable
             'lead_auditor' => 'Ketua Pemeriksa',
             'inspector'    => 'Inspektor',
             'supervisor'   => 'Penyelia Tapak',
+            'contractor'   => 'Kontraktor',
             default        => ucfirst($this->role),
         };
     }
