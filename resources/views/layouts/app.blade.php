@@ -42,7 +42,7 @@
                     <span class="material-symbols-outlined filled text-white text-xl">domain</span>
                 </div>
                 <div class="min-w-0">
-                    <div class="text-white font-extrabold text-lg leading-none tracking-tight">E-IDS <span class="text-eids-light text-xs font-semibold">v2</span></div>
+                    <div class="text-white font-extrabold text-lg leading-none tracking-tight">E-IDS</div>
                     <div class="text-white/60 text-[10px] tracking-widest uppercase leading-tight mt-1 truncate font-semibold">Defect Inspection</div>
                 </div>
             </div>

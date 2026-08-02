@@ -47,28 +47,39 @@
         };
         $ratingMap = ['GOOD' => 'GOOD RATING', 'MODERATE' => 'MODERATE RATING', 'WEAK' => 'WEAK RATING'];
 
-        // Speedometer gauge geometry: a semicircle swept from 180deg (value 0, left) to
-        // 0deg (value = gaugeMax, right), split into WEAK / MODERATE / GOOD colored zones.
-        $gaugeMax  = array_sum(array_column($components, 'weightage')) + $meScore + $extScore;
-        $gaugeCx   = 100; $gaugeCy = 100; $gaugeR = 82;
-        $angleFor  = fn ($v) => 180 * (1 - max(0, min($v, $gaugeMax)) / $gaugeMax);
+        // Radial gauge geometry: a 240deg arc swept from 150deg (value 0) to 390deg
+        // (value = gaugeMax), clockwise through the top, split into WEAK / MODERATE / GOOD zones.
+        $gaugeMax   = array_sum(array_column($components, 'weightage')) + $meScore + $extScore;
+        $gaugeCx    = 110; $gaugeCy = 110; $gaugeR = 84;
+        $gaugeStart = 150; $gaugeSweep = 240;
+        $tFor      = fn ($v) => max(0, min($v, $gaugeMax)) / max($gaugeMax, 0.0001);
+        $angleFor  = fn ($v) => $gaugeStart + $gaugeSweep * $tFor($v);
         $pointAt   = fn ($angleDeg, $radius) => [
             $gaugeCx + $radius * cos(deg2rad($angleDeg)),
-            $gaugeCy - $radius * sin(deg2rad($angleDeg)),
+            $gaugeCy + $radius * sin(deg2rad($angleDeg)),
         ];
         $arcPath = function ($v1, $v2) use ($angleFor, $pointAt, $gaugeR) {
             $theta1 = $angleFor($v1);
             $theta2 = $angleFor($v2);
             [$x1, $y1] = $pointAt($theta1, $gaugeR);
             [$x2, $y2] = $pointAt($theta2, $gaugeR);
-            $largeArc = ($theta1 - $theta2) > 180 ? 1 : 0;
+            $largeArc = ($theta2 - $theta1) > 180 ? 1 : 0;
             return "M {$x1} {$y1} A {$gaugeR} {$gaugeR} 0 {$largeArc} 1 {$x2} {$y2}";
         };
         $weakArc = $arcPath(0, $ratingMod);
         $modArc  = $arcPath($ratingMod, $ratingBaik);
         $goodArc = $arcPath($ratingBaik, $gaugeMax);
 
-        [$needleX, $needleY] = $pointAt($angleFor($totalScore), $gaugeR - 16);
+        [$needleX, $needleY] = $pointAt($angleFor($totalScore), $gaugeR - 22);
+
+        // Decorative tick marks around the outer edge of the arc.
+        $tickCount = 32;
+        $ticks = collect(range(0, $tickCount))->map(function ($i) use ($tickCount, $gaugeStart, $gaugeSweep, $pointAt) {
+            $angle = $gaugeStart + $gaugeSweep * ($i / $tickCount);
+            [$x1, $y1] = $pointAt($angle, 92);
+            [$x2, $y2] = $pointAt($angle, 100);
+            return compact('x1', 'y1', 'x2', 'y2');
+        });
     @endphp
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
@@ -76,17 +87,21 @@
         <div class="lg:col-span-1 bg-eids-primary rounded-2xl p-6 text-white flex flex-col items-center justify-center text-center shadow-md border border-white/10 relative overflow-hidden">
             <div class="text-xs text-eids-light uppercase tracking-widest font-extrabold mb-2">G-IDS Final Score</div>
 
-            {{-- Speedometer gauge --}}
-            <svg viewBox="0 0 200 112" class="w-full max-w-[210px]" aria-hidden="true">
-                <path d="{{ $weakArc }}" stroke="#f87171" stroke-width="18" fill="none" stroke-linecap="round" />
-                <path d="{{ $modArc }}"  stroke="#fbbf24" stroke-width="18" fill="none" stroke-linecap="round" />
-                <path d="{{ $goodArc }}" stroke="#34d399" stroke-width="18" fill="none" stroke-linecap="round" />
+            {{-- Radial gauge --}}
+            <svg viewBox="0 5 220 165" class="w-full max-w-[220px]" aria-hidden="true">
+                @foreach($ticks as $tick)
+                    <line x1="{{ $tick['x1'] }}" y1="{{ $tick['y1'] }}" x2="{{ $tick['x2'] }}" y2="{{ $tick['y2'] }}" stroke="white" stroke-opacity="0.15" stroke-width="1.5" />
+                @endforeach
+                <path d="{{ $weakArc }}" stroke="#f87171" stroke-width="8"  fill="none" stroke-linecap="round" />
+                <path d="{{ $modArc }}"  stroke="#fbbf24" stroke-width="11" fill="none" stroke-linecap="round" />
+                <path d="{{ $goodArc }}" stroke="#34d399" stroke-width="14" fill="none" stroke-linecap="round" />
                 <line x1="{{ $gaugeCx }}" y1="{{ $gaugeCy }}" x2="{{ $needleX }}" y2="{{ $needleY }}"
                       stroke="white" stroke-width="4" stroke-linecap="round" />
+                <circle cx="{{ $gaugeCx }}" cy="{{ $gaugeCy }}" r="14" fill="white" fill-opacity="0.12" />
                 <circle cx="{{ $gaugeCx }}" cy="{{ $gaugeCy }}" r="7" fill="white" />
             </svg>
 
-            <div class="text-4xl lg:text-5xl font-extrabold tracking-tight -mt-2">{{ number_format($totalScore, 2) }}</div>
+            <div class="text-4xl lg:text-5xl font-extrabold tracking-tight -mt-1">{{ number_format($totalScore, 2) }}</div>
             <div class="text-white/70 text-xs mt-1 font-semibold">out of {{ number_format($gaugeMax, 2) }} max pts</div>
             <div class="mt-4 px-4 py-1.5 rounded-full text-xs font-extrabold tracking-wider uppercase
                 @if($rating === 'GOOD') bg-emerald-500 text-white

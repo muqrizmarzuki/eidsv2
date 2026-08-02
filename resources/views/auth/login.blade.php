@@ -18,31 +18,21 @@
             </svg>
         </div>
 
-        <div class="relative z-10">
-            <div class="flex items-center gap-3.5 mb-8">
-                <div class="w-11 h-11 bg-eids-accent rounded-xl flex items-center justify-center shadow-md ring-2 ring-white/10">
-                    <span class="material-symbols-outlined filled text-white text-2xl">domain</span>
-                </div>
-                <div>
-                    <div class="text-white font-extrabold text-2xl leading-none tracking-tight">E-IDS <span class="text-eids-light text-sm font-semibold">v2</span></div>
-                    <div class="text-eids-light/80 text-xs tracking-widest uppercase font-bold mt-1">Electronic Inspection Defect System</div>
-                </div>
-            </div>
-        </div>
-
         <div class="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4">
-            <div class="w-56 h-56 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-xs flex items-center justify-center mb-8 shadow-inner">
-                <span class="material-symbols-outlined text-eids-light" style="font-size: 110px; font-variation-settings: 'FILL' 1">apartment</span>
+            <div class="font-['Big_Shoulders_Display'] font-black text-white leading-[0.8] tracking-tight text-[6rem] xl:text-[7.5rem]">
+                E-IDS
             </div>
-            <h2 class="text-white font-extrabold text-2xl mb-3 tracking-tight">Building Quality Inspection System</h2>
-            <p class="text-white/80 text-sm leading-relaxed max-w-sm font-medium">
+            <div class="mt-6 h-px w-14 bg-eids-light/40"></div>
+            <div class="mt-6 font-['IBM_Plex_Mono'] text-eids-light text-[11px] xl:text-xs tracking-[0.45em] uppercase font-medium">
+                Electronic Inspection<br class="xl:hidden">&nbsp;Defect System
+            </div>
+            <p class="mt-10 text-white/70 text-sm leading-relaxed max-w-sm font-medium">
                 Professional digital ledger for residential building defect inspections, real-time sample matrix calculations, and G-IDS / CIS 7 scoring.
             </p>
         </div>
 
         <div class="relative z-10 text-white/60 text-xs font-semibold pt-6 border-t border-white/10 flex justify-between items-center">
             <div>Politeknik Merlimau Melaka · Department of Civil Engineering</div>
-            <div class="font-mono text-eids-light">v2.4</div>
         </div>
     </div>
 
@@ -63,7 +53,7 @@
                     <span class="material-symbols-outlined text-white text-lg">domain</span>
                 </div>
                 <div>
-                    <span class="font-extrabold text-eids-primary text-xl leading-none block">E-IDS v2</span>
+                    <span class="font-extrabold text-eids-primary text-xl leading-none block">E-IDS</span>
                     <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Defect Inspection</span>
                 </div>
             </div>
@@ -124,7 +114,7 @@
             </form>
 
             <p class="mt-8 text-center text-xs text-gray-500 font-medium">
-                Protected by E-IDS v2 Enterprise Quality Control Protocol
+                Protected by E-IDS Enterprise Quality Control Protocol
             </p>
         </div>
     </div>
