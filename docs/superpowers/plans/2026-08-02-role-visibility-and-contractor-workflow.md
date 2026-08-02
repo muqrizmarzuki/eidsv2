@@ -2046,11 +2046,11 @@ In `app/Models/Project.php`, add right after `getInspectionProgressAttribute()`:
         }
 
         if ($user->role === 'inspector') {
-            if (!$inspectionStarted) {
-                return ['icon' => 'grid_on', 'text' => 'Start the Components Grid inspection.'];
-            }
             if ($pendingVerify > 0) {
                 return ['icon' => 'fact_check', 'text' => "{$pendingVerify} defect(s) awaiting your verification."];
+            }
+            if (!$inspectionStarted) {
+                return ['icon' => 'grid_on', 'text' => 'Start the Components Grid inspection.'];
             }
             if (!$inspectionDone) {
                 return ['icon' => 'grid_on', 'text' => "Continue — {$inspectedCount}/{$totalSamples} sample units done."];
