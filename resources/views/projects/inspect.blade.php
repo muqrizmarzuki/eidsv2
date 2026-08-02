@@ -35,7 +35,7 @@
          get overall() {
              return [this.finishing, this.hollow, this.levellingStatus, this.jointStatus, this.crack].includes('FAIL') ? 'FAIL' : 'PASS';
          },
-         photoSrc: null,
+         photoSrc: {{ $assessment?->photo_url ? "'" . $assessment->photo_url . "'" : 'null' }},
          handlePhoto(e) {
              const f = e.target.files[0];
              if (f) this.photoSrc = URL.createObjectURL(f);
@@ -243,12 +243,16 @@
                             <img :src="photoSrc" class="w-full rounded-xl object-cover max-h-56">
                         </div>
                     </div>
-                    @if($assessment?->photo_url)
-                        <div class="mt-2 text-xs text-gray-600 flex items-center gap-2 font-medium">
+                    <div x-show="photoSrc" x-cloak class="mt-2 flex items-center justify-between gap-2">
+                        <span class="text-xs text-gray-600 font-medium flex items-center gap-1.5">
                             <span class="material-symbols-outlined text-base text-emerald-700">image</span>
-                            <span>Existing photo attached: <strong class="text-gray-900">View Photo</strong></span>
-                        </div>
-                    @endif
+                            Photo attached
+                        </span>
+                        <a :href="photoSrc" target="_blank" rel="noopener"
+                           class="text-xs font-bold text-eids-accent hover:text-eids-primary hover:underline">
+                            View full size &rarr;
+                        </a>
+                    </div>
                 </div>
 
                 {{-- Inspection Remarks --}}
