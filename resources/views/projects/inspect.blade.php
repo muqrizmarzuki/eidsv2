@@ -121,12 +121,12 @@
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <label :class="finishing === 'PASS' ? 'bg-emerald-100 border-emerald-400 text-emerald-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition flex items-center justify-center gap-2">
+                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
                             <input type="radio" name="finishing_status" value="PASS" x-model="finishing" class="sr-only">
                             <span class="material-symbols-outlined text-base">check_circle</span> PASS
                         </label>
                         <label :class="finishing === 'FAIL' ? 'bg-red-100 border-red-400 text-red-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition flex items-center justify-center gap-2">
+                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
                             <input type="radio" name="finishing_status" value="FAIL" x-model="finishing" class="sr-only">
                             <span class="material-symbols-outlined text-base">cancel</span> FAIL
                         </label>
@@ -141,12 +141,12 @@
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <label :class="hollow === 'PASS' ? 'bg-emerald-100 border-emerald-400 text-emerald-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition flex items-center justify-center gap-2">
+                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
                             <input type="radio" name="hollow_status" value="PASS" x-model="hollow" class="sr-only">
                             <span class="material-symbols-outlined text-base">check_circle</span> PASS
                         </label>
                         <label :class="hollow === 'FAIL' ? 'bg-red-100 border-red-400 text-red-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition flex items-center justify-center gap-2">
+                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
                             <input type="radio" name="hollow_status" value="FAIL" x-model="hollow" class="sr-only">
                             <span class="material-symbols-outlined text-base">cancel</span> FAIL
                         </label>
@@ -203,12 +203,12 @@
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <label :class="crack === 'PASS' ? 'bg-emerald-100 border-emerald-400 text-emerald-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition flex items-center justify-center gap-2">
+                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
                             <input type="radio" name="crack_status" value="PASS" x-model="crack" class="sr-only">
                             <span class="material-symbols-outlined text-base">check_circle</span> PASS
                         </label>
                         <label :class="crack === 'FAIL' ? 'bg-red-100 border-red-400 text-red-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition flex items-center justify-center gap-2">
+                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
                             <input type="radio" name="crack_status" value="FAIL" x-model="crack" class="sr-only">
                             <span class="material-symbols-outlined text-base">cancel</span> FAIL
                         </label>
