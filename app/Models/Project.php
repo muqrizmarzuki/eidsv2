@@ -10,6 +10,7 @@ class Project extends Model
         'project_no', 'project_name', 'location', 'developer_name',
         'contractor_name', 'building_type', 'total_units', 'floor_area_sqm',
         'calculated_samples', 'overall_score', 'status', 'created_by', 'assigned_to',
+        'assigned_contractor_id',
     ];
 
     protected $casts = [
@@ -42,6 +43,11 @@ class Project extends Model
     public function assignedInspector()
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function assignedContractor()
+    {
+        return $this->belongsTo(User::class, 'assigned_contractor_id');
     }
 
     public function getStatusLabelAttribute(): string
