@@ -10,7 +10,7 @@ class DefectController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Defect::with(['project', 'media'])->latest();
+        $query = Defect::visibleTo(auth()->user())->with(['project', 'media'])->latest();
 
         if ($request->filled('project_id')) {
             $query->where('project_id', $request->project_id);

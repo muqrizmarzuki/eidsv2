@@ -12,14 +12,15 @@ class ProjectController extends Controller
 {
     public function dashboard()
     {
-        $total           = Project::count();
-        $active          = Project::where('status', 'dalam_pemeriksaan')->count();
-        $completed       = Project::where('status', 'selesai')->count();
-        $draft           = Project::where('status', 'draf')->count();
-        $recent          = Project::with(['creator', 'assignedInspector'])->latest()->take(8)->get();
-        $avgScore        = Project::where('overall_score', '>', 0)->avg('overall_score') ?? 0;
-        $openDefects     = Defect::where('status', 'OPEN')->count();
-        $resolvedDefects = Defect::where('status', 'RESOLVED')->count();
+        $visible         = Project::visibleTo(auth()->user());
+        $total           = $visible->clone()->count();
+        $active          = $visible->clone()->where('status', 'dalam_pemeriksaan')->count();
+        $completed       = $visible->clone()->where('status', 'selesai')->count();
+        $draft           = $visible->clone()->where('status', 'draf')->count();
+        $recent          = $visible->clone()->with(['creator', 'assignedInspector'])->latest()->take(8)->get();
+        $avgScore        = $visible->clone()->where('overall_score', '>', 0)->avg('overall_score') ?? 0;
+        $openDefects     = Defect::visibleTo(auth()->user())->where('status', 'OPEN')->count();
+        $resolvedDefects = Defect::visibleTo(auth()->user())->where('status', 'RESOLVED')->count();
         $ratingBaik      = (float) setting('rating_baik', 85);
         $ratingMod       = (float) setting('rating_sederhana', 70);
         $meScore         = (float) setting('me_score', 2.0);
@@ -33,7 +34,7 @@ class ProjectController extends Controller
 
     public function index(Request $request)
     {
-        $query = Project::with(['creator', 'assignedInspector'])->latest();
+        $query = Project::visibleTo(auth()->user())->with(['creator', 'assignedInspector'])->latest();
 
         if ($request->filled('search')) {
             $s = $request->search;
