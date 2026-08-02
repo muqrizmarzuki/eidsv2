@@ -102,7 +102,7 @@ sequenceDiagram
     Admin-->>Cont: 4. Defect now appears under Contractor's "My Defects"
     Cont->>Cont: 5. Contractor marks "Start Repair" (IN_PROGRESS), then "Mark Settled" (PENDING_VERIFICATION) once fixed
     Insp->>Insp: 6. Inspector re-inspects & either Confirms Resolved or Rejects back to IN_PROGRESS
-    Insp->>Admin: 7. System recalculates Final G-IDS Score & Rating (GOOD/MODERATE/WEAK); Inspector is notified once inspection is 100% done and all defects are resolved
+    Insp->>Admin: 7. System recalculates Final G-IDS Score & Rating (GOOD/MODERATE/WEAK) — Inspector is notified once inspection is 100% done and all defects are resolved
     Admin->>Admin: 8. Admin clicks "Mark as Completed" (only enabled once inspection is done and every defect is resolved), then exports the Signed G-IDS PDF Certificate
 ```
 
@@ -189,11 +189,11 @@ To eliminate horizontal side-scrolling on mobile and tablet screens during site 
 
 The total G-IDS score ($S_{\text{total}}$) is calculated using native CIS 7 rules:
 
-$$S_{\text{total}} = S_{\text{arch}} + S_{\text{M\&E}} + S_{\text{external}}$$
+$$S_{\text{total}} = S_{\text{arch}} + S_{\text{ME}} + S_{\text{external}}$$
 
 - **Architectural Subtotal ($S_{\text{arch}}$)**: Sum of 8 weighted component pass rates ($S_{\text{comp}}$):
-  $$S_{\text{comp}} = \left( \frac{\text{Pass Count}}{\text{Total Assessed}} \right) \times \text{Weightage \%}$$
-- **M&E Fixed Score ($S_{\text{M\&E}}$)**: 2.00 pts
+  $$S_{\text{comp}} = \left( \frac{\text{Pass Count}}{\text{Total Assessed}} \right) \times \text{Weightage \\%}$$
+- **M&E Fixed Score ($S_{\text{ME}}$)**: 2.00 pts
 - **External Work Fixed Score ($S_{\text{external}}$)**: 11.80 pts
 
 ### Rating Thresholds
