@@ -50,6 +50,11 @@ class Project extends Model
         return $this->belongsTo(User::class, 'assigned_contractor_id');
     }
 
+    public function supervisors()
+    {
+        return $this->belongsToMany(User::class, 'project_supervisor');
+    }
+
     public function getStatusLabelAttribute(): string
     {
         return match($this->status) {
