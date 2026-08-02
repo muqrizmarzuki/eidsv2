@@ -11,11 +11,13 @@
 @endsection
 
 @section('topbar-actions')
-    <a href="{{ route('projects.components', $project) }}"
-       class="flex items-center gap-1.5 px-4 py-2.5 border border-gray-200 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-100 transition min-h-[44px]">
-        <span class="material-symbols-outlined text-lg">grid_on</span>
-        Grid
-    </a>
+    @if(auth()->user()->canInspect())
+        <a href="{{ route('projects.components', $project) }}"
+           class="flex items-center gap-1.5 px-4 py-2.5 border border-gray-200 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-100 transition min-h-[44px]">
+            <span class="material-symbols-outlined text-lg">grid_on</span>
+            Grid
+        </a>
+    @endif
     <a href="{{ route('reports.show', $project) }}"
        class="flex items-center gap-2 px-5 py-2.5 bg-eids-primary text-white text-sm font-bold rounded-xl hover:bg-eids-dark transition shadow-xs min-h-[44px]">
         <span class="material-symbols-outlined text-lg">description</span>
@@ -27,7 +29,9 @@
 <div class="max-w-5xl mx-auto">
 
     {{-- Pipeline Step Indicator --}}
-    <x-workflow-step step="5" :project="$project" />
+    @unless(auth()->user()->role === 'supervisor')
+        <x-workflow-step step="5" :project="$project" :role="auth()->user()->role" />
+    @endunless
 
     {{-- Score Hero Section --}}
     @php
@@ -129,9 +133,11 @@
 
     {{-- Bottom Action Bar --}}
     <div class="mt-6 flex justify-between items-center bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex-wrap gap-3">
-        <a href="{{ route('projects.components', $project) }}" class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
-            &larr; Return to Inspection Grid
-        </a>
+        @if(auth()->user()->canInspect())
+            <a href="{{ route('projects.components', $project) }}" class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
+                &larr; Return to Inspection Grid
+            </a>
+        @endif
         <a href="{{ route('reports.show', $project) }}" class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-xs font-extrabold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md">
             <span class="material-symbols-outlined text-base">description</span>
             Generate Official G-IDS Certificate PDF &rarr;

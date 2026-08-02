@@ -74,4 +74,35 @@ class ProjectShowBannerTest extends TestCase
 
         $response->assertSee('Sample Setup');
     }
+
+    public function test_supervisor_sees_no_interactive_stepper_or_grid_link_on_score_page(): void
+    {
+        $supervisor = User::factory()->create(['role' => 'supervisor']);
+        $project = Project::factory()->create();
+        $project->supervisors()->attach($supervisor->id);
+        $sample = ProjectSample::create(['project_id' => $project->id, 'sample_index' => 1, 'location_name' => 'Sample 1']);
+
+        $response = $this->actingAs($supervisor)->get("/projects/{$project->id}/score");
+
+        // Supervisor IS allowed on the score page itself, per route middleware.
+        $response->assertOk();
+        // None of the stepper's step labels render.
+        $response->assertDontSee('Sample Setup');
+        $response->assertDontSee('Components Grid');
+        // Nor any of the stepper's / quick-link's navigation links.
+        $response->assertDontSee('href="' . route('projects.components', $project) . '"', false);
+        $response->assertDontSee('href="' . route('projects.samples', $project) . '"', false);
+        $response->assertDontSee('href="' . route('projects.inspect', [$project, $sample]) . '"', false);
+    }
+
+    public function test_inspector_still_sees_the_interactive_stepper_on_score_page(): void
+    {
+        $inspector = User::factory()->create(['role' => 'inspector']);
+        $project = Project::factory()->create(['assigned_to' => $inspector->id]);
+
+        $response = $this->actingAs($inspector)->get("/projects/{$project->id}/score");
+
+        $response->assertOk();
+        $response->assertSee('Components Grid');
+    }
 }
