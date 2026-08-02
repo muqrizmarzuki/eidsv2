@@ -94,6 +94,54 @@ class Project extends Model
         return (int) min(100, round(($done / $total) * 100));
     }
 
+    public function nextActionFor(User $user): array
+    {
+        $hasNamedLocations = $this->samples->contains(fn ($s) => !str_starts_with($s->location_name, 'Sample '));
+        $inspectionStarted = $this->assessments()->exists();
+        $inspectionDone    = $this->inspection_progress >= 100;
+        $inspectedCount    = $this->samples->whereNotNull('pass_rate')->count();
+        $totalSamples      = $this->samples->count();
+        $openDefects       = $this->defects()->whereIn('status', ['OPEN', 'IN_PROGRESS'])->count();
+        $pendingVerify     = $this->defects()->where('status', 'PENDING_VERIFICATION')->count();
+
+        if (in_array($user->role, ['admin', 'lead_auditor'])) {
+            if (!$hasNamedLocations) {
+                return ['icon' => 'tune', 'text' => 'Finish naming sample locations.'];
+            }
+            if (!$inspectionStarted) {
+                $name = $this->assignedInspector->name ?? 'the assigned inspector';
+                return ['icon' => 'grid_on', 'text' => "Waiting on Inspector {$name} to begin the Components Grid inspection."];
+            }
+            if ($openDefects > 0 || $pendingVerify > 0) {
+                $count = $openDefects + $pendingVerify;
+                return ['icon' => 'warning', 'text' => "{$count} defect(s) still open — waiting on Contractor & Inspector verification."];
+            }
+            return ['icon' => 'analytics', 'text' => 'Inspection complete — ready to generate the signed G-IDS PDF.'];
+        }
+
+        if ($user->role === 'inspector') {
+            if ($pendingVerify > 0) {
+                return ['icon' => 'fact_check', 'text' => "{$pendingVerify} defect(s) awaiting your verification."];
+            }
+            if (!$inspectionStarted) {
+                return ['icon' => 'grid_on', 'text' => 'Start the Components Grid inspection.'];
+            }
+            if (!$inspectionDone) {
+                return ['icon' => 'grid_on', 'text' => "Continue — {$inspectedCount}/{$totalSamples} sample units done."];
+            }
+            return ['icon' => 'task_alt', 'text' => 'Inspection complete — notify your Lead Auditor.'];
+        }
+
+        if ($user->role === 'supervisor') {
+            if ($this->status === 'selesai') {
+                return ['icon' => 'description', 'text' => 'Certificate ready for download.'];
+            }
+            return ['icon' => 'schedule', 'text' => "In progress — {$inspectedCount}/{$totalSamples} sample units inspected."];
+        }
+
+        return ['icon' => 'info', 'text' => ''];
+    }
+
     public function scopeVisibleTo($query, User $user)
     {
         return match ($user->role) {
