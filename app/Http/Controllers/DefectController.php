@@ -117,7 +117,7 @@ class DefectController extends Controller
             ->with('success', 'Defect deleted.');
     }
 
-private const TRANSITIONS = [
+    private const TRANSITIONS = [
         'OPEN'                 => ['IN_PROGRESS'],
         'IN_PROGRESS'          => ['PENDING_VERIFICATION'],
         'PENDING_VERIFICATION' => ['RESOLVED', 'IN_PROGRESS'],
