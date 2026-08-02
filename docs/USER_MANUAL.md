@@ -4,6 +4,9 @@
 
 > Updated 2026-08-02 to reflect the simplified 3-role system (Admin, Inspector, Contractor), per-role project/defect visibility, and the 4-state defect lifecycle.
 
+![Inspector Portal sign-in screen](screenshots/01-login.png)
+*The sign-in screen every role shares — the same login form routes Admin, Inspector, and Contractor to their own scoped view of the system.*
+
 ---
 
 ## 1. System Overview
@@ -17,6 +20,9 @@ flowchart LR
     C --> D["4. Defect Tracking (Open -> In Progress -> Pending Verification -> Resolved)"]
     D --> E["5. G-IDS Score & Signed PDF"]
 ```
+
+![Admin dashboard showing project totals, average G-IDS performance, and the Action Required widget](screenshots/02-dashboard.png)
+*The Dashboard is the landing page for Admin and Inspector — project totals, the average score across every visible project, and an Action Required list of what still needs attention.*
 
 ---
 
@@ -71,6 +77,9 @@ graph TD
 
 **What "scoped" means in practice:** opening a project or defect you don't have visibility into — whether from a list or by typing the URL directly — returns a "Forbidden" page for every role except Admin. This applies uniformly across Projects, the Dashboard, Defects, and Reports.
 
+![Projects list showing status, progress bar, and score per row](screenshots/03-projects-index.png)
+*The Projects list — the same page renders different rows for each role: Admin sees every project, Inspector and Contractor only ever see rows they're assigned to.*
+
 ---
 
 ## 3. Operational Role Handoff & Project Lifecycle
@@ -96,6 +105,9 @@ sequenceDiagram
     Insp->>Admin: 7. System recalculates Final G-IDS Score & Rating (GOOD/MODERATE/WEAK); Inspector is notified once inspection is 100% done and all defects are resolved
     Admin->>Admin: 8. Admin clicks "Mark as Completed" (only enabled once inspection is done and every defect is resolved), then exports the Signed G-IDS PDF Certificate
 ```
+
+![Project detail page with the Case Ledger showing all four phases and their current state](screenshots/05-project-show.png)
+*The project page's Case Ledger is the single place this whole handoff is tracked — each row shows who's responsible, the key metric, and one action. Here, Field Inspection is active (green) and Defect Rectification needs attention (red) — Final Certificate stays locked until both clear.*
 
 ---
 
@@ -135,6 +147,9 @@ stateDiagram-v2
    - **Trigger**: The Inspector (or Admin) conducts a re-inspection of the specified location on site.
    - **Action**: Upon verifying the defect has been properly rectified to G-IDS standards, they click **Confirm Resolved**. If the repair is inadequate, they instead click **Reject – Not Fixed**, sending it back to `IN_PROGRESS` for the Contractor to redo.
 
+![Defects Register showing one defect in each of the four lifecycle states with their matching action buttons](screenshots/10-defects-register.png)
+*All four states side by side: Open shows Start Repair, In Progress shows Mark Settled, Pending Verification shows Confirm Resolved / Reject – Not Fixed, and Resolved shows Reopen.*
+
 ---
 
 ## 5. UI/UX Feature Highlights
@@ -149,13 +164,21 @@ To eliminate horizontal side-scrolling on mobile and tablet screens during site 
    - Sample units are stacked as vertical cards.
    - 8 architectural components are rendered in a 2 to 4-column touch grid with high-contrast `PASS`, `FAIL`, or `PENDING` badges.
    - **Zero side-scrolling required**.
+
+   ![Components Grid, Cards View — sample units stacked with component tiles showing PASS/FAIL](screenshots/07-components-grid-cards.png)
+
 2. **Matrix Table View (Spreadsheet Mode)**:
    - Traditional table grid for desktop monitors and office review.
+
+   ![Components Grid, Matrix Table View — same data as a spreadsheet-style grid](screenshots/08-components-grid-matrix.png)
 
 ### 📷 Spatie Media Library Photo Storage
 - Automated thumbnail generation ($300 \times 300\text{px}$) for fast table rendering.
 - HD preview conversion ($800 \times 600\text{px}$) for PDF reports.
 - Media items attached to inspection assessments are automatically copied to auto-spawned defect records.
+
+![5-point inspection form for a single component, showing a FAIL result and photo upload](screenshots/09-inspection-form.png)
+*The 5-point assessment form for one component — Finishing, Hollow, Levelling, Joint/Gap, and Crack, with the calculated PASS/FAIL result and photo evidence upload.*
 
 ### 🛡️ Modal Confirmation Dialogs
 - All destructive actions (Deleting Projects, Deleting Defects, Deleting User Accounts) are protected by an Alpine.js modal dialog (`x-modal-confirm`) requiring explicit confirmation.
@@ -180,6 +203,9 @@ $$S_{\text{total}} = S_{\text{arch}} + S_{\text{M\&E}} + S_{\text{external}}$$
 > - 🟡 **MODERATE RATING**: Total score $\ge 70.00$ pts and $< 85.00$ pts
 > - 🔴 **WEAK RATING**: Total score $< 70.00$ pts
 
+![G-IDS Score page with the speedometer gauge and component pass-rate breakdown table](screenshots/11-score-page.png)
+*The G-IDS Score page: the gauge's needle position and red/amber/green zones map directly to the rating thresholds above, with the full component-by-component breakdown below.*
+
 ---
 
 ## 7. Step-by-Step Operating Instructions
@@ -191,10 +217,14 @@ $$S_{\text{total}} = S_{\text{arch}} + S_{\text{M\&E}} + S_{\text{external}}$$
 4. Select the **Assigned Inspector** and **Assigned Contractor** from the dropdowns. (An Inspector creating a project instead is auto-assigned to themselves, and can still choose the Contractor — only Admin can assign the Inspector field.)
 5. Click **Create Project**.
 
+![New Project form with specifications, GFA, and sample-unit calculation](screenshots/04-project-create.png)
+
 ### Step 2: Sample Location Setup (Admin / Inspector)
 1. System automatically redirects to **Sample Setup**.
 2. Select default location names (e.g. *Master Bedroom*, *Living Room*, *Kitchen*) or enter custom room names.
 3. Click **Save Locations**. For Admin, this pauses their part of setup — you're returned to the Project Overview page. The project now appears under the assigned Inspector's **My Assigned Projects**, ready for on-site inspection. (An Inspector doing their own setup instead continues straight into the Components Grid.)
+
+![Sample Setup page listing each sample unit's location name and Inspected/Pending status](screenshots/06-sample-setup.png)
 
 ### Step 3: Component Inspection Matrix Grid (Inspector)
 1. Open **Components Grid** (defaults to mobile-friendly **Cards View**) from **My Assigned Projects**.
@@ -222,6 +252,9 @@ $$S_{\text{total}} = S_{\text{arch}} + S_{\text{M\&E}} + S_{\text{external}}$$
 1. Once inspection is 100% done and every defect is `RESOLVED`, the project page's **Final Certificate** panel shows a **Mark as Completed** button.
 2. Click it to formally close out the project (status becomes **Completed**) — this is a deliberate action; nothing marks a project Completed automatically.
 3. Click **Generate Official PDF Report** to view or print the formal signed G-IDS Inspection Certificate.
+
+![Formal G-IDS Inspection Certificate showing the final score, project metadata, and component breakdown](screenshots/12-report-certificate.png)
+*The signed certificate — only reachable once inspection is 100% done and every defect is `RESOLVED`. Its "Export Signed PDF Certificate" button in the top bar produces the downloadable file.*
 
 ---
 
