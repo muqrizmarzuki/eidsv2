@@ -974,7 +974,7 @@ git commit -m "feat: scope Projects/Dashboard/Defects lists to visibleTo()"
 - Test: `tests/Feature/ContractorRouteAccessTest.php`
 
 **Interfaces:**
-- Produces: `defects.advance` route name (replacing `defects.toggle`, wired up in Task 9); Contractor gets `403` on dashboard/projects/reports routes.
+- Produces: `defects.advance` route name (added alongside the still-functional `defects.toggle`, wired up to a not-yet-existing controller method in Task 9); Contractor gets `403` on dashboard/projects/reports routes.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1077,6 +1077,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/defects/{defect}/edit',    [DefectController::class, 'edit'])->name('defects.edit');
         Route::put('/defects/{defect}',         [DefectController::class, 'update'])->name('defects.update');
         Route::delete('/defects/{defect}',      [DefectController::class, 'destroy'])->name('defects.destroy');
+        Route::post('/defects/{defect}/toggle', [DefectController::class, 'toggleStatus'])->name('defects.toggle');
     });
 
     Route::middleware('role:admin,lead_auditor,inspector,contractor')->group(function () {
@@ -1105,7 +1106,7 @@ Route::middleware('auth')->group(function () {
 });
 ```
 
-Note: `defects.toggle` no longer exists as a route name — `resources/views/defects/index.blade.php` still references it via `route('defects.toggle', $defect)`, which will now throw a `RouteNotFoundException`. This is fixed in Task 10, not here — Task 9 introduces the `advanceStatus()` controller method this route points to, and Task 10 rewrites the view to stop referencing `defects.toggle`. Do not skip ahead; the view breakage is transient and resolved by Task 10.
+Note: this task ADDS the new `defects.advance` route alongside the existing `defects.toggle` route — it does NOT remove `defects.toggle` or touch `DefectController::toggleStatus()`. `defects.advance` points at `DefectController::advanceStatus()`, a method that doesn't exist yet (added in Task 9) — registering a route to a not-yet-existing controller method is harmless in Laravel; it only fails if that specific route is actually invoked, and nothing invokes `defects.advance` until Task 9/10. Keeping `defects.toggle` alive means `resources/views/defects/index.blade.php` (which still calls `route('defects.toggle', $defect)`) keeps working completely unchanged — no transient breakage, no dependency on jumping ahead to later tasks. Task 10 is what finally retires `defects.toggle` and `toggleStatus()`, in the same commit where it rewrites the view to stop referencing them.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -1299,7 +1300,7 @@ git commit -m "feat: enforce visibility on single-resource project/defect routes
 ### Task 9: Defect status transition guard (`advanceStatus`)
 
 **Files:**
-- Modify: `app/Http/Controllers/DefectController.php` (replace `toggleStatus` with `advanceStatus`)
+- Modify: `app/Http/Controllers/DefectController.php` (add `advanceStatus`, alongside the still-existing `toggleStatus` — do not remove `toggleStatus` in this task)
 - Test: `tests/Feature/DefectAdvanceStatusTest.php`
 
 **Interfaces:**
@@ -1413,9 +1414,9 @@ class DefectAdvanceStatusTest extends TestCase
 Run: `php artisan test --filter=DefectAdvanceStatusTest`
 Expected: FAIL — `advanceStatus` method / route doesn't exist yet (route was added in Task 7 pointing at this not-yet-written method).
 
-- [ ] **Step 3: Replace `toggleStatus` with `advanceStatus`**
+- [ ] **Step 3: Add `advanceStatus` alongside the existing `toggleStatus`**
 
-In `app/Http/Controllers/DefectController.php`, delete the `toggleStatus()` method entirely and replace it with:
+In `app/Http/Controllers/DefectController.php`, leave the existing `toggleStatus()` method exactly as it is (it's still wired to the `defects.toggle` route and still used by the current view) and add this new method right after it:
 
 ```php
     private const TRANSITIONS = [
@@ -1463,7 +1464,7 @@ Expected: PASS (6 tests)
 
 ```bash
 git add app/Http/Controllers/DefectController.php tests/Feature/DefectAdvanceStatusTest.php
-git commit -m "feat: replace defect toggleStatus with role-gated advanceStatus"
+git commit -m "feat: add role-gated advanceStatus alongside existing toggleStatus"
 ```
 
 ---
@@ -1472,10 +1473,12 @@ git commit -m "feat: replace defect toggleStatus with role-gated advanceStatus"
 
 **Files:**
 - Modify: `resources/views/defects/index.blade.php`
+- Modify: `app/Http/Controllers/DefectController.php` (remove the now-unused `toggleStatus()`)
+- Modify: `routes/web.php` (remove the now-unused `defects.toggle` route)
 - Test: `tests/Feature/DefectsIndexUiTest.php`
 
 **Interfaces:**
-- Consumes: `defects.advance` route (Task 7/9)
+- Consumes: `defects.advance` route (Task 7), `DefectController::advanceStatus()` (Task 9)
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1535,7 +1538,7 @@ class DefectsIndexUiTest extends TestCase
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `php artisan test --filter=DefectsIndexUiTest`
-Expected: FAIL — the view still uses the old single toggle icon referencing the now-removed `defects.toggle` route (throws `RouteNotFoundException`), and title is still "Defects Register" for everyone.
+Expected: FAIL — the view still renders the old single toggle icon (no "Start Repair"/"Confirm Resolved"/"Awaiting Verification" text anywhere), and the title is still "Defects Register" for everyone.
 
 - [ ] **Step 3: Update the page title/breadcrumb**
 
@@ -1704,18 +1707,30 @@ with:
                                 </td>
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [ ] **Step 5: Retire the now-unused `toggleStatus()` and `defects.toggle` route**
+
+The view no longer references `route('defects.toggle', ...)` anywhere after Step 4's replacement — confirm with `grep -rn "defects.toggle" resources/views/` (expect no matches). Now remove what nothing points to anymore:
+
+In `app/Http/Controllers/DefectController.php`, delete the `toggleStatus()` method entirely (it's the old cyclical `OPEN -> IN_PROGRESS -> RESOLVED -> OPEN` method that `advanceStatus()`, added in Task 9, has fully replaced).
+
+In `routes/web.php`, delete this line from the `role:admin,lead_auditor,inspector` Defects group:
+```php
+        Route::post('/defects/{defect}/toggle', [DefectController::class, 'toggleStatus'])->name('defects.toggle');
+```
+
+- [ ] **Step 6: Run test to verify it passes**
 
 Run: `php artisan test --filter=DefectsIndexUiTest`
 Expected: PASS
 
-Run: `php artisan test` (full suite) to confirm Task 6's `DefectListScopingTest` and Task 7's `ContractorRouteAccessTest` still pass now that the view no longer references the dead `defects.toggle` route.
+Run: `php artisan test` (full suite) to confirm nothing else referenced `defects.toggle`/`toggleStatus` and everything is still green now that both are gone.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add resources/views/defects/index.blade.php tests/Feature/DefectsIndexUiTest.php
-git commit -m "feat: role/state-aware defect action buttons, My Defects relabel"
+git add resources/views/defects/index.blade.php app/Http/Controllers/DefectController.php \
+        routes/web.php tests/Feature/DefectsIndexUiTest.php
+git commit -m "feat: role/state-aware defect action buttons, retire toggleStatus"
 ```
 
 ---
