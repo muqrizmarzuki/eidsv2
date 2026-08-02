@@ -49,6 +49,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     });
 
+    Route::middleware('role:admin,lead_auditor')->group(function () {
+        Route::post('/projects/{project}/complete', [ProjectController::class, 'markComplete'])->name('projects.complete');
+    });
+
     Route::middleware('role:admin,lead_auditor,inspector')->group(function () {
         Route::get('/projects/{project}/edit',  [ProjectController::class, 'edit'])->name('projects.edit');
         Route::put('/projects/{project}',       [ProjectController::class, 'update'])->name('projects.update');

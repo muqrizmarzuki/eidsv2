@@ -159,16 +159,35 @@
                     </div>
 
                     {{-- Phase 4 --}}
-                    <div class="p-4 rounded-xl border {{ $project->status === 'selesai' ? 'border-emerald-300 bg-emerald-50/60' : 'border-gray-200 bg-gray-50/60' }}">
+                    @php
+                        $readyToComplete = $project->status !== 'selesai' && $project->inspection_progress >= 100 && $openDefects === 0;
+                        $canMarkComplete = auth()->user()->isAdmin() || auth()->user()->isLeadAuditor();
+                    @endphp
+                    <div class="p-4 rounded-xl border {{ $project->status === 'selesai' ? 'border-emerald-300 bg-emerald-50/60' : ($readyToComplete ? 'border-eids-accent/40 bg-eids-primary/5' : 'border-gray-200 bg-gray-50/60') }}">
                         <div class="flex items-center gap-2 mb-1.5">
-                            <span class="w-6 h-6 rounded-full {{ $project->status === 'selesai' ? 'bg-emerald-700' : 'bg-gray-400' }} text-white text-[11px] font-extrabold flex items-center justify-center">4</span>
+                            <span class="w-6 h-6 rounded-full {{ $project->status === 'selesai' ? 'bg-emerald-700' : ($readyToComplete ? 'bg-eids-primary' : 'bg-gray-400') }} text-white text-[11px] font-extrabold flex items-center justify-center">4</span>
                             <span class="text-xs font-extrabold text-gray-900">Final Certificate</span>
                         </div>
                         <p class="text-[11px] text-gray-600 font-medium">G-IDS Score: <strong>{{ number_format($project->overall_score, 1) }}%</strong></p>
                         <p class="text-[11px] text-gray-500 mt-0.5">Rating: <strong>{{ $project->rating }}</strong></p>
-                        <a href="{{ route('reports.show', $project) }}" class="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-eids-primary hover:underline">
-                            Official PDF Certificate &rarr;
-                        </a>
+
+                        @if($project->status === 'selesai')
+                            <a href="{{ route('reports.show', $project) }}" class="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-eids-primary hover:underline">
+                                Official PDF Certificate &rarr;
+                            </a>
+                        @elseif($readyToComplete && $canMarkComplete)
+                            <form method="POST" action="{{ route('projects.complete', $project) }}" class="mt-2.5">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-[36px] bg-eids-primary text-white text-[11px] font-extrabold rounded-lg hover:bg-eids-dark transition">
+                                    <span class="material-symbols-outlined text-sm">verified</span>
+                                    Mark as Completed
+                                </button>
+                            </form>
+                        @elseif($readyToComplete)
+                            <p class="mt-2.5 text-[11px] font-bold text-eids-primary">Ready &mdash; awaiting Lead Auditor sign-off.</p>
+                        @else
+                            <p class="mt-2.5 text-[11px] text-gray-500 font-medium">Unlocks once inspection is done and all defects are resolved.</p>
+                        @endif
                     </div>
                 </div>
             </div>

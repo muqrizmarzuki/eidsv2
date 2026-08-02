@@ -105,7 +105,7 @@ class ProjectController extends Controller
             'building_type'   => 'required|in:teres,semi_d,banglo',
             'total_units'     => 'required|integer|min:1',
             'floor_area_sqm'  => 'required|numeric|min:1',
-            'status'          => 'required|in:draf,dalam_pemeriksaan,selesai',
+            'status'          => 'required|in:draf,dalam_pemeriksaan',
             'assigned_to'     => 'nullable|exists:users,id',
             'assigned_contractor_id' => 'nullable|exists:users,id',
             'supervisor_ids'         => 'nullable|array',
@@ -179,6 +179,13 @@ class ProjectController extends Controller
         $supervisorIds = $request->has('supervisors_submitted') ? ($data['supervisor_ids'] ?? []) : null;
         unset($data['supervisor_ids']);
 
+        if ($data['status'] === 'selesai' && $project->status !== 'selesai') {
+            // Completing a project is only allowed through the explicit "Mark as Completed"
+            // action (see markComplete()), which enforces inspection-done + defects-resolved.
+            // This form's status field can only move a project between Draft and In Inspection.
+            $data['status'] = $project->status;
+        }
+
         if (!auth()->user()->isAdmin() && !auth()->user()->isLeadAuditor()) {
             // Inspector may still change the Assigned Contractor; Supervisors and the
             // Assigned Inspector field remain Admin/Lead-Auditor-only.
@@ -196,6 +203,32 @@ class ProjectController extends Controller
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Project updated successfully.');
+    }
+
+    public function markComplete(Project $project)
+    {
+        $this->guardProjectVisible($project);
+        abort_unless(auth()->user()->isAdmin() || auth()->user()->isLeadAuditor(), 403);
+
+        if ($project->status === 'selesai') {
+            return redirect()->route('projects.show', $project);
+        }
+
+        if ($project->inspection_progress < 100) {
+            return redirect()->route('projects.show', $project)
+                ->with('error', 'Inspection is not yet complete — every sample unit must be assessed first.');
+        }
+
+        $openOrPending = $project->defects()->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
+        if ($openOrPending > 0) {
+            return redirect()->route('projects.show', $project)
+                ->with('error', "{$openOrPending} defect(s) still need to be resolved before this project can be marked complete.");
+        }
+
+        $project->update(['status' => 'selesai']);
+
+        return redirect()->route('projects.show', $project)
+            ->with('success', 'Project marked as Completed. The official certificate is now available.');
     }
 
     public function destroy(Project $project)

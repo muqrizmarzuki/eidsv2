@@ -82,7 +82,6 @@
                             class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
                         <option value="draf"              {{ old('status','dalam_pemeriksaan') === 'draf'              ? 'selected' : '' }}>Draft</option>
                         <option value="dalam_pemeriksaan" {{ old('status','dalam_pemeriksaan') === 'dalam_pemeriksaan' ? 'selected' : '' }}>In Inspection</option>
-                        <option value="selesai"           {{ old('status') === 'selesai'           ? 'selected' : '' }}>Completed</option>
                     </select>
                 </div>
 

@@ -71,15 +71,27 @@
                     @error('building_type')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Project Status *</label>
-                    <select name="status" required
-                            class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
-                        <option value="draf"              {{ old('status', $project->status) === 'draf'              ? 'selected' : '' }}>Draft</option>
-                        <option value="dalam_pemeriksaan" {{ old('status', $project->status) === 'dalam_pemeriksaan' ? 'selected' : '' }}>In Inspection</option>
-                        <option value="selesai"           {{ old('status', $project->status) === 'selesai'           ? 'selected' : '' }}>Completed</option>
-                    </select>
-                </div>
+                @if($project->status === 'selesai')
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Project Status</label>
+                        <div class="w-full min-h-[44px] px-4 py-2.5 border border-emerald-200 bg-emerald-50 rounded-xl text-sm font-bold text-emerald-800 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base">verified</span>
+                            Completed
+                        </div>
+                        <p class="mt-1.5 text-xs text-gray-500 font-medium">This project is complete and locked. Status can't be changed here.</p>
+                        <input type="hidden" name="status" value="selesai">
+                    </div>
+                @else
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Project Status *</label>
+                        <select name="status" required
+                                class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
+                            <option value="draf"              {{ old('status', $project->status) === 'draf'              ? 'selected' : '' }}>Draft</option>
+                            <option value="dalam_pemeriksaan" {{ old('status', $project->status) === 'dalam_pemeriksaan' ? 'selected' : '' }}>In Inspection</option>
+                        </select>
+                        <p class="mt-1.5 text-xs text-gray-500 font-medium">Marking a project "Completed" happens via the sign-off button once inspection is finished and all defects are resolved.</p>
+                    </div>
+                @endif
 
                 @if(auth()->user()->isAdmin() || auth()->user()->isLeadAuditor())
                 <div>
