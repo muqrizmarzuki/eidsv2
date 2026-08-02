@@ -88,8 +88,10 @@ class ProjectController extends Controller
 
     public function create()
     {
-        $inspectors = User::whereIn('role', ['admin', 'lead_auditor', 'inspector'])->orderBy('name')->get();
-        return view('projects.create', compact('inspectors'));
+        $inspectors  = User::whereIn('role', ['admin', 'lead_auditor', 'inspector'])->orderBy('name')->get();
+        $contractors = User::where('role', 'contractor')->orderBy('name')->get();
+        $supervisors = User::where('role', 'supervisor')->orderBy('name')->get();
+        return view('projects.create', compact('inspectors', 'contractors', 'supervisors'));
     }
 
     public function store(Request $request)
@@ -105,12 +107,24 @@ class ProjectController extends Controller
             'floor_area_sqm'  => 'required|numeric|min:1',
             'status'          => 'required|in:draf,dalam_pemeriksaan,selesai',
             'assigned_to'     => 'nullable|exists:users,id',
+            'assigned_contractor_id' => 'nullable|exists:users,id',
+            'supervisor_ids'         => 'nullable|array',
+            'supervisor_ids.*'       => 'exists:users,id',
         ]);
+
+        $supervisorIds = $data['supervisor_ids'] ?? [];
+        unset($data['supervisor_ids']);
+
+        if (!auth()->user()->isAdmin() && !auth()->user()->isLeadAuditor()) {
+            unset($data['assigned_contractor_id']);
+            $supervisorIds = [];
+        }
 
         $data['calculated_samples'] = max(1, (int) ceil($data['floor_area_sqm'] / (float) setting('sample_divisor', 60)));
         $data['created_by']         = auth()->id();
 
         $project = Project::create($data);
+        $project->supervisors()->sync($supervisorIds);
 
         // Auto-generate sample slots
         $locations = json_decode(setting('default_locations', '[]'), true) ?: config('eids.default_locations');
@@ -130,8 +144,10 @@ class ProjectController extends Controller
     {
         $this->guardProjectVisible($project);
 
-        $inspectors = User::whereIn('role', ['admin', 'lead_auditor', 'inspector'])->orderBy('name')->get();
-        return view('projects.edit', compact('project', 'inspectors'));
+        $inspectors  = User::whereIn('role', ['admin', 'lead_auditor', 'inspector'])->orderBy('name')->get();
+        $contractors = User::where('role', 'contractor')->orderBy('name')->get();
+        $supervisors = User::where('role', 'supervisor')->orderBy('name')->get();
+        return view('projects.edit', compact('project', 'inspectors', 'contractors', 'supervisors'));
     }
 
     public function update(Request $request, Project $project)
@@ -149,9 +165,24 @@ class ProjectController extends Controller
             'floor_area_sqm'  => 'required|numeric|min:1',
             'status'          => 'required|in:draf,dalam_pemeriksaan,selesai',
             'assigned_to'     => 'nullable|exists:users,id',
+            'assigned_contractor_id' => 'nullable|exists:users,id',
+            'supervisor_ids'         => 'nullable|array',
+            'supervisor_ids.*'       => 'exists:users,id',
         ]);
 
+        $supervisorIds = $data['supervisor_ids'] ?? null;
+        unset($data['supervisor_ids']);
+
+        if (!auth()->user()->isAdmin() && !auth()->user()->isLeadAuditor()) {
+            unset($data['assigned_contractor_id']);
+            $supervisorIds = null;
+        }
+
         $project->update($data);
+
+        if ($supervisorIds !== null) {
+            $project->supervisors()->sync($supervisorIds);
+        }
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Project updated successfully.');

@@ -100,6 +100,35 @@
                     @error('assigned_to')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Assigned Contractor</label>
+                    <select name="assigned_contractor_id"
+                            class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
+                        <option value="">Unassigned</option>
+                        @foreach($contractors as $contractor)
+                            <option value="{{ $contractor->id }}" {{ old('assigned_contractor_id') == $contractor->id ? 'selected' : '' }}>
+                                {{ $contractor->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('assigned_contractor_id')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Supervisors / Client Viewers</label>
+                    <div class="flex flex-wrap gap-3 p-3 border border-gray-200 rounded-xl">
+                        @forelse($supervisors as $supervisor)
+                            <label class="flex items-center gap-1.5 text-sm font-medium">
+                                <input type="checkbox" name="supervisor_ids[]" value="{{ $supervisor->id }}"
+                                       {{ collect(old('supervisor_ids', []))->contains($supervisor->id) ? 'checked' : '' }}>
+                                {{ $supervisor->name }}
+                            </label>
+                        @empty
+                            <span class="text-xs text-gray-400 italic">No supervisor accounts yet.</span>
+                        @endforelse
+                    </div>
+                </div>
+
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Total Project Units *</label>
                     <input type="number" name="total_units" value="{{ old('total_units', 1) }}" min="1" required
