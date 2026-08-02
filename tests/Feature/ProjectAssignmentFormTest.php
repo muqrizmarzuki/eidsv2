@@ -55,4 +55,20 @@ class ProjectAssignmentFormTest extends TestCase
 
         $this->assertNull($project->fresh()->assigned_contractor_id);
     }
+
+    public function test_admin_can_clear_all_supervisors_via_edit(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $supervisorA = User::factory()->create(['role' => 'supervisor']);
+        $supervisorB = User::factory()->create(['role' => 'supervisor']);
+        $project = Project::factory()->create();
+        $project->supervisors()->sync([$supervisorA->id, $supervisorB->id]);
+
+        $this->actingAs($admin)->put("/projects/{$project->id}", $this->validPayload([
+            'project_no'            => $project->project_no,
+            'supervisors_submitted' => '1',
+        ]));
+
+        $this->assertCount(0, $project->fresh()->supervisors);
+    }
 }

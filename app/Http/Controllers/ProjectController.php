@@ -170,7 +170,7 @@ class ProjectController extends Controller
             'supervisor_ids.*'       => 'exists:users,id',
         ]);
 
-        $supervisorIds = $data['supervisor_ids'] ?? null;
+        $supervisorIds = $request->has('supervisors_submitted') ? ($data['supervisor_ids'] ?? []) : null;
         unset($data['supervisor_ids']);
 
         if (!auth()->user()->isAdmin() && !auth()->user()->isLeadAuditor()) {
