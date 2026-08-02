@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+    private function homeRoute(User $user): string
+    {
+        return $user->isContractor() ? route('defects.index') : route('dashboard');
+    }
+
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return redirect($this->homeRoute(Auth::user()));
         }
         return view('auth.login');
     }
@@ -26,7 +32,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
-            return redirect()->intended(route('dashboard'))
+            return redirect()->intended($this->homeRoute(Auth::user()))
                 ->with('success', 'Selamat datang, ' . Auth::user()->name . '!');
         }
 

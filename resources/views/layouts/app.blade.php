@@ -49,10 +49,14 @@
 
             {{-- Navigation Links --}}
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                <x-nav-item route="dashboard"      icon="grid_view" label="Dashboard" />
-                <x-nav-item route="projects.index" icon="domain"    label="Projects" :match="['projects.*']" />
-                <x-nav-item route="defects.index"  icon="warning"   label="Defects Register" />
-                <x-nav-item route="reports.index"  icon="description" label="G-IDS Reports" :match="['reports.*']" />
+                @if(auth()->user()->isContractor())
+                    <x-nav-item route="defects.index"  icon="warning"   label="My Defects" />
+                @else
+                    <x-nav-item route="dashboard"      icon="grid_view" label="Dashboard" />
+                    <x-nav-item route="projects.index" icon="domain"    label="Projects" :match="['projects.*']" />
+                    <x-nav-item route="defects.index"  icon="warning"   label="Defects Register" />
+                    <x-nav-item route="reports.index"  icon="description" label="G-IDS Reports" :match="['reports.*']" />
+                @endif
 
                 @if(auth()->user()->isAdmin())
                     <div class="pt-6 pb-2 px-3">
