@@ -13,7 +13,7 @@
 @endsection
 
 @section('content')
-<div class="max-w-5xl mx-auto flex-1 flex flex-col w-full"
+<div class="max-w-5xl mx-auto flex flex-col w-full min-h-[calc(100dvh-6rem)] sm:min-h-[calc(100dvh-7rem)] lg:min-h-[calc(100dvh-8rem)]"
      x-data="{
          finishing:  '{{ $assessment?->finishing_status ?? 'PASS' }}',
          hollow:     '{{ $assessment?->hollow_status    ?? 'PASS' }}',

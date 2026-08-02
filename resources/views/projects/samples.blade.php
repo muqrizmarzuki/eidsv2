@@ -27,7 +27,7 @@
 @endsection
 
 @section('content')
-<div class="max-w-5xl mx-auto flex-1 flex flex-col w-full">
+<div class="max-w-5xl mx-auto flex flex-col w-full min-h-[calc(100dvh-6rem)] sm:min-h-[calc(100dvh-7rem)] lg:min-h-[calc(100dvh-8rem)]">
 
     {{-- Pipeline Step Indicator --}}
     <x-workflow-step step="2" :project="$project" />
