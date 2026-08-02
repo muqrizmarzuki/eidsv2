@@ -263,7 +263,7 @@
         </div>
 
         {{-- Primary Actions Bar --}}
-        <div class="bg-white rounded-2xl border border-gray-200 shadow-md p-4 sticky bottom-4 flex items-center justify-between gap-3 z-20 flex-wrap">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-md p-4 flex items-center justify-between gap-3 flex-wrap">
             <a href="{{ route('projects.components', $project) }}"
                class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-1.5">
                 <span class="material-symbols-outlined text-base">grid_on</span>

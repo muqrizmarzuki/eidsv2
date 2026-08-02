@@ -165,7 +165,7 @@
         </div>
 
         {{-- Primary Action buttons --}}
-        <div class="flex justify-between items-center gap-4 bg-white rounded-2xl border border-gray-200 shadow-md p-4 sticky bottom-4 z-20">
+        <div class="flex justify-between items-center gap-4 bg-white rounded-2xl border border-gray-200 shadow-md p-4">
             <a href="{{ route('projects.show', $project) }}"
                class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
                 &larr; Return to Project
