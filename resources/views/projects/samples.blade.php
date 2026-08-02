@@ -27,7 +27,7 @@
 @endsection
 
 @section('content')
-<div class="max-w-5xl mx-auto">
+<div class="max-w-5xl mx-auto flex-1 flex flex-col w-full">
 
     {{-- Pipeline Step Indicator --}}
     <x-workflow-step step="2" :project="$project" />
@@ -48,7 +48,7 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('projects.samples.store', $project) }}">
+    <form method="POST" action="{{ route('projects.samples.store', $project) }}" class="flex-1 flex flex-col">
         @csrf
 
         {{-- Sample units card --}}
@@ -165,7 +165,7 @@
         </div>
 
         {{-- Primary Action buttons --}}
-        <div class="flex justify-between items-center gap-4 bg-white rounded-2xl border border-gray-200 shadow-md p-4">
+        <div class="flex justify-between items-center gap-4 bg-white rounded-2xl border border-gray-200 shadow-md p-4 mt-auto">
             <a href="{{ route('projects.show', $project) }}"
                class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
                 &larr; Return to Project
