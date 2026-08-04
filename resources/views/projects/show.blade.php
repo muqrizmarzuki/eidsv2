@@ -224,6 +224,10 @@
                         <dd class="text-gray-900 font-semibold">{{ $typeMap[$project->building_type] ?? $project->building_type }}</dd>
                     </div>
                     <div>
+                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Building Category (CIS 7:2021)</dt>
+                        <dd class="text-gray-900 font-semibold">Category {{ $project->building_category }}</dd>
+                    </div>
+                    <div>
                         <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Total Units</dt>
                         <dd class="text-gray-900 font-semibold">{{ number_format($project->total_units) }} units</dd>
                     </div>
@@ -255,6 +259,52 @@
                         <dd class="text-gray-900 font-semibold">{{ $project->created_at->format('d M Y') }}</dd>
                     </div>
                 </dl>
+            </div>
+
+            {{-- QP Declarations (Skim Coat / Water-tightness — Table 2's Material & functional test) --}}
+            @php
+                $qp = $project->qpDeclarations->keyBy('item_code');
+                $qpItems = [
+                    'QP_SKIM_COAT'       => 'Skim Coat or Prepacked Plaster',
+                    'QP_WATER_TIGHTNESS' => 'Wet-area Water-tightness Test',
+                ];
+            @endphp
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
+                        <span class="material-symbols-outlined text-eids-accent text-lg">fact_check</span>
+                        QP Declarations (Material &amp; Functional Test)
+                    </h2>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    @foreach($qpItems as $code => $label)
+                        @php $decl = $qp->get($code); @endphp
+                        <div class="px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <div class="text-sm font-bold text-gray-900">{{ $label }}</div>
+                                <div class="text-xs text-gray-500 mt-0.5">
+                                    @if($decl?->is_earned)
+                                        <span class="text-emerald-700 font-bold">Declared — evidence on file</span>
+                                    @else
+                                        <span class="text-amber-700 font-bold">Not yet declared</span>
+                                    @endif
+                                </div>
+                            </div>
+                            @if(auth()->user()->canInspect())
+                                <form method="POST" action="{{ route('projects.qp-declarations.update', $project) }}" enctype="multipart/form-data" class="flex items-center gap-2">
+                                    @csrf
+                                    <input type="hidden" name="item_code" value="{{ $code }}">
+                                    <input type="hidden" name="declared" value="1">
+                                    <input type="file" name="evidence" accept=".pdf,image/*" required
+                                           class="text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-eids-primary/10 file:text-eids-primary">
+                                    <button type="submit" class="min-h-[36px] px-3 py-1.5 bg-eids-primary text-white text-xs font-bold rounded-lg hover:bg-eids-dark transition">
+                                        Declare
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
             </div>
 
             {{-- Sample Units List --}}

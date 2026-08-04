@@ -33,46 +33,6 @@ class Setting extends Model
     {
         return [
             [
-                'key'         => 'sample_divisor',
-                'value'       => '60',
-                'label'       => 'Sample Divisor',
-                'description' => 'GFA is divided by this to calculate the number of required samples (N = ceil(GFA ÷ divisor)).',
-                'unit'        => 'm²',
-                'type'        => 'number',
-            ],
-            [
-                'key'         => 'levelling_max_mm',
-                'value'       => '3.0',
-                'label'       => 'Max Levelling Tolerance',
-                'description' => 'A levelling measurement above this value will be marked FAIL.',
-                'unit'        => 'mm',
-                'type'        => 'number',
-            ],
-            [
-                'key'         => 'joint_max_mm',
-                'value'       => '1.0',
-                'label'       => 'Max Joint / Gap Tolerance',
-                'description' => 'A joint/gap measurement above this value will be marked FAIL.',
-                'unit'        => 'mm',
-                'type'        => 'number',
-            ],
-            [
-                'key'         => 'me_score',
-                'value'       => '2.00',
-                'label'       => 'M&E Fixed Score',
-                'description' => 'Fixed points added for Mechanical & Electrical work (always awarded).',
-                'unit'        => 'pts',
-                'type'        => 'number',
-            ],
-            [
-                'key'         => 'external_score',
-                'value'       => '11.80',
-                'label'       => 'External Work Fixed Score',
-                'description' => 'Fixed points added for external / landscape work (always awarded).',
-                'unit'        => 'pts',
-                'type'        => 'number',
-            ],
-            [
                 'key'         => 'rating_baik',
                 'value'       => '85',
                 'label'       => 'GOOD Rating Threshold',

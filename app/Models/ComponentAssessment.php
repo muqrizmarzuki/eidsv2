@@ -13,18 +13,12 @@ class ComponentAssessment extends Model implements HasMedia
     use InteractsWithMedia;
 
     protected $fillable = [
-        'project_id', 'sample_id', 'component_code', 'component_name', 'weightage',
-        'finishing_status', 'hollow_status',
-        'levelling_mm', 'levelling_status',
-        'joint_mm', 'joint_status',
-        'crack_status', 'overall_sample_status',
-        'photo_path', 'remarks',
+        'project_id', 'sample_id', 'external_sample_id', 'component_code', 'na',
+        'overall_sample_status', 'photo_path', 'remarks',
     ];
 
     protected $casts = [
-        'levelling_mm' => 'decimal:2',
-        'joint_mm'     => 'decimal:2',
-        'weightage'    => 'decimal:2',
+        'na' => 'boolean',
     ];
 
     public function registerMediaCollections(): void
@@ -70,8 +64,18 @@ class ComponentAssessment extends Model implements HasMedia
         return $this->belongsTo(ProjectSample::class, 'sample_id');
     }
 
+    public function externalSample()
+    {
+        return $this->belongsTo(ExternalSample::class, 'external_sample_id');
+    }
+
     public function defect()
     {
         return $this->hasOne(Defect::class, 'assessment_id');
+    }
+
+    public function answers()
+    {
+        return $this->hasMany(AssessmentAnswer::class);
     }
 }

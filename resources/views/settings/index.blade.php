@@ -9,28 +9,23 @@
 @endsection
 
 @section('content')
-<div class="max-w-3xl mx-auto">
+<div class="max-w-4xl mx-auto">
 
     <form method="POST" action="{{ route('settings.update') }}">
         @csrf
 
-        {{-- Formula Parameters --}}
+        {{-- Rating Thresholds --}}
         <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
                 <span class="material-symbols-outlined text-eids-accent text-lg">calculate</span>
-                <h2 class="font-extrabold text-gray-900 text-sm">G-IDS Formula &amp; Scoring Parameters</h2>
+                <h2 class="font-extrabold text-gray-900 text-sm">G-IDS Rating Thresholds</h2>
             </div>
 
             <div class="divide-y divide-gray-100">
                 @php
                     $fields = [
-                        'sample_divisor'   => ['step' => '1',    'min' => '1'],
-                        'levelling_max_mm' => ['step' => '0.1',  'min' => '0.1'],
-                        'joint_max_mm'     => ['step' => '0.1',  'min' => '0.1'],
-                        'me_score'         => ['step' => '0.01', 'min' => '0'],
-                        'external_score'   => ['step' => '0.01', 'min' => '0'],
-                        'rating_baik'      => ['step' => '1',    'min' => '1'],
-                        'rating_sederhana' => ['step' => '1',    'min' => '1'],
+                        'rating_baik'      => ['step' => '1', 'min' => '1'],
+                        'rating_sederhana' => ['step' => '1', 'min' => '1'],
                     ];
                 @endphp
 
@@ -137,40 +132,171 @@
 
     </form>
 
-    {{-- Component Registry (Read-only) --}}
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
-        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-eids-accent text-lg">construction</span>
-                <h2 class="font-extrabold text-gray-900 text-sm">Architectural Component Weightage Registry ({{ count($components) }})</h2>
+    {{-- CIS 7:2021 Weightage & Sampling Tables --}}
+    <form method="POST" action="{{ route('settings.weightage.update') }}">
+        @csrf
+
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                <span class="material-symbols-outlined text-eids-accent text-lg">gavel</span>
+                <h2 class="font-extrabold text-gray-900 text-sm">CIS 7:2021 — Overall Weightage by Building Category (Table 1)</h2>
             </div>
-            <span class="text-xs text-gray-500 font-mono font-semibold">Configured in <code class="bg-gray-100 px-2 py-0.5 rounded text-eids-primary">config/eids.php</code></span>
-        </div>
-        <table class="w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider font-bold">
-                <tr>
-                    <th class="px-6 py-3.5 text-left">Code</th>
-                    <th class="px-4 py-3.5 text-left">Component Name</th>
-                    <th class="px-6 py-3.5 text-right">Weightage</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @php $totalWeight = 0; @endphp
-                @foreach($components as $code => $comp)
-                    @php $totalWeight += $comp['weightage']; @endphp
-                    <tr class="hover:bg-gray-50/50">
-                        <td class="px-6 py-3.5 font-mono text-xs font-extrabold text-eids-primary">{{ $code }}</td>
-                        <td class="px-4 py-3.5 text-gray-900 font-semibold">{{ $comp['name'] }}</td>
-                        <td class="px-6 py-3.5 text-right font-extrabold text-gray-900 font-mono">{{ $comp['weightage'] }}%</td>
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider font-bold">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Category</th>
+                        <th class="px-4 py-3 text-center">Architectural %</th>
+                        <th class="px-4 py-3 text-center">M&amp;E %</th>
+                        <th class="px-4 py-3 text-center">External %</th>
                     </tr>
-                @endforeach
-                <tr class="bg-eids-primary/5 border-t-2 border-eids-primary/20">
-                    <td class="px-6 py-4 font-extrabold text-eids-primary" colspan="2">Total Architectural Component Weight</td>
-                    <td class="px-6 py-4 text-right font-extrabold text-eids-primary text-base font-mono">{{ $totalWeight }}%</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($overallWeights as $row)
+                        <tr>
+                            <td class="px-6 py-3 font-extrabold text-eids-primary">{{ $row->building_category }}</td>
+                            @foreach(['architectural_pct', 'me_pct', 'external_pct'] as $field)
+                                <td class="px-4 py-3 text-center">
+                                    <input type="number" step="0.01" min="0" max="100"
+                                           name="overall[{{ $row->building_category }}][{{ $field }}]"
+                                           value="{{ old("overall.{$row->building_category}.{$field}", $row->$field) }}"
+                                           class="w-24 min-h-[38px] px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center font-mono font-bold focus:outline-none focus:ring-2 focus:ring-eids-accent">
+                                </td>
+                            @endforeach
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                <span class="material-symbols-outlined text-eids-accent text-lg">home_work</span>
+                <h2 class="font-extrabold text-gray-900 text-sm">Location-Type Weightage by Building Category (Table 4)</h2>
+            </div>
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider font-bold">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Category</th>
+                        <th class="px-4 py-3 text-center">Principal %</th>
+                        <th class="px-4 py-3 text-center">Service %</th>
+                        <th class="px-4 py-3 text-center">Circulation %</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($locationWeights as $row)
+                        <tr>
+                            <td class="px-6 py-3 font-extrabold text-eids-primary">{{ $row->building_category }}</td>
+                            @foreach(['principal_pct', 'service_pct', 'circulation_pct'] as $field)
+                                <td class="px-4 py-3 text-center">
+                                    <input type="number" step="0.01" min="0" max="100"
+                                           name="locations[{{ $row->building_category }}][{{ $field }}]"
+                                           value="{{ old("locations.{$row->building_category}.{$field}", $row->$field) }}"
+                                           class="w-24 min-h-[38px] px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center font-mono font-bold focus:outline-none focus:ring-2 focus:ring-eids-accent">
+                                </td>
+                            @endforeach
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                <span class="material-symbols-outlined text-eids-accent text-lg">straighten</span>
+                <h2 class="font-extrabold text-gray-900 text-sm">Sample Count Formula by Building Category (Table 3)</h2>
+            </div>
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider font-bold">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Category</th>
+                        <th class="px-4 py-3 text-center">GFA Divisor (m²)</th>
+                        <th class="px-4 py-3 text-center">Min Samples</th>
+                        <th class="px-4 py-3 text-center">Max Samples</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($samplingRules as $row)
+                        <tr>
+                            <td class="px-6 py-3 font-extrabold text-eids-primary">{{ $row->building_category }}</td>
+                            <td class="px-4 py-3 text-center">
+                                <input type="number" step="0.01" min="1" name="sampling[{{ $row->building_category }}][gfa_divisor]"
+                                       value="{{ old("sampling.{$row->building_category}.gfa_divisor", $row->gfa_divisor) }}"
+                                       class="w-24 min-h-[38px] px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center font-mono font-bold focus:outline-none focus:ring-2 focus:ring-eids-accent">
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <input type="number" step="1" min="1" name="sampling[{{ $row->building_category }}][min_samples]"
+                                       value="{{ old("sampling.{$row->building_category}.min_samples", $row->min_samples) }}"
+                                       class="w-24 min-h-[38px] px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center font-mono font-bold focus:outline-none focus:ring-2 focus:ring-eids-accent">
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <input type="number" step="1" min="1" name="sampling[{{ $row->building_category }}][max_samples]"
+                                       value="{{ old("sampling.{$row->building_category}.max_samples", $row->max_samples) }}"
+                                       class="w-24 min-h-[38px] px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center font-mono font-bold focus:outline-none focus:ring-2 focus:ring-eids-accent">
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        {{-- Architectural Component Weightage Registry (Table 2) --}}
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-eids-accent text-lg">construction</span>
+                    <h2 class="font-extrabold text-gray-900 text-sm">Architectural Component Weightage (Table 2, {{ count($components) }})</h2>
+                </div>
+                <a href="{{ route('checklist-items.index') }}" class="text-xs font-bold text-eids-accent hover:underline">Edit Question Bank &rarr;</a>
+            </div>
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider font-bold">
+                    <tr>
+                        <th class="px-6 py-3.5 text-left">Code</th>
+                        <th class="px-4 py-3.5 text-left">Component Name</th>
+                        <th class="px-4 py-3.5 text-left">Group</th>
+                        <th class="px-4 py-3.5 text-center">Optional?</th>
+                        <th class="px-6 py-3.5 text-right">Weightage</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @php $totalWeight = 0; @endphp
+                    @foreach($components as $code => $comp)
+                        @php $totalWeight += (float) $comp->breakdown_pct; @endphp
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-6 py-3.5 font-mono text-xs font-extrabold text-eids-primary">{{ $code }}</td>
+                            <td class="px-4 py-3.5 text-gray-900 font-semibold">{{ $comp->name }}</td>
+                            <td class="px-4 py-3.5 text-gray-500 text-xs">{{ $comp->group }}</td>
+                            <td class="px-4 py-3.5 text-center text-xs">
+                                @if($comp->optional)
+                                    <span class="text-amber-700 font-bold">May be absent</span>
+                                @else
+                                    <span class="text-gray-300">—</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-3.5 text-right">
+                                <input type="number" step="0.01" min="0" max="100" name="elements[{{ $code }}][breakdown_pct]"
+                                       value="{{ old("elements.{$code}.breakdown_pct", $comp->breakdown_pct) }}"
+                                       class="w-24 min-h-[38px] px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-right font-mono font-extrabold focus:outline-none focus:ring-2 focus:ring-eids-accent">
+                            </td>
+                        </tr>
+                    @endforeach
+                    <tr class="bg-eids-primary/5 border-t-2 border-eids-primary/20">
+                        <td class="px-6 py-4 font-extrabold text-eids-primary" colspan="4">Total Architectural Component Weight</td>
+                        <td class="px-6 py-4 text-right font-extrabold text-eids-primary text-base font-mono">{{ number_format($totalWeight, 2) }}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex items-center justify-between mb-8 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
+            <p class="text-xs text-gray-500 font-medium">A project with an absent optional element (Car Park, Apron/Drain) automatically rescales the rest to still sum to 100% — see §4.4 of the design spec.</p>
+            <button type="submit"
+                    class="min-h-[44px] flex items-center gap-2 px-6 py-2.5 bg-eids-primary text-white text-sm font-extrabold rounded-xl hover:bg-eids-dark transition shadow-md">
+                <span class="material-symbols-outlined text-lg">save</span>
+                Save Weightage &amp; Sampling Tables
+            </button>
+        </div>
+    </form>
 
 </div>
 @endsection

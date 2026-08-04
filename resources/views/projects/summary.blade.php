@@ -97,9 +97,9 @@
                             <tr>
                                 <td class="px-5 py-3">
                                     <div class="font-medium text-gray-800 text-xs">{{ $code }}</div>
-                                    <div class="text-xs text-gray-400">{{ $row['cfg']['name'] }}</div>
+                                    <div class="text-xs text-gray-400">{{ $row['name'] }}</div>
                                 </td>
-                                <td class="px-4 py-3 text-center text-xs text-gray-500">{{ $row['cfg']['weightage'] }}</td>
+                                <td class="px-4 py-3 text-center text-xs text-gray-500">{{ $row['weightage'] }}</td>
                                 <td class="px-4 py-3 text-center">
                                     @if($row['total'] > 0)
                                         <span class="{{ $row['passRate'] >= 80 ? 'text-emerald-600' : ($row['passRate'] >= 60 ? 'text-amber-600' : 'text-red-600') }} font-semibold text-xs">
@@ -119,11 +119,11 @@
                             <td class="px-4 py-2.5 text-center font-bold text-eids-primary">{{ number_format($sArch, 2) }}</td>
                         </tr>
                         <tr class="bg-gray-50">
-                            <td class="px-5 py-2 text-gray-400 text-xs" colspan="3">M&E Work (fixed)</td>
+                            <td class="px-5 py-2 text-gray-400 text-xs" colspan="3">M&amp;E Fittings ({{ $meRow['passRate'] }}% pass, {{ $meRow['pass'] }}/{{ $meRow['total'] }})</td>
                             <td class="px-4 py-2 text-center text-blue-600 font-semibold">{{ number_format($meScore, 2) }}</td>
                         </tr>
                         <tr class="bg-gray-50">
-                            <td class="px-5 py-2 text-gray-400 text-xs" colspan="3">External Work (fixed)</td>
+                            <td class="px-5 py-2 text-gray-400 text-xs" colspan="3">External Works ({{ $externalRow['passRate'] }}% pass, {{ $externalRow['pass'] }}/{{ $externalRow['total'] }})</td>
                             <td class="px-4 py-2 text-center text-purple-600 font-semibold">{{ number_format($extScore, 2) }}</td>
                         </tr>
                         <tr class="bg-eids-primary text-white">
@@ -161,7 +161,7 @@
                             <tr>
                                 <td class="px-5 py-3.5 text-gray-400 text-xs">{{ $sample->sample_index }}</td>
                                 <td class="px-4 py-3.5 font-medium text-gray-700">{{ $sample->location_name }}</td>
-                                <td class="px-4 py-3.5 text-center text-gray-600">{{ $total }}/{{ count($components) }}</td>
+                                <td class="px-4 py-3.5 text-center text-gray-600">{{ $total }}/{{ count($rows) }}</td>
                                 <td class="px-4 py-3.5 text-center text-emerald-600 font-semibold">{{ $pass }}</td>
                                 <td class="px-4 py-3.5 text-center {{ $fail > 0 ? 'text-red-500 font-semibold' : 'text-gray-300' }}">{{ $fail }}</td>
                                 <td class="px-4 py-3.5 text-center">

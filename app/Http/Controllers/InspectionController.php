@@ -2,21 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HandlesChecklistAnswers;
+use App\Models\ChecklistItem;
 use App\Models\ComponentAssessment;
-use App\Models\Defect;
 use App\Models\Project;
 use App\Models\ProjectSample;
+use App\Models\WeightageArchitecturalElement;
+use App\Services\ScoringService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class InspectionController extends Controller
 {
+    use HandlesChecklistAnswers;
+
+    public function __construct(private ScoringService $scoring)
+    {
+    }
+
+    /**
+     * Display info (name, weightage%) for every code the inspector can walk
+     * through — the Table 2 architectural registry plus a synthetic M&E entry,
+     * since M&E is scored under Table 1's me_pct rather than a Table 2 row.
+     */
+    private function componentRegistry(Project $project): array
+    {
+        $registry   = WeightageArchitecturalElement::ordered();
+        $components = collect($project->activeComponentCodes())->mapWithKeys(fn ($code) => [
+            $code => ['name' => $registry[$code]->name, 'weightage' => (float) $registry[$code]->breakdown_pct],
+        ])->all();
+
+        $mePct = (float) \App\Models\WeightageOverall::forCategory($project->building_category)->me_pct;
+        $components['ME_FITTING'] = ['name' => 'M&E Fittings', 'weightage' => $mePct];
+
+        return $components;
+    }
+
     public function components(Project $project)
     {
         $this->guardProjectVisible($project);
 
         $project->load(['samples.assessments']);
-        $components = config('eids.components');
+        $components = $this->componentRegistry($project);
 
         return view('projects.components', compact('project', 'components'));
     }
@@ -27,32 +53,36 @@ class InspectionController extends Controller
 
         abort_if($sample->project_id !== $project->id, 404);
 
-        $components    = config('eids.components');
-        $componentCode = request('component');
+        $componentCodes = $project->inspectableComponentCodes();
+        $registry       = $this->componentRegistry($project);
+        $componentCode  = request('component');
 
-        if (!$componentCode || !isset($components[$componentCode])) {
+        if (!$componentCode || !in_array($componentCode, $componentCodes, true)) {
             $done = $sample->assessments->pluck('component_code')->toArray();
-            $componentCode = collect(array_keys($components))
-                ->first(fn ($c) => !in_array($c, $done))
-                ?? array_key_first($components);
+            $componentCode = collect($componentCodes)->first(fn ($c) => !in_array($c, $done))
+                ?? $componentCodes[0];
         }
 
-        $component      = $components[$componentCode];
-        $assessment     = $sample->assessments->where('component_code', $componentCode)->first();
-        $levellingMax   = (float) setting('levelling_max_mm', 3.0);
-        $jointMax       = (float) setting('joint_max_mm', 1.0);
+        $component  = $registry[$componentCode];
+        $assessment = $sample->assessments->where('component_code', $componentCode)->first();
+        $items      = ChecklistItem::forComponent($componentCode)->get();
+        $answers    = $assessment ? $assessment->answers->keyBy('checklist_item_id') : collect();
 
-        $componentKeys  = array_keys($components);
-        $currentIdx     = array_search($componentCode, $componentKeys);
-        $prevCode       = $currentIdx > 0 ? $componentKeys[$currentIdx - 1] : null;
-        $nextCode       = $currentIdx < count($componentKeys) - 1 ? $componentKeys[$currentIdx + 1] : null;
+        $currentIdx     = array_search($componentCode, $componentCodes);
+        $prevCode       = $currentIdx > 0 ? $componentCodes[$currentIdx - 1] : null;
+        $nextCode       = $currentIdx < count($componentCodes) - 1 ? $componentCodes[$currentIdx + 1] : null;
         $componentPos   = $currentIdx + 1;
-        $componentCount = count($componentKeys);
+        $componentCount = count($componentCodes);
+
+        $gridUrl  = route('projects.components', $project);
+        $storeUrl = route('projects.inspect.store', [$project, $sample]);
+        $prevUrl  = $prevCode ? route('projects.inspect', [$project, $sample, 'component' => $prevCode]) : null;
 
         return view('projects.inspect', compact(
-            'project', 'sample', 'components', 'componentCode',
-            'component', 'assessment', 'levellingMax', 'jointMax',
-            'prevCode', 'nextCode', 'componentPos', 'componentCount'
+            'project', 'sample', 'componentCode', 'component',
+            'assessment', 'items', 'answers',
+            'prevCode', 'nextCode', 'componentPos', 'componentCount',
+            'gridUrl', 'storeUrl', 'prevUrl'
         ));
     }
 
@@ -62,56 +92,21 @@ class InspectionController extends Controller
 
         abort_if($sample->project_id !== $project->id, 404);
 
-        $components    = config('eids.components');
         $componentCode = $request->input('component_code');
-        $componentCfg  = $components[$componentCode] ?? null;
-        abort_unless($componentCfg, 422);
+        abort_unless(in_array($componentCode, $project->inspectableComponentCodes(), true), 422);
+
+        $items = ChecklistItem::forComponent($componentCode)->get();
 
         $data = $request->validate([
-            'component_code'   => 'required|string',
-            'finishing_status' => 'required|in:PASS,FAIL',
-            'hollow_status'    => 'required|in:PASS,FAIL',
-            'levelling_mm'     => 'nullable|numeric|min:0',
-            'joint_mm'         => 'nullable|numeric|min:0',
-            'crack_status'     => 'required|in:PASS,FAIL',
-            'remarks'          => 'nullable|string|max:1000',
-            'photo'            => 'nullable|image|max:5120',
+            'component_code' => 'required|string',
+            'answers'        => 'required|array',
+            'remarks'        => 'nullable|string|max:1000',
+            'photo'          => 'nullable|image|max:5120',
         ]);
-
-        $levellingMm = isset($data['levelling_mm']) ? (float) $data['levelling_mm'] : null;
-        $jointMm     = isset($data['joint_mm'])     ? (float) $data['joint_mm']     : null;
-
-        $levellingStatus = is_null($levellingMm) ? 'PASS'
-            : ($levellingMm <= (float) setting('levelling_max_mm', 3.0) ? 'PASS' : 'FAIL');
-        $jointStatus = is_null($jointMm) ? 'PASS'
-            : ($jointMm <= (float) setting('joint_max_mm', 1.0) ? 'PASS' : 'FAIL');
-
-        $allStatuses   = [$data['finishing_status'], $data['hollow_status'], $levellingStatus, $jointStatus, $data['crack_status']];
-        $overallStatus = in_array('FAIL', $allStatuses) ? 'FAIL' : 'PASS';
 
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = $request->file('photo')->store("inspections/{$project->id}/{$sample->id}", 'public');
-        }
-
-        $payload = [
-            'project_id'            => $project->id,
-            'sample_id'             => $sample->id,
-            'component_code'        => $componentCode,
-            'component_name'        => $componentCfg['name'],
-            'weightage'             => $componentCfg['weightage'],
-            'finishing_status'      => $data['finishing_status'],
-            'hollow_status'         => $data['hollow_status'],
-            'levelling_mm'          => $levellingMm,
-            'levelling_status'      => $levellingStatus,
-            'joint_mm'              => $jointMm,
-            'joint_status'          => $jointStatus,
-            'crack_status'          => $data['crack_status'],
-            'overall_sample_status' => $overallStatus,
-            'remarks'               => $data['remarks'] ?? null,
-        ];
-        if ($photoPath) {
-            $payload['photo_path'] = $photoPath;
         }
 
         $existing = ComponentAssessment::where([
@@ -120,47 +115,37 @@ class InspectionController extends Controller
             'component_code' => $componentCode,
         ])->first();
 
+        $payload = ['remarks' => $data['remarks'] ?? null];
+        if ($photoPath) $payload['photo_path'] = $photoPath;
+
         if ($existing) {
-            if (!$photoPath) unset($payload['photo_path']);
             $existing->update($payload);
-            $assessment = $existing->fresh();
+            $assessment = $existing;
         } else {
-            $assessment = ComponentAssessment::create($payload);
+            $assessment = ComponentAssessment::create(array_merge($payload, [
+                'project_id'     => $project->id,
+                'sample_id'      => $sample->id,
+                'component_code' => $componentCode,
+            ]));
         }
+
+        [$overallStatus, $failCount] = $this->saveAnswers($assessment, $items, $data['answers']);
+        $assessment->update(['overall_sample_status' => $overallStatus]);
 
         if ($request->hasFile('photo')) {
             $assessment->addMediaFromRequest('photo')->toMediaCollection('photos');
         }
 
-        if ($overallStatus === 'FAIL') {
-            $defect = Defect::updateOrCreate(
-                ['assessment_id' => $assessment->id],
-                [
-                    'project_id'         => $project->id,
-                    'component_name'     => $componentCfg['name'],
-                    'location'           => $sample->location_name,
-                    'defect_description' => "FAIL on {$componentCode} ({$componentCfg['name']}) at {$sample->location_name}. " . ($data['remarks'] ?? ''),
-                    'photo_path'         => $assessment->photo_path,
-                    'severity'           => $this->inferSeverity($allStatuses),
-                    'status'             => 'OPEN',
-                ]
-            );
+        $componentName = $this->componentRegistry($project)[$componentCode]['name'];
 
-            if ($request->hasFile('photo')) {
-                $defect->addMediaFromRequest('photo')->toMediaCollection('photos');
-            } elseif ($assessment->hasMedia('photos')) {
-                $mediaItem = $assessment->getFirstMedia('photos');
-                if ($mediaItem) {
-                    $mediaItem->copy($defect, 'photos');
-                }
-            }
-        } else {
-            Defect::where('assessment_id', $assessment->id)->delete();
-        }
+        $this->syncDefect(
+            $assessment, $overallStatus, $failCount, $project->id, $componentCode,
+            $componentName, $sample->location_name, $data['remarks'] ?? null, $request->hasFile('photo')
+        );
 
-        $this->recalculateScore($project);
+        $this->scoring->recalculateAndSave($project);
 
-        $nextCode = $this->nextComponent($sample, $componentCode);
+        $nextCode = $this->nextComponent($project, $sample, $componentCode);
 
         if ($nextCode) {
             return redirect()
@@ -177,23 +162,9 @@ class InspectionController extends Controller
     {
         $this->guardProjectVisible($project);
 
-        $project->load('assessments');
-        $components = config('eids.components');
-        $meScore    = (float) setting('me_score', 2.0);
-        $extScore   = (float) setting('external_score', 11.8);
-        $ratingBaik = (float) setting('rating_baik', 85);
-        $ratingMod  = (float) setting('rating_sederhana', 70);
+        $breakdown = $this->scoring->scoreBreakdown($project);
 
-        $rows = $this->buildRows($project->assessments, $components);
-
-        $sArch      = collect($rows)->sum('sComp');
-        $totalScore = $sArch + $meScore + $extScore;
-        $rating     = $totalScore >= $ratingBaik ? 'GOOD' : ($totalScore >= $ratingMod ? 'MODERATE' : 'WEAK');
-
-        return view('projects.score', compact(
-            'project', 'rows', 'sArch', 'meScore', 'extScore',
-            'totalScore', 'rating', 'components', 'ratingBaik', 'ratingMod'
-        ));
+        return view('projects.score', array_merge(compact('project'), $breakdown));
     }
 
     public function summary(Project $project)
@@ -201,84 +172,23 @@ class InspectionController extends Controller
         $this->guardProjectVisible($project);
 
         $project->load(['samples.assessments', 'defects', 'creator']);
-        $components = config('eids.components');
-        $meScore    = (float) setting('me_score', 2.0);
-        $extScore   = (float) setting('external_score', 11.8);
-        $ratingBaik = (float) setting('rating_baik', 85);
-        $ratingMod  = (float) setting('rating_sederhana', 70);
-
-        $rows = $this->buildRows($project->assessments, $components);
-
-        $sArch           = collect($rows)->sum('sComp');
-        $totalScore      = $sArch + $meScore + $extScore;
-        $rating          = $totalScore >= $ratingBaik ? 'GOOD' : ($totalScore >= $ratingMod ? 'MODERATE' : 'WEAK');
+        $breakdown       = $this->scoring->scoreBreakdown($project);
         $openDefects     = $project->defects->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
         $resolvedDefects = $project->defects->where('status', 'RESOLVED')->count();
 
-        return view('projects.summary', compact(
-            'project', 'rows', 'sArch', 'meScore', 'extScore',
-            'totalScore', 'rating', 'openDefects', 'resolvedDefects',
-            'components', 'ratingBaik', 'ratingMod'
+        return view('projects.summary', array_merge(
+            compact('project', 'openDefects', 'resolvedDefects'),
+            $breakdown
         ));
     }
 
-    private function buildRows($assessments, array $components): array
+    private function nextComponent(Project $project, ProjectSample $sample, string $currentCode): ?string
     {
-        $rows = [];
-        foreach ($components as $code => $cfg) {
-            $subset   = $assessments->where('component_code', $code);
-            $total    = $subset->count();
-            $pass     = $subset->where('overall_sample_status', 'PASS')->count();
-            $passRate = $total > 0 ? ($pass / $total) * 100 : 0;
-            $sComp    = ($passRate / 100) * $cfg['weightage'];
-            $rows[$code] = [
-                'name'      => $cfg['name'],
-                'weightage' => $cfg['weightage'],
-                'total'     => $total,
-                'pass'      => $pass,
-                'fail'      => $total - $pass,
-                'passRate'  => round($passRate, 1),
-                'sComp'     => round($sComp, 2),
-                'cfg'       => $cfg,
-                'code'      => $code,
-            ];
-        }
-        return $rows;
-    }
-
-    private function recalculateScore(Project $project): void
-    {
-        $project->load('assessments');
-        $components = config('eids.components');
-        $sArch      = 0;
-
-        foreach ($components as $code => $cfg) {
-            $assessments = $project->assessments->where('component_code', $code);
-            $total       = $assessments->count();
-            if ($total === 0) continue;
-            $pass  = $assessments->where('overall_sample_status', 'PASS')->count();
-            $sArch += ($pass / $total) * $cfg['weightage'];
-        }
-
-        $totalScore = $sArch + (float) setting('me_score', 2.0) + (float) setting('external_score', 11.8);
-        $project->update(['overall_score' => round($totalScore, 2)]);
-    }
-
-    private function nextComponent(ProjectSample $sample, string $currentCode): ?string
-    {
-        $components = array_keys(config('eids.components'));
+        $components = $project->inspectableComponentCodes();
         $done       = $sample->fresh()->assessments->pluck('component_code')->toArray();
         $currentIdx = array_search($currentCode, $components);
         $next       = array_slice($components, $currentIdx + 1);
 
         return collect($next)->first(fn ($c) => !in_array($c, $done));
-    }
-
-    private function inferSeverity(array $statuses): string
-    {
-        $failCount = count(array_filter($statuses, fn ($s) => $s === 'FAIL'));
-        if ($failCount >= 3) return 'high';
-        if ($failCount === 2) return 'medium';
-        return 'low';
     }
 }

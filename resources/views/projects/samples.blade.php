@@ -51,6 +51,25 @@
     <form method="POST" action="{{ route('projects.samples.store', $project) }}" class="flex-1 flex flex-col">
         @csrf
 
+        {{-- Optional Element Presence (Table 2's Car Park / Apron & Perimeter Drain) --}}
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 mb-6">
+            <h2 class="font-extrabold text-gray-900 mb-1 flex items-center gap-2 text-sm">
+                <span class="material-symbols-outlined text-eids-accent text-lg">tune</span>
+                Optional Elements Present in This Project
+            </h2>
+            <p class="text-xs text-gray-500 font-medium mb-4">If an element doesn't exist on this project, its Table 2 weightage is automatically redistributed across the rest.</p>
+            <div class="flex flex-wrap gap-4">
+                <label class="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" name="car_park_present" value="1" {{ old('car_park_present', $project->car_park_present) ? 'checked' : '' }}>
+                    Car Park / Car Porch
+                </label>
+                <label class="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" name="apron_drain_present" value="1" {{ old('apron_drain_present', $project->apron_drain_present) ? 'checked' : '' }}>
+                    Apron and Perimeter Drain
+                </label>
+            </div>
+        </div>
+
         {{-- Sample units card --}}
         <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
             <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -125,6 +144,14 @@
                                 <input type="hidden" name="locations[{{ $sample->id }}]" :value="val">
                             </div>
 
+                            {{-- Table 4 location type (Principal/Service/Circulation) --}}
+                            <select name="location_types[{{ $sample->id }}]"
+                                    class="min-h-[44px] px-3 py-2.5 border border-gray-200 rounded-xl text-xs font-bold text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-eids-accent shrink-0">
+                                @foreach(['principal' => 'Principal', 'service' => 'Service', 'circulation' => 'Circulation'] as $val => $label)
+                                    <option value="{{ $val }}" {{ old("location_types.{$sample->id}", $sample->location_type) === $val ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+
                             {{-- Status badge --}}
                             @if(!is_null($sample->pass_rate))
                                 <span class="text-xs font-extrabold text-emerald-800 bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-full shrink-0">
@@ -154,10 +181,13 @@
                     <div class="flex items-center justify-between px-6 py-3.5">
                         <div class="flex items-center gap-3">
                             <span class="font-mono text-xs font-extrabold text-eids-primary bg-eids-primary/10 px-2.5 py-1 rounded-md">{{ $code }}</span>
-                            <span class="text-sm font-semibold text-gray-800">{{ $comp['name'] }}</span>
+                            <span class="text-sm font-semibold text-gray-800">{{ $comp->name }}</span>
+                            @if($comp->optional)
+                                <span class="text-[10px] text-amber-700 font-bold uppercase">optional</span>
+                            @endif
                         </div>
                         <span class="text-xs font-extrabold text-eids-primary bg-eids-accent/15 border border-eids-accent/30 px-3 py-1 rounded-full">
-                            {{ $comp['weightage'] }}% Weightage
+                            {{ $comp->breakdown_pct }}% Weightage
                         </span>
                     </div>
                 @endforeach

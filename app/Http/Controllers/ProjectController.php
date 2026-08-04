@@ -6,10 +6,17 @@ use App\Models\Defect;
 use App\Models\Project;
 use App\Models\ProjectSample;
 use App\Models\User;
+use App\Models\WeightageArchitecturalElement;
+use App\Models\WeightageOverall;
+use App\Services\ScoringService;
 use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
+    public function __construct(private ScoringService $scoring)
+    {
+    }
+
     public function dashboard()
     {
         $visible         = Project::visibleTo(auth()->user());
@@ -23,7 +30,7 @@ class ProjectController extends Controller
         $resolvedDefects = Defect::visibleTo(auth()->user())->where('status', 'RESOLVED')->count();
         $ratingBaik      = (float) setting('rating_baik', 85);
         $ratingMod       = (float) setting('rating_sederhana', 70);
-        $meScore         = (float) setting('me_score', 2.0);
+        $meScore         = (float) WeightageOverall::forCategory('A')->me_pct;
 
         $actionRequired = collect();
         if (in_array(auth()->user()->role, ['admin', 'inspector'])) {
@@ -79,7 +86,7 @@ class ProjectController extends Controller
     {
         $this->guardProjectVisible($project);
 
-        $project->load(['samples', 'defects', 'creator', 'assignedInspector']);
+        $project->load(['samples', 'defects', 'creator', 'assignedInspector', 'qpDeclarations']);
         $openDefects     = $project->defects->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
         $resolvedDefects = $project->defects->where('status', 'RESOLVED')->count();
 
@@ -102,12 +109,18 @@ class ProjectController extends Controller
             'developer_name'  => 'required|string|max:255',
             'contractor_name' => 'required|string|max:255',
             'building_type'   => 'required|in:teres,semi_d,banglo',
+            'building_category' => 'required|in:A,B,C,D',
+            'car_park_present'    => 'nullable|boolean',
+            'apron_drain_present' => 'nullable|boolean',
             'total_units'     => 'required|integer|min:1',
             'floor_area_sqm'  => 'required|numeric|min:1',
             'status'          => 'required|in:draf,dalam_pemeriksaan',
             'assigned_to'     => 'nullable|exists:users,id',
             'assigned_contractor_id' => 'nullable|exists:users,id',
         ]);
+
+        $data['car_park_present']    = $request->boolean('car_park_present', true);
+        $data['apron_drain_present'] = $request->boolean('apron_drain_present', true);
 
         if (!auth()->user()->isAdmin()) {
             // Inspector may still choose the Assigned Contractor; the Assigned Inspector
@@ -119,7 +132,7 @@ class ProjectController extends Controller
             $data['assigned_to'] = auth()->id();
         }
 
-        $data['calculated_samples'] = max(1, (int) ceil($data['floor_area_sqm'] / (float) setting('sample_divisor', 60)));
+        $data['calculated_samples'] = $this->scoring->sampleCount($data['building_category'], (float) $data['floor_area_sqm']);
         $data['created_by']         = auth()->id();
 
         $project = Project::create($data);
@@ -127,10 +140,12 @@ class ProjectController extends Controller
         // Auto-generate sample slots
         $locations = json_decode(setting('default_locations', '[]'), true) ?: config('eids.default_locations');
         for ($i = 0; $i < $project->calculated_samples; $i++) {
+            $name = $locations[$i] ?? "Sample " . ($i + 1);
             ProjectSample::create([
                 'project_id'    => $project->id,
                 'sample_index'  => $i + 1,
-                'location_name' => $locations[$i] ?? "Sample " . ($i + 1),
+                'location_name' => $name,
+                'location_type' => ProjectSample::guessLocationType($name),
             ]);
         }
 
@@ -158,12 +173,15 @@ class ProjectController extends Controller
             'developer_name'  => 'required|string|max:255',
             'contractor_name' => 'required|string|max:255',
             'building_type'   => 'required|in:teres,semi_d,banglo',
+            'building_category' => 'required|in:A,B,C,D',
             'total_units'     => 'required|integer|min:1',
             'floor_area_sqm'  => 'required|numeric|min:1',
             'status'          => 'required|in:draf,dalam_pemeriksaan,selesai',
             'assigned_to'     => 'nullable|exists:users,id',
             'assigned_contractor_id' => 'nullable|exists:users,id',
         ]);
+        // car_park_present / apron_drain_present are managed on the Sample Setup
+        // page (storeSamples()), not this form — leave them untouched here.
 
         if ($data['status'] === 'selesai' && $project->status !== 'selesai') {
             // Completing a project is only allowed through the explicit "Mark as Completed"
@@ -180,6 +198,7 @@ class ProjectController extends Controller
         }
 
         $project->update($data);
+        $this->scoring->recalculateAndSave($project);
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Project updated successfully.');
@@ -227,8 +246,8 @@ class ProjectController extends Controller
         $this->guardProjectVisible($project);
 
         $project->load('samples');
-        $divisor          = (float) setting('sample_divisor', 60);
-        $components       = config('eids.components');
+        $divisor          = (float) \App\Models\SamplingRule::forCategory($project->building_category)->gfa_divisor;
+        $components       = WeightageArchitecturalElement::ordered();
         $defaultLocations = json_decode(setting('default_locations', '[]'), true) ?: config('eids.default_locations');
 
         return view('projects.samples', compact('project', 'divisor', 'components', 'defaultLocations'));
@@ -239,14 +258,27 @@ class ProjectController extends Controller
         $this->guardProjectVisible($project);
 
         $data = $request->validate([
-            'locations'   => 'required|array',
-            'locations.*' => 'required|string|max:255',
+            'locations'            => 'required|array',
+            'locations.*'          => 'required|string|max:255',
+            'location_types'       => 'nullable|array',
+            'location_types.*'     => 'nullable|in:principal,service,circulation',
+            'car_park_present'     => 'nullable|boolean',
+            'apron_drain_present'  => 'nullable|boolean',
         ]);
 
         foreach ($data['locations'] as $id => $name) {
             ProjectSample::where('id', $id)->where('project_id', $project->id)
-                ->update(['location_name' => $name]);
+                ->update([
+                    'location_name' => $name,
+                    'location_type' => $data['location_types'][$id] ?? ProjectSample::guessLocationType($name),
+                ]);
         }
+
+        $project->update([
+            'car_park_present'    => $request->boolean('car_park_present', true),
+            'apron_drain_present' => $request->boolean('apron_drain_present', true),
+        ]);
+        $this->scoring->recalculateAndSave($project);
 
         $user = auth()->user();
 

@@ -11,16 +11,20 @@ class Project extends Model
 
     protected $fillable = [
         'project_no', 'project_name', 'location', 'developer_name',
-        'contractor_name', 'building_type', 'total_units', 'floor_area_sqm',
+        'contractor_name', 'building_type', 'building_category',
+        'car_park_present', 'apron_drain_present',
+        'total_units', 'floor_area_sqm',
         'calculated_samples', 'overall_score', 'status', 'created_by', 'assigned_to',
         'assigned_contractor_id',
     ];
 
     protected $casts = [
-        'floor_area_sqm'     => 'decimal:2',
-        'overall_score'      => 'decimal:2',
-        'total_units'        => 'integer',
-        'calculated_samples' => 'integer',
+        'floor_area_sqm'       => 'decimal:2',
+        'overall_score'        => 'decimal:2',
+        'total_units'          => 'integer',
+        'calculated_samples'   => 'integer',
+        'car_park_present'     => 'boolean',
+        'apron_drain_present'  => 'boolean',
     ];
 
     public function samples()
@@ -31,6 +35,79 @@ class Project extends Model
     public function assessments()
     {
         return $this->hasMany(ComponentAssessment::class);
+    }
+
+    public function qpDeclarations()
+    {
+        return $this->hasMany(QpDeclaration::class);
+    }
+
+    public function externalElementSettings()
+    {
+        return $this->hasMany(ProjectExternalElement::class);
+    }
+
+    public function externalSamples()
+    {
+        return $this->hasMany(ExternalSample::class);
+    }
+
+    /**
+     * Annex C element codes this project has flagged as present (§5/§6 —
+     * project-setup toggle, defaults per ExternalElement::default_present).
+     */
+    public function activeExternalElementCodes(): array
+    {
+        $overrides = $this->externalElementSettings->keyBy('element_code');
+
+        return ExternalElement::ordered()
+            ->filter(fn ($el) => $overrides->has($el->element_code)
+                ? $overrides[$el->element_code]->present
+                : $el->default_present)
+            ->keys()
+            ->all();
+    }
+
+    public function externalElementPresent(string $elementCode): bool
+    {
+        return in_array($elementCode, $this->activeExternalElementCodes(), true);
+    }
+
+    /**
+     * Component codes that go through the per-sample inspection grid — the
+     * architectural registry minus declaration-scored items (QP declarations
+     * aren't inspected per sample, see QpDeclarationController) and minus
+     * whichever optional elements (Car Park, Apron/Drain) this project has
+     * flagged as absent, per Table 2.
+     */
+    public function activeComponentCodes(): array
+    {
+        return WeightageArchitecturalElement::ordered()
+            ->reject(fn ($el) => $el->scoring_mode === 'declaration')
+            ->reject(fn ($el) => $el->optional && !$this->elementPresent($el->component_code))
+            ->keys()
+            ->all();
+    }
+
+    /**
+     * Everything the inspector actually walks through per sample: the
+     * architectural components plus M&E Fittings (Annex B) — assessed at the
+     * same sample locations per Table 5's note, but scored under its own
+     * Table 1 weightage bucket rather than Table 2's, so it's kept out of
+     * activeComponentCodes()/redistributedWeights().
+     */
+    public function inspectableComponentCodes(): array
+    {
+        return array_merge($this->activeComponentCodes(), ['ME_FITTING']);
+    }
+
+    public function elementPresent(string $componentCode): bool
+    {
+        return match ($componentCode) {
+            'A10_CAR_PARK'     => (bool) $this->car_park_present,
+            'A9_APRON_DRAIN'   => (bool) $this->apron_drain_present,
+            default            => true,
+        };
     }
 
     public function defects()
@@ -83,7 +160,7 @@ class Project extends Model
 
     public function getInspectionProgressAttribute(): int
     {
-        $total = $this->calculated_samples * count(config('eids.components'));
+        $total = $this->calculated_samples * count($this->inspectableComponentCodes());
         if ($total === 0) return 0;
         $done = $this->assessments()->count();
         return (int) min(100, round(($done / $total) * 100));

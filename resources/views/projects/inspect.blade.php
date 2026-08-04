@@ -7,33 +7,40 @@
     <span class="material-symbols-outlined text-sm">chevron_right</span>
     <a href="{{ route('projects.show', $project) }}" class="hover:text-gray-800 transition truncate max-w-28">{{ $project->project_name }}</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
-    <a href="{{ route('projects.components', $project) }}" class="hover:text-gray-800 transition">Grid</a>
+    <a href="{{ $gridUrl }}" class="hover:text-gray-800 transition">Grid</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
     <span class="text-gray-900 font-bold">{{ $sample->location_name }} / {{ $componentCode }}</span>
 @endsection
 
+@php
+    $initialAnswers = [];
+    foreach ($items as $item) {
+        $answer = $answers->get($item->id);
+        $initialAnswers[(string) $item->id] = [
+            'type'   => $item->input_type,
+            'max'    => $item->tolerance_max_mm !== null ? (float) $item->tolerance_max_mm : null,
+            'result' => $answer->result ?? 'PASS',
+            'value'  => $answer?->numeric_value !== null ? (string) $answer->numeric_value : '',
+        ];
+    }
+@endphp
+
 @section('content')
 <div class="max-w-5xl mx-auto flex flex-col w-full min-h-[calc(100dvh-6rem)] sm:min-h-[calc(100dvh-7rem)] lg:min-h-[calc(100dvh-8rem)]"
      x-data="{
-         finishing:  '{{ $assessment?->finishing_status ?? 'PASS' }}',
-         hollow:     '{{ $assessment?->hollow_status    ?? 'PASS' }}',
-         levelling:  '{{ $assessment?->levelling_mm     ?? '' }}',
-         joint:      '{{ $assessment?->joint_mm         ?? '' }}',
-         crack:      '{{ $assessment?->crack_status     ?? 'PASS' }}',
-         levellingMax: {{ $levellingMax }},
-         jointMax:     {{ $jointMax }},
-         get levellingStatus() {
-             const v = parseFloat(this.levelling);
-             if (isNaN(v) || this.levelling === '') return 'PASS';
-             return v <= this.levellingMax ? 'PASS' : 'FAIL';
-         },
-         get jointStatus() {
-             const v = parseFloat(this.joint);
-             if (isNaN(v) || this.joint === '') return 'PASS';
-             return v <= this.jointMax ? 'PASS' : 'FAIL';
+         answers: {{ Js::from($initialAnswers) }},
+         guideOpen: null,
+         statusFor(id) {
+             const a = this.answers[id];
+             if (a.type === 'numeric_with_tolerance') {
+                 const v = parseFloat(a.value);
+                 if (isNaN(v) || a.value === '' || a.max === null) return 'PASS';
+                 return v <= a.max ? 'PASS' : 'FAIL';
+             }
+             return a.result;
          },
          get overall() {
-             return [this.finishing, this.hollow, this.levellingStatus, this.jointStatus, this.crack].includes('FAIL') ? 'FAIL' : 'PASS';
+             return Object.keys(this.answers).some(id => this.statusFor(id) === 'FAIL') ? 'FAIL' : 'PASS';
          },
          photoSrc: {{ $assessment?->photo_url ? "'" . $assessment->photo_url . "'" : 'null' }},
          handlePhoto(e) {
@@ -81,10 +88,17 @@
                     {{ $sample->location_name }} &nbsp;·&nbsp; Sample Unit #{{ $sample->sample_index }}
                 </div>
             </div>
-            <div class="text-center bg-white/10 px-5 py-3 rounded-xl backdrop-blur-xs border border-white/10">
-                <div class="text-[10px] uppercase tracking-widest text-eids-light font-bold mb-0.5">Architectural Weight</div>
-                <div class="text-3xl font-extrabold text-white">{{ $component['weightage'] }}<span class="text-base text-white/70">%</span></div>
-            </div>
+            @if($component['weightage'] !== null)
+                <div class="text-center bg-white/10 px-5 py-3 rounded-xl backdrop-blur-xs border border-white/10">
+                    <div class="text-[10px] uppercase tracking-widest text-eids-light font-bold mb-0.5">{{ $componentCode === 'ME_FITTING' ? 'M&E Weight' : 'Architectural Weight' }}</div>
+                    <div class="text-3xl font-extrabold text-white">{{ number_format((float) $component['weightage'], 1) }}<span class="text-base text-white/70">%</span></div>
+                </div>
+            @else
+                <div class="text-center bg-white/10 px-5 py-3 rounded-xl backdrop-blur-xs border border-white/10">
+                    <div class="text-[10px] uppercase tracking-widest text-eids-light font-bold mb-0.5">Category</div>
+                    <div class="text-lg font-extrabold text-white">External Works</div>
+                </div>
+            @endif
         </div>
 
         {{-- Calculated Overall Result Badge --}}
@@ -96,126 +110,138 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('projects.inspect.store', [$project, $sample]) }}"
+    <form method="POST" action="{{ $storeUrl }}"
           enctype="multipart/form-data" class="flex-1 flex flex-col">
         @csrf
         <input type="hidden" name="component_code" value="{{ $componentCode }}">
 
-        {{-- 5 Checklist Items Card --}}
-        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 mb-6">
-            <div class="flex items-center justify-between mb-5 pb-3 border-b border-gray-100">
+        {{-- Checklist Card — No. / Question / Method-Tool / Limit / Guide / Result --}}
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                 <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
                     <span class="material-symbols-outlined text-eids-accent text-lg">checklist</span>
-                    Inspection Criteria Checklist (5 Checks)
+                    Inspection Checklist ({{ $items->count() }} Questions)
                 </h2>
-                <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">44px Touch Target</span>
             </div>
 
-            <div class="space-y-6">
-
-                {{-- 1. Finishing --}}
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
-                    <div>
-                        <div class="text-sm font-extrabold text-gray-900">1. Finishing</div>
-                        <div class="text-xs text-gray-500 mt-0.5 font-medium">Surface finishing quality, alignment & plastering uniform</div>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <label :class="finishing === 'PASS' ? 'bg-emerald-100 border-emerald-400 text-emerald-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
-                            <input type="radio" name="finishing_status" value="PASS" x-model="finishing" class="sr-only">
-                            <span class="material-symbols-outlined text-base">check_circle</span> PASS
-                        </label>
-                        <label :class="finishing === 'FAIL' ? 'bg-red-100 border-red-400 text-red-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
-                            <input type="radio" name="finishing_status" value="FAIL" x-model="finishing" class="sr-only">
-                            <span class="material-symbols-outlined text-base">cancel</span> FAIL
-                        </label>
-                    </div>
-                </div>
-
-                {{-- 2. Hollow --}}
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-100">
-                    <div>
-                        <div class="text-sm font-extrabold text-gray-900">2. Hollow</div>
-                        <div class="text-xs text-gray-500 mt-0.5 font-medium">Tapping test for hollow sound underneath plastering or tiles</div>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <label :class="hollow === 'PASS' ? 'bg-emerald-100 border-emerald-400 text-emerald-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
-                            <input type="radio" name="hollow_status" value="PASS" x-model="hollow" class="sr-only">
-                            <span class="material-symbols-outlined text-base">check_circle</span> PASS
-                        </label>
-                        <label :class="hollow === 'FAIL' ? 'bg-red-100 border-red-400 text-red-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
-                            <input type="radio" name="hollow_status" value="FAIL" x-model="hollow" class="sr-only">
-                            <span class="material-symbols-outlined text-base">cancel</span> FAIL
-                        </label>
-                    </div>
-                </div>
-
-                {{-- 3. Levelling --}}
-                <div class="pt-4 border-t border-gray-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <div>
-                            <div class="text-sm font-extrabold text-gray-900">3. Levelling (mm)</div>
-                            <div class="text-xs text-gray-500 mt-0.5 font-medium">Max allowable tolerance: <strong class="text-gray-900 font-bold">{{ $levellingMax }}mm</strong></div>
-                        </div>
-                        <span :class="levellingStatus === 'PASS' ? 'bg-emerald-100 border-emerald-400 text-emerald-900' : 'bg-red-100 border-red-400 text-red-900'"
-                              class="min-h-[36px] px-4 py-1 border rounded-lg text-xs font-extrabold transition flex items-center gap-1"
-                              x-text="levellingStatus"></span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <input type="number" name="levelling_mm" step="0.01" min="0" id="input_levelling_mm"
-                               placeholder="Enter measured value (leave blank = PASS)"
-                               x-model="levelling"
-                               class="flex-1 min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-medium">
-                        <span class="text-xs text-gray-600 font-bold shrink-0">mm</span>
-                    </div>
-                    <input type="hidden" name="levelling_status" :value="levellingStatus">
-                </div>
-
-                {{-- 4. Joint --}}
-                <div class="pt-4 border-t border-gray-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <div>
-                            <div class="text-sm font-extrabold text-gray-900">4. Joint / Gap (mm)</div>
-                            <div class="text-xs text-gray-500 mt-0.5 font-medium">Max allowable tolerance: <strong class="text-gray-900 font-bold">{{ $jointMax }}mm</strong></div>
-                        </div>
-                        <span :class="jointStatus === 'PASS' ? 'bg-emerald-100 border-emerald-400 text-emerald-900' : 'bg-red-100 border-red-400 text-red-900'"
-                              class="min-h-[36px] px-4 py-1 border rounded-lg text-xs font-extrabold transition flex items-center gap-1"
-                              x-text="jointStatus"></span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <input type="number" name="joint_mm" step="0.01" min="0" id="input_joint_mm"
-                               placeholder="Enter measured value (leave blank = PASS)"
-                               x-model="joint"
-                               class="flex-1 min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-medium">
-                        <span class="text-xs text-gray-600 font-bold shrink-0">mm</span>
-                    </div>
-                    <input type="hidden" name="joint_status" :value="jointStatus">
-                </div>
-
-                {{-- 5. Crack --}}
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-100">
-                    <div>
-                        <div class="text-sm font-extrabold text-gray-900">5. Crack</div>
-                        <div class="text-xs text-gray-500 mt-0.5 font-medium">Visible cracks, hairline fractures, or structural splits</div>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <label :class="crack === 'PASS' ? 'bg-emerald-100 border-emerald-400 text-emerald-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
-                            <input type="radio" name="crack_status" value="PASS" x-model="crack" class="sr-only">
-                            <span class="material-symbols-outlined text-base">check_circle</span> PASS
-                        </label>
-                        <label :class="crack === 'FAIL' ? 'bg-red-100 border-red-400 text-red-900 shadow-2xs font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 font-semibold'"
-                               class="min-h-[44px] min-w-[100px] px-4 py-2.5 border rounded-xl text-xs cursor-pointer transition will-change-transform flex items-center justify-center gap-2">
-                            <input type="radio" name="crack_status" value="FAIL" x-model="crack" class="sr-only">
-                            <span class="material-symbols-outlined text-base">cancel</span> FAIL
-                        </label>
-                    </div>
-                </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider font-bold">
+                        <tr>
+                            <th class="px-4 py-3 text-left w-10">No.</th>
+                            <th class="px-4 py-3 text-left">Inspection Question</th>
+                            <th class="px-4 py-3 text-left hidden md:table-cell">Method / Tool</th>
+                            <th class="px-4 py-3 text-center hidden sm:table-cell">Limit</th>
+                            <th class="px-4 py-3 text-center w-12">Guide</th>
+                            <th class="px-4 py-3 text-center">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach($items as $i => $item)
+                            <tr class="align-top">
+                                <td class="px-4 py-4 text-gray-400 font-mono text-xs">{{ $i + 1 }}</td>
+                                <td class="px-4 py-4 text-gray-900 font-semibold max-w-xs">{{ $item->question_text }}</td>
+                                <td class="px-4 py-4 text-gray-600 text-xs hidden md:table-cell">{{ $item->method_tool ?? 'Visual' }}</td>
+                                <td class="px-4 py-4 text-gray-600 text-xs text-center hidden sm:table-cell font-mono">{{ $item->tolerance_text ?? '-' }}</td>
+                                <td class="px-4 py-4 text-center">
+                                    @if($item->has_guide)
+                                        <button type="button" @click="guideOpen = {{ $item->id }}"
+                                                class="w-7 h-7 rounded-full bg-eids-primary/10 text-eids-primary border border-eids-primary/20 hover:bg-eids-primary hover:text-white transition flex items-center justify-center mx-auto">
+                                            <span class="material-symbols-outlined text-base">help</span>
+                                        </button>
+                                    @else
+                                        <span class="text-gray-300 text-xs">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-4">
+                                    @if($item->input_type === 'numeric_with_tolerance')
+                                        <div class="flex items-center gap-2 justify-center">
+                                            <input type="number" step="0.01" min="0"
+                                                   name="answers[{{ $item->id }}]"
+                                                   x-model="answers[{{ $item->id }}].value"
+                                                   placeholder="mm"
+                                                   class="w-24 min-h-[40px] px-2.5 py-2 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-eids-accent font-mono font-medium">
+                                            <span :class="statusFor({{ $item->id }}) === 'PASS' ? 'bg-emerald-100 border-emerald-400 text-emerald-900' : 'bg-red-100 border-red-400 text-red-900'"
+                                                  class="px-2.5 py-1 border rounded-lg text-[11px] font-extrabold" x-text="statusFor({{ $item->id }})"></span>
+                                        </div>
+                                    @else
+                                        <div class="flex items-center gap-1.5 justify-center">
+                                            <label :class="answers[{{ $item->id }}].result === 'PASS' ? 'bg-emerald-100 border-emerald-400 text-emerald-900 font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 font-semibold'"
+                                                   class="min-h-[40px] px-3 py-2 border rounded-lg text-xs cursor-pointer transition flex items-center gap-1">
+                                                <input type="radio" name="answers[{{ $item->id }}]" value="PASS" x-model="answers[{{ $item->id }}].result" class="sr-only">
+                                                PASS
+                                            </label>
+                                            <label :class="answers[{{ $item->id }}].result === 'FAIL' ? 'bg-red-100 border-red-400 text-red-900 font-extrabold' : 'bg-gray-50 border-gray-200 text-gray-600 font-semibold'"
+                                                   class="min-h-[40px] px-3 py-2 border rounded-lg text-xs cursor-pointer transition flex items-center gap-1">
+                                                <input type="radio" name="answers[{{ $item->id }}]" value="FAIL" x-model="answers[{{ $item->id }}].result" class="sr-only">
+                                                FAIL
+                                            </label>
+                                        </div>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
+            <div class="px-6 py-3 text-[11px] text-gray-400 border-t border-gray-100">Meets CIS 7:2021. The system will automatically record the result.</div>
         </div>
+
+        {{-- Guide Modals --}}
+        @foreach($items as $item)
+            @if($item->has_guide)
+                <div x-show="guideOpen === {{ $item->id }}" x-cloak
+                     class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+                     @click.self="guideOpen = null">
+                    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-y-auto">
+                        <div class="bg-eids-primary text-white px-6 py-4 rounded-t-2xl flex items-center justify-between sticky top-0">
+                            <h3 class="font-extrabold text-sm">{{ $item->question_text }}</h3>
+                            <button type="button" @click="guideOpen = null" class="text-white/80 hover:text-white">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div class="p-6 space-y-5 text-sm">
+                            @if($item->guide_tools)
+                                <div>
+                                    <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-2">Tools</h4>
+                                    <p class="text-gray-800 whitespace-pre-line">{{ $item->guide_tools }}</p>
+                                </div>
+                            @endif
+                            @if($item->guide_procedure)
+                                <div>
+                                    <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-2">Inspection Procedure</h4>
+                                    <ol class="list-decimal list-inside space-y-1 text-gray-800">
+                                        @foreach($item->guide_procedure as $step)
+                                            <li>{{ $step }}</li>
+                                        @endforeach
+                                    </ol>
+                                </div>
+                            @endif
+                            @if($item->tolerance_text)
+                                <div>
+                                    <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-2">Limit (CIS 7:2021)</h4>
+                                    <div class="inline-block bg-emerald-50 border border-emerald-200 text-emerald-900 font-mono font-bold px-4 py-2 rounded-lg">
+                                        {{ $item->tolerance_text }}
+                                    </div>
+                                </div>
+                            @endif
+                            @if($item->guide_result_thresholds)
+                                <div>
+                                    <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-2">Result</h4>
+                                    <p class="text-gray-800">{{ $item->guide_result_thresholds }}</p>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="p-4 border-t border-gray-100">
+                            <button type="button" @click="guideOpen = null"
+                                    class="w-full min-h-[44px] bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-bold rounded-xl transition">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @endforeach
 
         {{-- Documentation & Photo Evidence Card --}}
         <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 mb-6">
@@ -268,7 +294,7 @@
 
         {{-- Primary Actions Bar --}}
         <div class="bg-white rounded-2xl border border-gray-200 shadow-md p-4 mt-auto flex items-center justify-between gap-3 flex-wrap">
-            <a href="{{ route('projects.components', $project) }}"
+            <a href="{{ $gridUrl }}"
                class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-1.5">
                 <span class="material-symbols-outlined text-base">grid_on</span>
                 Grid
@@ -276,7 +302,7 @@
 
             <div class="flex items-center gap-2">
                 @if($prevCode)
-                    <a href="{{ route('projects.inspect', [$project, $sample, 'component' => $prevCode]) }}"
+                    <a href="{{ $prevUrl }}"
                        class="min-h-[44px] px-4 py-2.5 text-xs font-bold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-1"
                        title="View previous without saving">
                         <span class="material-symbols-outlined text-base">chevron_left</span>

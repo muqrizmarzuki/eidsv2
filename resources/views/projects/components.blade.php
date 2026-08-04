@@ -248,10 +248,16 @@
     <a href="{{ route('projects.samples', $project) }}" class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
         &larr; Back to Sample Setup
     </a>
-    <a href="{{ route('projects.score', $project) }}" class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-xs font-extrabold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md">
-        <span class="material-symbols-outlined text-base">analytics</span>
-        Proceed to G-IDS Score Breakdown &rarr;
-    </a>
+    <div class="flex items-center gap-2">
+        <a href="{{ route('projects.external', $project) }}" class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
+            <span class="material-symbols-outlined text-base">park</span>
+            External Works
+        </a>
+        <a href="{{ route('projects.score', $project) }}" class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-xs font-extrabold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md">
+            <span class="material-symbols-outlined text-base">analytics</span>
+            Proceed to G-IDS Score Breakdown &rarr;
+        </a>
+    </div>
 </div>
 
 </div>

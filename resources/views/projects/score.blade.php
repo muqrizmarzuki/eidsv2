@@ -49,7 +49,7 @@
 
         // Radial gauge geometry: a 240deg arc swept from 150deg (value 0) to 390deg
         // (value = gaugeMax), clockwise through the top, split into WEAK / MODERATE / GOOD zones.
-        $gaugeMax   = array_sum(array_column($components, 'weightage')) + $meScore + $extScore;
+        $gaugeMax   = $archPct + $meScore + $extScore;
         $gaugeCx    = 110; $gaugeCy = 110; $gaugeR = 84;
         $gaugeStart = 150; $gaugeSweep = 240;
         $tFor      = fn ($v) => max(0, min($v, $gaugeMax)) / max($gaugeMax, 0.0001);
@@ -116,17 +116,21 @@
             <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 flex flex-col items-center justify-center text-center">
                 <div class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">Architectural Subtotal</div>
                 <div class="text-3xl lg:text-4xl font-extrabold text-eids-primary font-mono">{{ number_format($sArch, 2) }}</div>
-                <div class="text-xs text-gray-500 font-semibold mt-1">Max {{ array_sum(array_column($components, 'weightage')) }} pts</div>
+                <div class="text-xs text-gray-500 font-semibold mt-1">Max {{ number_format($archPct, 2) }} pts</div>
             </div>
             <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 flex flex-col items-center justify-center text-center">
-                <div class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">M&amp;E Work Fixed</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">M&amp;E Fittings (Annex B)</div>
                 <div class="text-3xl lg:text-4xl font-extrabold text-eids-accent font-mono">{{ number_format($meScore, 2) }}</div>
-                <div class="text-xs text-gray-500 font-semibold mt-1">Standard fixed score</div>
+                <div class="text-xs text-gray-500 font-semibold mt-1">
+                    Max {{ number_format($mePct, 2) }} pts &middot; {{ $meRow['passRate'] }}% pass rate ({{ $meRow['pass'] }}/{{ $meRow['total'] }})
+                </div>
             </div>
             <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 flex flex-col items-center justify-center text-center">
-                <div class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">External Work Fixed</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">External Works (Annex C)</div>
                 <div class="text-3xl lg:text-4xl font-extrabold text-gray-700 font-mono">{{ number_format($extScore, 2) }}</div>
-                <div class="text-xs text-gray-500 font-semibold mt-1">Standard fixed score</div>
+                <div class="text-xs text-gray-500 font-semibold mt-1">
+                    Max {{ number_format($extPct, 2) }} pts &middot; {{ $externalRow['passRate'] }}% pass rate ({{ $externalRow['pass'] }}/{{ $externalRow['total'] }})
+                </div>
             </div>
         </div>
     </div>

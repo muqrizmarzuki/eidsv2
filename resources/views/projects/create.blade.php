@@ -10,13 +10,22 @@
     <span class="text-gray-900 font-bold">New Project</span>
 @endsection
 
+@php
+    $samplingByCategory = \App\Models\SamplingRule::all()->keyBy('building_category')->map(fn ($r) => [
+        'divisor' => (float) $r->gfa_divisor, 'min' => $r->min_samples, 'max' => $r->max_samples,
+    ]);
+@endphp
+
 @section('content')
 <div class="max-w-3xl mx-auto" x-data="{
     gfa: '{{ old('floor_area_sqm') }}',
-    divisor: {{ setting('sample_divisor', 60) }},
+    category: '{{ old('building_category', 'A') }}',
+    rules: {{ Js::from($samplingByCategory) }},
     get samples() {
         const n = parseFloat(this.gfa);
-        return isNaN(n) || n <= 0 ? 0 : Math.max(1, Math.ceil(n / this.divisor));
+        const r = this.rules[this.category] ?? { divisor: 60, min: 1, max: 999999 };
+        if (isNaN(n) || n <= 0) return 0;
+        return Math.max(r.min, Math.min(r.max, Math.ceil(n / r.divisor)));
     }
 }">
     <form method="POST" action="{{ route('projects.store') }}">
@@ -74,6 +83,18 @@
                         <option value="banglo" {{ old('building_type') === 'banglo' ? 'selected' : '' }}>Bungalow</option>
                     </select>
                     @error('building_type')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">CIS 7:2021 Building Category *</label>
+                    <select name="building_category" required x-model="category"
+                            class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
+                        <option value="A" {{ old('building_category', 'A') === 'A' ? 'selected' : '' }}>Category A — Landed Housing</option>
+                        <option value="B" {{ old('building_category') === 'B' ? 'selected' : '' }}>Category B — Stratified Housing</option>
+                        <option value="C" {{ old('building_category') === 'C' ? 'selected' : '' }}>Category C — Commercial/Industrial (no CCS)</option>
+                        <option value="D" {{ old('building_category') === 'D' ? 'selected' : '' }}>Category D — Commercial/Industrial (with CCS)</option>
+                    </select>
+                    @error('building_category')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
@@ -139,7 +160,7 @@
                 <span class="material-symbols-outlined text-eids-accent text-lg">calculate</span>
                 Sample Unit Calculation
             </h2>
-            <p class="text-xs text-gray-500 font-medium mb-5">Formula: N = max(1, ceil(GFA ÷ {{ setting('sample_divisor', 60) }}))</p>
+            <p class="text-xs text-gray-500 font-medium mb-5">Formula (Table 3, per building category): N = clamp(ceil(GFA &divide; divisor), min, max)</p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
                 <div>

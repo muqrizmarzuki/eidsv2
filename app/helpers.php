@@ -4,8 +4,7 @@ if (!function_exists('setting')) {
     /**
      * Read a value from the settings table, falling back to the matching config key.
      *
-     * Usage:  setting('sample_divisor')
-     *         setting('rating_baik', 85)
+     * Usage:  setting('rating_baik', 85)
      */
     function setting(string $key, mixed $default = null): mixed
     {

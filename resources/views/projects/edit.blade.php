@@ -71,6 +71,18 @@
                     @error('building_type')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">CIS 7:2021 Building Category *</label>
+                    <select name="building_category" required
+                            class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
+                        <option value="A" {{ old('building_category', $project->building_category) === 'A' ? 'selected' : '' }}>Category A — Landed Housing</option>
+                        <option value="B" {{ old('building_category', $project->building_category) === 'B' ? 'selected' : '' }}>Category B — Stratified Housing</option>
+                        <option value="C" {{ old('building_category', $project->building_category) === 'C' ? 'selected' : '' }}>Category C — Commercial/Industrial (no CCS)</option>
+                        <option value="D" {{ old('building_category', $project->building_category) === 'D' ? 'selected' : '' }}>Category D — Commercial/Industrial (with CCS)</option>
+                    </select>
+                    @error('building_category')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
+                </div>
+
                 @if($project->status === 'selesai')
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Project Status</label>
