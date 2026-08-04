@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\HandlesChecklistAnswers;
 use App\Models\ChecklistItem;
 use App\Models\ComponentAssessment;
+use App\Models\Defect;
 use App\Models\ExternalElement;
 use App\Models\ExternalSample;
 use App\Models\Project;
 use App\Services\ScoringService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ExternalInspectionController extends Controller
 {
@@ -24,48 +26,117 @@ class ExternalInspectionController extends Controller
         $this->guardProjectVisible($project);
 
         $project->load('externalSamples.assessments');
-        $registry     = ExternalElement::ordered();
-        $presentCodes = $project->activeExternalElementCodes();
+        $registry = ExternalElement::ordered();
 
         $elements = $registry->map(fn ($el) => [
-            'el'      => $el,
-            'present' => in_array($el->element_code, $presentCodes, true),
-            'samples' => $project->externalSamples->where('element_code', $el->element_code),
+            'el'       => $el,
+            'quantity' => $project->externalElementQuantity($el->element_code),
+            'samples'  => $project->externalSamples->where('element_code', $el->element_code)
+                ->sortBy(['instance_index', 'sample_index']),
         ]);
 
         return view('projects.external', compact('project', 'elements'));
     }
 
-    public function togglePresence(Request $request, Project $project, string $elementCode)
+    private function instanceLabel(ExternalElement $element, int $instance, int $totalInstances, int $section): string
+    {
+        if ($totalInstances > 1) {
+            return $element->sample_count > 1
+                ? "{$element->name} {$instance} - Section {$section}"
+                : "{$element->name} {$instance}";
+        }
+        return $element->sample_count > 1 ? "{$element->name} #{$section}" : $element->name;
+    }
+
+    /**
+     * Relabels every remaining instance of an element after an add/remove so
+     * labels always reflect "N of current total" (e.g. adding a 3rd playground
+     * renames "Playground" back to "Playground 1"/"Playground 2"/"Playground 3").
+     */
+    private function relabelInstances(Project $project, string $elementCode, ExternalElement $element): int
+    {
+        $samples = $project->externalSamples()->where('element_code', $elementCode)
+            ->orderBy('instance_index')->orderBy('sample_index')->get();
+        $totalInstances = $samples->pluck('instance_index')->unique()->count();
+
+        foreach ($samples as $sample) {
+            $sample->update(['label' => $this->instanceLabel($element, $sample->instance_index, $totalInstances, $sample->sample_index)]);
+        }
+
+        return $totalInstances;
+    }
+
+    /**
+     * Adds one more physical instance of an element (e.g. a 3rd playground),
+     * generating its full Table 6 sample set.
+     */
+    public function addInstance(Project $project, string $elementCode)
     {
         $this->guardProjectVisible($project);
 
-        $element = ExternalElement::where('element_code', $elementCode)->firstOrFail();
-        $present = $request->boolean('present');
+        $element        = ExternalElement::where('element_code', $elementCode)->firstOrFail();
+        $nextInstance   = ($project->externalSamples()->where('element_code', $elementCode)->max('instance_index') ?? 0) + 1;
 
-        $project->externalElementSettings()->updateOrCreate(
-            ['element_code' => $elementCode],
-            ['present' => $present]
-        );
-
-        // Generate the fixed sample set (Table 6) the first time an element is
-        // switched on — existing samples/assessments are preserved if toggled
-        // off and back on.
-        if ($present && $project->externalSamples()->where('element_code', $elementCode)->doesntExist()) {
-            for ($i = 0; $i < $element->sample_count; $i++) {
-                ExternalSample::create([
-                    'project_id'   => $project->id,
-                    'element_code' => $elementCode,
-                    'sample_index' => $i + 1,
-                    'label'        => "{$element->name} #" . ($i + 1),
-                ]);
-            }
+        $rows = [];
+        for ($section = 1; $section <= $element->sample_count; $section++) {
+            $rows[] = [
+                'project_id'     => $project->id,
+                'element_code'   => $elementCode,
+                'instance_index' => $nextInstance,
+                'sample_index'   => $section,
+                'label'          => '', // relabelled below once the new total is known
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ];
         }
+        ExternalSample::insert($rows);
+
+        $total = $this->relabelInstances($project, $elementCode, $element);
+        $project->externalElementSettings()->updateOrCreate(['element_code' => $elementCode], ['quantity' => $total]);
 
         $this->scoring->recalculateAndSave($project);
 
         return redirect()->route('projects.external', $project)
-            ->with('success', "{$element->name} " . ($present ? 'marked present.' : 'marked not present.'));
+            ->with('success', "Added another {$element->name} instance.");
+    }
+
+    /**
+     * Removes one physical instance of an element — deletes its sample
+     * sections, their assessments/answers, and any defect raised against
+     * them, then renumbers the remaining instances to stay contiguous.
+     * Unlike other N/A handling in this app, this is a real delete: the
+     * instance itself (e.g. "the 2nd playground") no longer exists on the
+     * project, so there's nothing meaningful left to preserve.
+     */
+    public function removeInstance(Project $project, string $elementCode, int $instance)
+    {
+        $this->guardProjectVisible($project);
+
+        $element = ExternalElement::where('element_code', $elementCode)->firstOrFail();
+
+        DB::transaction(function () use ($project, $elementCode, $instance) {
+            $samples = $project->externalSamples()->where('element_code', $elementCode)
+                ->where('instance_index', $instance)->get();
+
+            $assessmentIds = ComponentAssessment::whereIn('external_sample_id', $samples->pluck('id'))->pluck('id');
+            Defect::whereIn('assessment_id', $assessmentIds)->get()->each->delete(); // model delete, not bulk, so media attachments are cleaned up too
+            ComponentAssessment::whereIn('id', $assessmentIds)->get()->each->delete(); // cascades to assessment_answers, clears media
+            ExternalSample::whereIn('id', $samples->pluck('id'))->delete();
+
+            // Shift every later instance down by one so numbering stays contiguous.
+            $project->externalSamples()->where('element_code', $elementCode)
+                ->where('instance_index', '>', $instance)
+                ->orderBy('instance_index')
+                ->each(fn ($s) => $s->update(['instance_index' => $s->instance_index - 1]));
+        });
+
+        $total = $this->relabelInstances($project, $elementCode, $element);
+        $project->externalElementSettings()->updateOrCreate(['element_code' => $elementCode], ['quantity' => $total]);
+
+        $this->scoring->recalculateAndSave($project);
+
+        return redirect()->route('projects.external', $project)
+            ->with('success', "Removed a {$element->name} instance.");
     }
 
     public function inspect(Project $project, ExternalSample $sample)

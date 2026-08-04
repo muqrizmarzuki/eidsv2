@@ -8,7 +8,7 @@ class WeightageArchitecturalElement extends Model
 {
     protected $fillable = [
         'component_code', 'name', 'group', 'breakdown_pct',
-        'scoring_mode', 'optional', 'sort_order',
+        'scoring_mode', 'sampling_scope', 'optional', 'sort_order',
     ];
 
     protected $casts = [

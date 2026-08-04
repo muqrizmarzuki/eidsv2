@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProjectSample extends Model
 {
     protected $fillable = [
-        'project_id', 'sample_index', 'location_name', 'location_type',
+        'project_id', 'unit_reference', 'sample_index', 'location_name', 'location_type',
     ];
 
     protected $appends = ['pass_rate'];
@@ -31,6 +31,34 @@ class ProjectSample extends Model
             if (str_contains($name, $kw)) return 'circulation';
         }
         return 'principal';
+    }
+
+    /**
+     * Distributes $count samples across $totalUnits, walking each unit's rooms
+     * (per $roomNames, cycling if a unit needs more rooms than the list has)
+     * before moving to the next unit — matching how an inspector actually
+     * walks a site, and CIS 7:2021 §1.7's "distributed as uniformly as
+     * possible throughout the project" requirement.
+     *
+     * @return array<int, array{unit_reference: string, location_name: string}>
+     */
+    public static function distributeAcrossUnits(int $count, array $roomNames, int $totalUnits): array
+    {
+        $roomNames  = array_values($roomNames) ?: ['Sample'];
+        $roomCount  = count($roomNames);
+        $totalUnits = max(1, $totalUnits);
+        $plan       = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $roomIdx = $i % $roomCount;
+            $unitIdx = intdiv($i, $roomCount) % $totalUnits;
+            $plan[]  = [
+                'unit_reference' => 'Unit #' . ($unitIdx + 1),
+                'location_name'  => $roomNames[$roomIdx] ?? ('Room ' . ($roomIdx + 1)),
+            ];
+        }
+
+        return $plan;
     }
 
     public function project()

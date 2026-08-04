@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'G-IDS Score Breakdown')
+@section('title', 'E-IDS Score Breakdown')
 
 @section('breadcrumb')
     <a href="{{ route('dashboard') }}" class="hover:text-gray-800 transition">Dashboard</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
     <a href="{{ route('projects.show', $project) }}" class="hover:text-gray-800 transition truncate max-w-36">{{ $project->project_name }}</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
-    <span class="text-gray-900 font-bold">G-IDS Score</span>
+    <span class="text-gray-900 font-bold">E-IDS Score</span>
 @endsection
 
 @php
@@ -85,7 +85,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
         {{-- Total Score Card --}}
         <div class="lg:col-span-1 bg-eids-primary rounded-2xl p-6 text-white flex flex-col items-center justify-center text-center shadow-md border border-white/10 relative overflow-hidden">
-            <div class="text-xs text-eids-light uppercase tracking-widest font-extrabold mb-2">G-IDS Final Score</div>
+            <div class="text-xs text-eids-light uppercase tracking-widest font-extrabold mb-2">E-IDS Final Score</div>
 
             {{-- Radial gauge --}}
             <svg viewBox="0 5 220 165" class="w-full max-w-[220px]" aria-hidden="true">
@@ -189,6 +189,45 @@
         </div>
     </div>
 
+    {{-- Detailed Findings: every FAILED checklist question, not just the component roll-up --}}
+    @if(!empty($findings))
+        <div class="mt-6 bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-red-500 text-lg">fact_check</span>
+                    Detailed Findings — Failed Checklist Items ({{ count($findings) }})
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider font-bold">
+                        <tr>
+                            <th class="px-6 py-3 text-left">Component</th>
+                            <th class="px-4 py-3 text-left">Location</th>
+                            <th class="px-4 py-3 text-left">Question</th>
+                            <th class="px-6 py-3 text-left">Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach($findings as $f)
+                            <tr class="hover:bg-red-50/30">
+                                <td class="px-6 py-3 font-bold text-gray-900 text-xs">{{ $f['component'] }}</td>
+                                <td class="px-4 py-3 text-gray-600 text-xs">{{ $f['location'] }}</td>
+                                <td class="px-4 py-3 text-gray-800 text-xs">
+                                    {{ $f['question'] }}
+                                    @if($f['value'] !== null)
+                                        <span class="font-mono font-bold text-red-700">({{ $f['value'] }} mm)</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-3 text-gray-500 text-xs">{{ $f['remarks'] ?? '—' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
     {{-- Bottom Action Bar --}}
     <div class="mt-6 flex justify-between items-center bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex-wrap gap-3">
         @if(auth()->user()->canInspect())
@@ -198,7 +237,7 @@
         @endif
         <a href="{{ route('reports.show', $project) }}" class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-xs font-extrabold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md">
             <span class="material-symbols-outlined text-base">description</span>
-            Generate Official G-IDS Certificate PDF &rarr;
+            Generate Official E-IDS Certificate PDF &rarr;
         </a>
     </div>
 

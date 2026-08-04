@@ -27,7 +27,7 @@
                 Electronic Inspection<br class="xl:hidden">&nbsp;Defect System
             </div>
             <p class="mt-10 text-white/70 text-sm leading-relaxed max-w-sm font-medium">
-                Professional digital ledger for residential building defect inspections, real-time sample matrix calculations, and G-IDS / CIS 7 scoring.
+                Professional digital ledger for residential building defect inspections, real-time sample matrix calculations, and E-IDS / CIS 7 scoring.
             </p>
         </div>
 
@@ -59,7 +59,7 @@
             </div>
 
             <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Inspector Portal Sign In</h1>
-            <p class="text-gray-500 text-sm mb-8 font-medium">Enter your credentials to access site inspection projects and G-IDS scoring ledger.</p>
+            <p class="text-gray-500 text-sm mb-8 font-medium">Enter your credentials to access site inspection projects and E-IDS scoring ledger.</p>
 
             <form method="POST" action="{{ route('login.submit') }}" x-data="{ loading: false }" @submit="loading = true">
                 @csrf

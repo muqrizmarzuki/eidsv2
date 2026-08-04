@@ -127,7 +127,7 @@
                             <td class="px-4 py-2 text-center text-purple-600 font-semibold">{{ number_format($extScore, 2) }}</td>
                         </tr>
                         <tr class="bg-eids-primary text-white">
-                            <td class="px-5 py-3.5 font-bold text-sm" colspan="3">G-IDS Total Score</td>
+                            <td class="px-5 py-3.5 font-bold text-sm" colspan="3">E-IDS Total Score</td>
                             <td class="px-4 py-3.5 text-center font-bold text-xl">{{ number_format($totalScore, 2) }}</td>
                         </tr>
                     </tbody>
@@ -178,13 +178,43 @@
                     </tbody>
                 </table>
             </div>
+
+            {{-- Detailed Findings --}}
+            @if(!empty($findings))
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-50">
+                        <h2 class="font-semibold text-gray-800 text-sm">Detailed Findings — Failed Items ({{ count($findings) }})</h2>
+                    </div>
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 text-xs text-gray-400 uppercase tracking-wider">
+                            <tr>
+                                <th class="px-5 py-3 text-left font-medium">Component</th>
+                                <th class="px-4 py-3 text-left font-medium">Location</th>
+                                <th class="px-4 py-3 text-left font-medium">Question</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            @foreach($findings as $f)
+                                <tr>
+                                    <td class="px-5 py-3 font-medium text-gray-700 text-xs">{{ $f['component'] }}</td>
+                                    <td class="px-4 py-3 text-gray-600 text-xs">{{ $f['location'] }}</td>
+                                    <td class="px-4 py-3 text-gray-700 text-xs">
+                                        {{ $f['question'] }}
+                                        @if($f['value'] !== null)<span class="font-mono font-bold text-red-600">({{ $f['value'] }} mm)</span>@endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
         </div>
 
         {{-- Right Column --}}
         <div class="space-y-5">
             {{-- Rating badge --}}
             <div class="bg-eids-primary rounded-2xl p-6 text-white text-center">
-                <div class="text-xs text-white/50 uppercase tracking-wider mb-3">G-IDS Rating</div>
+                <div class="text-xs text-white/50 uppercase tracking-wider mb-3">E-IDS Rating</div>
                 <div class="text-5xl font-bold mb-2">{{ number_format($totalScore, 2) }}</div>
                 <div class="px-5 py-1.5 rounded-full text-sm font-bold inline-block
                     @if($rating === 'GOOD') bg-emerald-500

@@ -17,7 +17,7 @@ class ExternalElementSeeder extends Seeder
     public function run(): void
     {
         $elements = [
-            ['EXT_LINKWAY',    'Link-way / Shelter',              'Infrastructure',          true,  1, 1],
+            ['EXT_LINKWAY',    'Link-way / Shelter',              'Infrastructure',          true,  2, 1],
             ['EXT_DRAIN',      'External Drain',                  'Infrastructure',          true,  2, 2],
             ['EXT_ROADWORK',   'Roadwork (incl. Parking Bay)',    'Infrastructure',          true,  2, 3],
             ['EXT_FOOTPATH',   'Footpath and Turfing',            'Infrastructure',          true,  2, 4],

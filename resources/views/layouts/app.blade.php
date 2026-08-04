@@ -55,7 +55,7 @@
                     <x-nav-item route="dashboard"      icon="grid_view" label="Dashboard" />
                     <x-nav-item route="projects.index" icon="domain"    label="Projects" :match="['projects.*']" />
                     <x-nav-item route="defects.index"  icon="warning"   label="Defects Register" />
-                    <x-nav-item route="reports.index"  icon="description" label="G-IDS Reports" :match="['reports.*']" />
+                    <x-nav-item route="reports.index"  icon="description" label="E-IDS Reports" :match="['reports.*']" />
                 @endif
 
                 @if(auth()->user()->isAdmin())

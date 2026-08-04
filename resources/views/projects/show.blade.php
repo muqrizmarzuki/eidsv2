@@ -208,7 +208,7 @@
         <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
                 <h2 class="font-extrabold text-gray-900 mb-5 flex items-center gap-2 text-sm">
                     <span class="material-symbols-outlined text-eids-accent text-lg">info</span>
-                    Project Specifications & G-IDS Parameters
+                    Project Specifications & E-IDS Parameters
                 </h2>
                 <dl class="grid grid-cols-2 gap-x-6 gap-y-5 text-sm">
                     <div>

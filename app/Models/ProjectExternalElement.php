@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProjectExternalElement extends Model
 {
-    protected $fillable = ['project_id', 'element_code', 'present'];
+    protected $fillable = ['project_id', 'element_code', 'quantity'];
 
-    protected $casts = ['present' => 'boolean'];
+    protected $casts = ['quantity' => 'integer'];
 
     public function project()
     {

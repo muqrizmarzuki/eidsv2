@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BuildingExternalController;
 use App\Http\Controllers\ChecklistItemController;
 use App\Http\Controllers\DefectController;
 use App\Http\Controllers\ExternalInspectionController;
@@ -73,9 +74,15 @@ Route::middleware('auth')->group(function () {
 
         // External works (Annex C)
         Route::get('/projects/{project}/external',                       [ExternalInspectionController::class, 'elements'])->name('projects.external');
-        Route::post('/projects/{project}/external/{elementCode}/toggle', [ExternalInspectionController::class, 'togglePresence'])->name('projects.external.toggle');
+        Route::post('/projects/{project}/external/{elementCode}/add',                [ExternalInspectionController::class, 'addInstance'])->name('projects.external.add');
+        Route::delete('/projects/{project}/external/{elementCode}/{instance}',       [ExternalInspectionController::class, 'removeInstance'])->name('projects.external.remove');
         Route::get('/projects/{project}/external/{sample}/inspect',      [ExternalInspectionController::class, 'inspect'])->name('projects.external.inspect');
         Route::post('/projects/{project}/external/{sample}/inspect',     [ExternalInspectionController::class, 'storeAssessment'])->name('projects.external.inspect.store');
+
+        // Building-level architectural components (Table 3: Roof, External Wall, Apron/Drain, Car Park)
+        Route::get('/projects/{project}/building-external',                  [BuildingExternalController::class, 'elements'])->name('projects.building-external');
+        Route::get('/projects/{project}/building-external/{sample}/inspect', [BuildingExternalController::class, 'inspect'])->name('projects.building-external.inspect');
+        Route::post('/projects/{project}/building-external/{sample}/inspect', [BuildingExternalController::class, 'storeAssessment'])->name('projects.building-external.inspect.store');
     });
 
     // Defects — static create route before parameterized routes. Index is open to
@@ -115,6 +122,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/weightage', [SettingController::class, 'updateWeightage'])->name('settings.weightage.update');
 
         Route::get('/checklist-items',                    [ChecklistItemController::class, 'index'])->name('checklist-items.index');
+        Route::post('/checklist-items/upload-image',      [ChecklistItemController::class, 'uploadGuideImage'])->name('checklist-items.upload-image');
         Route::get('/checklist-items/{checklistItem}/edit', [ChecklistItemController::class, 'edit'])->name('checklist-items.edit');
         Route::put('/checklist-items/{checklistItem}',      [ChecklistItemController::class, 'update'])->name('checklist-items.update');
     });

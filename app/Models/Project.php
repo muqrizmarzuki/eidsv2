@@ -52,33 +52,68 @@ class Project extends Model
         return $this->hasMany(ExternalSample::class);
     }
 
+    public function archExternalSamples()
+    {
+        return $this->hasMany(ArchExternalSample::class);
+    }
+
     /**
-     * Annex C element codes this project has flagged as present (§5/§6 —
-     * project-setup toggle, defaults per ExternalElement::default_present).
+     * Annex C element codes this project has at least one instance of (§5/§6
+     * — project-setup quantity, defaults to 1 if ExternalElement::default_present
+     * else 0). A project can have multiple instances of the same element (e.g.
+     * 3 playgrounds) — see externalElementQuantity().
      */
     public function activeExternalElementCodes(): array
     {
-        $overrides = $this->externalElementSettings->keyBy('element_code');
-
         return ExternalElement::ordered()
-            ->filter(fn ($el) => $overrides->has($el->element_code)
-                ? $overrides[$el->element_code]->present
-                : $el->default_present)
+            ->filter(fn ($el) => $this->externalElementQuantity($el->element_code) > 0)
             ->keys()
             ->all();
     }
 
     public function externalElementPresent(string $elementCode): bool
     {
-        return in_array($elementCode, $this->activeExternalElementCodes(), true);
+        return $this->externalElementQuantity($elementCode) > 0;
     }
 
     /**
-     * Component codes that go through the per-sample inspection grid — the
-     * architectural registry minus declaration-scored items (QP declarations
-     * aren't inspected per sample, see QpDeclarationController) and minus
-     * whichever optional elements (Car Park, Apron/Drain) this project has
-     * flagged as absent, per Table 2.
+     * How many physical instances of this Annex C element the project has
+     * (e.g. 3 separate playgrounds) — each instance gets its own full set of
+     * Table 6 sample sections. Defaults to 1 if the element's registry entry
+     * defaults to present, else 0, until the project customizes it.
+     */
+    public function externalElementQuantity(string $elementCode): int
+    {
+        $override = $this->externalElementSettings->firstWhere('element_code', $elementCode);
+        if ($override) return $override->quantity;
+
+        $el = ExternalElement::ordered()->get($elementCode);
+        return $el && $el->default_present ? 1 : 0;
+    }
+
+    /**
+     * True once every sample unit for every present external element has been
+     * assessed — mirrors inspection_progress but for Annex C, since External
+     * Works samples aren't generated until an element is toggled present.
+     */
+    public function externalInspectionComplete(): bool
+    {
+        $presentCodes = $this->activeExternalElementCodes();
+        if (empty($presentCodes)) return true;
+
+        $totalSamples    = $this->externalSamples()->whereIn('element_code', $presentCodes)->count();
+        $assessedSamples = $this->assessments()->whereNotNull('external_sample_id')
+            ->whereIn('component_code', $presentCodes)->count();
+
+        return $totalSamples > 0 && $assessedSamples >= $totalSamples;
+    }
+
+    /**
+     * All architectural component codes scored into Table 2 — used for
+     * weightage redistribution (ScoringService::redistributedWeights()).
+     * Includes both 'room' and 'building' sampling-scope components; excludes
+     * declaration-scored items and whichever optional elements (Car Park,
+     * Apron/Drain) this project has flagged as absent.
      */
     public function activeComponentCodes(): array
     {
@@ -90,7 +125,36 @@ class Project extends Model
     }
 
     /**
-     * Everything the inspector actually walks through per sample: the
+     * The subset of activeComponentCodes() inspected at internal-finish room
+     * samples (Floor, Wall, Ceiling, Door, Window, Fixtures) — excludes Roof/
+     * External Wall/Apron/Car Park, which are Table 3's "building" sampling
+     * scope and never belong to a specific room.
+     */
+    public function roomBasedComponentCodes(): array
+    {
+        $registry = WeightageArchitecturalElement::ordered();
+        return array_values(array_filter(
+            $this->activeComponentCodes(),
+            fn ($code) => $registry[$code]->sampling_scope === 'room'
+        ));
+    }
+
+    /**
+     * The subset of activeComponentCodes() sampled at the building level
+     * (Roof, External Wall, Apron/Drain, Car Park) per Table 3 — see
+     * ArchExternalSample.
+     */
+    public function buildingBasedComponentCodes(): array
+    {
+        $registry = WeightageArchitecturalElement::ordered();
+        return array_values(array_filter(
+            $this->activeComponentCodes(),
+            fn ($code) => $registry[$code]->sampling_scope === 'building'
+        ));
+    }
+
+    /**
+     * Everything the inspector walks through per room sample: the room-scoped
      * architectural components plus M&E Fittings (Annex B) — assessed at the
      * same sample locations per Table 5's note, but scored under its own
      * Table 1 weightage bucket rather than Table 2's, so it's kept out of
@@ -98,7 +162,7 @@ class Project extends Model
      */
     public function inspectableComponentCodes(): array
     {
-        return array_merge($this->activeComponentCodes(), ['ME_FITTING']);
+        return array_merge($this->roomBasedComponentCodes(), ['ME_FITTING']);
     }
 
     public function elementPresent(string $componentCode): bool
@@ -108,6 +172,40 @@ class Project extends Model
             'A9_APRON_DRAIN'   => (bool) $this->apron_drain_present,
             default            => true,
         };
+    }
+
+    /**
+     * Table 3's sample count for a "building"-scope component: Roof/External
+     * Wall get 50% of the project's units treated as sections (min 4); Apron/
+     * Drain and Car Park get a flat minimum of 2 length-sections. The standard
+     * doesn't give a sharper formula than "50%, min 4 sections" for Roof/Wall,
+     * so this is a documented, admin-adjustable approximation, not a literal
+     * GFA-style formula like Table 3's internal-finishes row.
+     */
+    public function buildingSampleCountFor(string $componentCode): int
+    {
+        return match ($componentCode) {
+            'A7_ROOF', 'A8_EXT_WALL' => max(4, (int) ceil($this->total_units * 0.5)),
+            'A9_APRON_DRAIN', 'A10_CAR_PARK' => 2,
+            default => 1,
+        };
+    }
+
+    /**
+     * True once every building-level sample (Roof/External Wall/Apron/Car
+     * Park, for whichever are present) has been assessed — mirrors
+     * externalInspectionComplete() but for Table 3's "building" scope.
+     */
+    public function archExternalInspectionComplete(): bool
+    {
+        $codes = $this->buildingBasedComponentCodes();
+        if (empty($codes)) return true;
+
+        $totalSamples    = $this->archExternalSamples()->whereIn('component_code', $codes)->count();
+        $assessedSamples = $this->assessments()->whereNotNull('arch_sample_id')
+            ->whereIn('component_code', $codes)->count();
+
+        return $totalSamples > 0 && $assessedSamples >= $totalSamples;
     }
 
     public function defects()
@@ -201,7 +299,7 @@ class Project extends Model
                 $count = $openDefects + $pendingVerify;
                 return $waiting('warning', "{$count} defect(s) still open — waiting on Contractor & Inspector verification.");
             }
-            return $actionable('analytics', 'Inspection complete — ready to generate the signed G-IDS PDF.', 'reports.show', ['project' => $this], 'Generate PDF Report');
+            return $actionable('analytics', 'Inspection complete — ready to generate the signed E-IDS PDF.', 'reports.show', ['project' => $this], 'Generate PDF Report');
         }
 
         if ($user->role === 'inspector') {
@@ -220,7 +318,7 @@ class Project extends Model
                     'projects.components', ['project' => $this], 'Continue Inspecting'
                 );
             }
-            return $actionable('task_alt', 'Inspection complete — notify your Admin.', 'projects.score', ['project' => $this], 'View G-IDS Score');
+            return $actionable('task_alt', 'Inspection complete — notify your Admin.', 'projects.score', ['project' => $this], 'View E-IDS Score');
         }
 
         return $waiting('info', '');

@@ -64,7 +64,7 @@
         </div>
         <div style="text-align:center">
             <div class="score-val">{{ number_format($totalScore, 2) }}</div>
-            <div class="sub" style="margin-bottom:4px">G-IDS Score</div>
+            <div class="sub" style="margin-bottom:4px">E-IDS Score</div>
             <span class="badge {{ $badgeCls[$rating] ?? '' }}">{{ $ratingMap[$rating] ?? $rating }}</span>
         </div>
     </div>
@@ -80,6 +80,7 @@
         <div class="dl-item"><dt>Total Units</dt><dd>{{ number_format($project->total_units) }}</dd></div>
         <div class="dl-item"><dt>GFA</dt><dd>{{ number_format($project->floor_area_sqm, 2) }} m²</dd></div>
         <div class="dl-item"><dt>Inspector</dt><dd>{{ $project->creator?->name ?? '—' }}</dd></div>
+        <div class="dl-item"><dt>CIS 7:2021 Category</dt><dd>Category {{ $project->building_category }}</dd></div>
     </div>
 </div>
 
@@ -111,24 +112,76 @@
                 </tr>
             @endforeach
             <tr class="arch-row">
-                <td colspan="5"><strong>S_arch (Architectural Sub-total)</strong></td>
+                <td colspan="5"><strong>S_arch (Architectural Sub-total, max {{ number_format($archPct, 2) }})</strong></td>
                 <td class="text-right"><strong>{{ number_format($sArch, 2) }}</strong></td>
             </tr>
             <tr class="sub-row">
-                <td colspan="5">M&E Work (fixed)</td>
+                <td colspan="4">M&amp;E Fittings (Annex B) &mdash; {{ $meRow['passRate'] }}% pass ({{ $meRow['pass'] }}/{{ $meRow['total'] }})</td>
+                <td class="text-center muted">max {{ number_format($mePct, 2) }}</td>
                 <td class="text-right">{{ number_format($meScore, 2) }}</td>
             </tr>
             <tr class="sub-row">
-                <td colspan="5">External Work (fixed)</td>
+                <td colspan="4">External Works (Annex C) &mdash; {{ $externalRow['passRate'] }}% pass ({{ $externalRow['pass'] }}/{{ $externalRow['total'] }})</td>
+                <td class="text-center muted">max {{ number_format($extPct, 2) }}</td>
                 <td class="text-right">{{ number_format($extScore, 2) }}</td>
             </tr>
             <tr class="total-row">
-                <td colspan="5">G-IDS TOTAL SCORE</td>
+                <td colspan="5">E-IDS TOTAL SCORE</td>
                 <td class="text-right">{{ number_format($totalScore, 2) }}</td>
             </tr>
         </tbody>
     </table>
 </div>
+
+{{-- QP Declarations --}}
+<div class="section">
+    <div class="section-header">QP Declarations (Material &amp; Functional Test)</div>
+    <table>
+        <thead>
+            <tr><th>Item</th><th class="text-center">Status</th></tr>
+        </thead>
+        <tbody>
+            @php
+                $qp = $project->qpDeclarations->keyBy('item_code');
+                $qpItems = ['QP_SKIM_COAT' => 'Skim Coat or Prepacked Plaster', 'QP_WATER_TIGHTNESS' => 'Wet-area Water-tightness Test'];
+            @endphp
+            @foreach($qpItems as $code => $label)
+                @php $decl = $qp->get($code); @endphp
+                <tr>
+                    <td>{{ $label }}</td>
+                    <td class="text-center {{ $decl?->is_earned ? 'pass' : 'fail' }}">{{ $decl?->is_earned ? 'Declared' : 'Not Declared' }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+
+{{-- Detailed Findings --}}
+@if(!empty($findings))
+    <div class="section">
+        <div class="section-header">Detailed Findings — Failed Checklist Items ({{ count($findings) }})</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Component</th>
+                    <th>Location</th>
+                    <th>Question</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($findings as $f)
+                    <tr>
+                        <td><strong>{{ $f['component'] }}</strong></td>
+                        <td>{{ $f['location'] }}</td>
+                        <td class="fail">{{ $f['question'] }}@if($f['value'] !== null) ({{ $f['value'] }} mm)@endif</td>
+                        <td class="muted">{{ $f['remarks'] ?? '—' }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@endif
 
 {{-- Defects --}}
 @if($project->defects->isNotEmpty())

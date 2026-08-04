@@ -24,6 +24,18 @@
     --color-status-warn-bg:     #fef3c7;
 }
 
+/* Rendered Guide content (Quill-authored HTML in the Guide modal) — Tailwind's
+   reset strips list markers/spacing, so restore them for readability. */
+.guide-rich-content p { margin-bottom: 0.5rem; }
+.guide-rich-content p:last-child { margin-bottom: 0; }
+.guide-rich-content ol { list-style: decimal; padding-left: 1.25rem; margin-bottom: 0.5rem; }
+.guide-rich-content ul { list-style: disc; padding-left: 1.25rem; margin-bottom: 0.5rem; }
+.guide-rich-content li { margin-bottom: 0.25rem; }
+.guide-rich-content strong { font-weight: 700; }
+.guide-rich-content em { font-style: italic; }
+.guide-rich-content a { color: #059669; text-decoration: underline; }
+.guide-rich-content img { border-radius: 0.5rem; max-width: 100%; margin: 0.5rem 0; }
+
 /* Custom Scrollbar for inspection grid & tables */
 .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -45,7 +57,7 @@
     outline-offset: 2px;
 }
 
-/* G-IDS Score button: one-time celebratory reveal (workflow-step component) */
+/* E-IDS Score button: one-time celebratory reveal (workflow-step component) */
 @keyframes score-pop {
     0%   { transform: scale(0.85); opacity: 0; }
     60%  { transform: scale(1.05); opacity: 1; }

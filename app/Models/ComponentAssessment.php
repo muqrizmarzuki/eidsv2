@@ -13,7 +13,7 @@ class ComponentAssessment extends Model implements HasMedia
     use InteractsWithMedia;
 
     protected $fillable = [
-        'project_id', 'sample_id', 'external_sample_id', 'component_code', 'na',
+        'project_id', 'sample_id', 'external_sample_id', 'arch_sample_id', 'component_code', 'na',
         'overall_sample_status', 'photo_path', 'remarks',
     ];
 
@@ -67,6 +67,11 @@ class ComponentAssessment extends Model implements HasMedia
     public function externalSample()
     {
         return $this->belongsTo(ExternalSample::class, 'external_sample_id');
+    }
+
+    public function archSample()
+    {
+        return $this->belongsTo(ArchExternalSample::class, 'arch_sample_id');
     }
 
     public function defect()

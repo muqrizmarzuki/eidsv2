@@ -16,7 +16,7 @@
 
     {{-- Overview Stats Grid --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <x-stat-card label="Total Projects"   value="{{ $total }}"      icon="folder_open"     color="blue" sub="Registered G-IDS projects" />
+        <x-stat-card label="Total Projects"   value="{{ $total }}"      icon="folder_open"     color="blue" sub="Registered E-IDS projects" />
         <x-stat-card label="In Inspection"    value="{{ $active }}"     icon="pending_actions" color="amber" sub="Active site inspections" />
         <x-stat-card label="Completed"        value="{{ $completed }}"  icon="task_alt"        color="emerald" sub="Fully scored & signed" />
         <x-stat-card label="Draft"            value="{{ $draft }}"      icon="draft"           color="gray" sub="Pending sample setup" />
@@ -42,7 +42,7 @@
                         <span class="material-symbols-outlined text-4xl">domain</span>
                     </div>
                     <p class="text-base text-gray-900 font-bold">No inspection projects yet</p>
-                    <p class="text-xs text-gray-500 mt-1 max-w-sm">Start by registering your first G-IDS residential project to begin site defect assessments.</p>
+                    <p class="text-xs text-gray-500 mt-1 max-w-sm">Start by registering your first E-IDS residential project to begin site defect assessments.</p>
                     @if(auth()->user()->canInspect())
                         <a href="{{ route('projects.create') }}"
                            class="mt-5 min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-xs font-bold rounded-xl hover:bg-eids-dark transition shadow-sm inline-flex items-center gap-2">
@@ -102,7 +102,7 @@
         {{-- Right Panel: Performance & Defect Widgets --}}
         <div class="space-y-6">
             
-            {{-- Average G-IDS Performance Hero Card --}}
+            {{-- Average E-IDS Performance Hero Card --}}
             <div class="bg-eids-primary rounded-2xl p-6 text-white shadow-md border border-white/10 relative overflow-hidden">
                 <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none text-white">
                     <span class="material-symbols-outlined" style="font-size: 180px;">analytics</span>
@@ -111,7 +111,7 @@
                 <div class="relative z-10">
                     <div class="text-xs uppercase tracking-widest text-eids-light font-bold mb-3 flex items-center gap-1.5">
                         <span class="material-symbols-outlined text-base">monitoring</span>
-                        Average G-IDS Performance
+                        Average E-IDS Performance
                     </div>
                     @if($avgScore > 0)
                         <div class="text-4xl lg:text-5xl font-extrabold tracking-tight mb-2">

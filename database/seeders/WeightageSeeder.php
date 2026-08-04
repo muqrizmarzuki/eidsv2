@@ -50,25 +50,28 @@ class WeightageSeeder extends Seeder
         }
 
         // Table 2 — architectural element weightage (fixed regardless of category).
+        // sampling_scope: 'room' = inspected at internal-finish room samples;
+        // 'building' = Table 3's own building-level sections/lengths (Roof,
+        // External Wall, Apron/Drain, Car Park never belong to one room).
         $elements = [
-            ['A1_FLOOR',           'Floor (Lantai)',                'Internal finishes',            18, 'sample_average', false, 1],
-            ['A2_WALL',            'Internal Wall (Dinding Dalam)', 'Internal finishes',            18, 'sample_average', false, 2],
-            ['A3_CEILING',         'Ceiling (Siling)',              'Internal finishes',             8, 'sample_average', false, 3],
-            ['A4_DOOR',            'Door (Pintu)',                  'Internal finishes',             8, 'sample_average', false, 4],
-            ['A5_WINDOW',          'Window (Tingkap)',              'Internal finishes',             8, 'sample_average', false, 5],
-            ['A6_FIXTURES',        'Internal Fixtures',             'Internal finishes',             8, 'sample_average', false, 6],
-            ['A7_ROOF',            'Roof (Bumbung)',                'External finishes',            10, 'sample_average', false, 7],
-            ['A8_EXT_WALL',        'External Wall (Dinding Luar)',  'External finishes',            10, 'sample_average', false, 8],
-            ['A9_APRON_DRAIN',     'Apron and Perimeter Drain',     'External finishes',             3, 'sample_average', true,  9],
-            ['A10_CAR_PARK',       'Car Park / Car Porch',          'External finishes',             3, 'sample_average', true,  10],
-            ['QP_SKIM_COAT',       'Skim Coat or Prepacked Plaster','Material and functional test',  3, 'declaration',    false, 11],
-            ['QP_WATER_TIGHTNESS', 'Wet-area Water-tightness Test', 'Material and functional test',  3, 'declaration',    false, 12],
+            ['A1_FLOOR',           'Floor (Lantai)',                'Internal finishes',            18, 'sample_average', 'room',     false, 1],
+            ['A2_WALL',            'Internal Wall (Dinding Dalam)', 'Internal finishes',            18, 'sample_average', 'room',     false, 2],
+            ['A3_CEILING',         'Ceiling (Siling)',              'Internal finishes',             8, 'sample_average', 'room',     false, 3],
+            ['A4_DOOR',            'Door (Pintu)',                  'Internal finishes',             8, 'sample_average', 'room',     false, 4],
+            ['A5_WINDOW',          'Window (Tingkap)',              'Internal finishes',             8, 'sample_average', 'room',     false, 5],
+            ['A6_FIXTURES',        'Internal Fixtures',             'Internal finishes',             8, 'sample_average', 'room',     false, 6],
+            ['A7_ROOF',            'Roof (Bumbung)',                'External finishes',            10, 'sample_average', 'building', false, 7],
+            ['A8_EXT_WALL',        'External Wall (Dinding Luar)',  'External finishes',            10, 'sample_average', 'building', false, 8],
+            ['A9_APRON_DRAIN',     'Apron and Perimeter Drain',     'External finishes',             3, 'sample_average', 'building', true,  9],
+            ['A10_CAR_PARK',       'Car Park / Car Porch',          'External finishes',             3, 'sample_average', 'building', true,  10],
+            ['QP_SKIM_COAT',       'Skim Coat or Prepacked Plaster','Material and functional test',  3, 'declaration',    'room',     false, 11],
+            ['QP_WATER_TIGHTNESS', 'Wet-area Water-tightness Test', 'Material and functional test',  3, 'declaration',    'room',     false, 12],
         ];
-        foreach ($elements as [$code, $name, $group, $pct, $mode, $optional, $sort]) {
+        foreach ($elements as [$code, $name, $group, $pct, $mode, $scope, $optional, $sort]) {
             WeightageArchitecturalElement::updateOrCreate(
                 ['component_code' => $code],
                 ['name' => $name, 'group' => $group, 'breakdown_pct' => $pct,
-                 'scoring_mode' => $mode, 'optional' => $optional, 'sort_order' => $sort]
+                 'scoring_mode' => $mode, 'sampling_scope' => $scope, 'optional' => $optional, 'sort_order' => $sort]
             );
         }
     }

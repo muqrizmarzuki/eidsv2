@@ -14,13 +14,14 @@ class ReportController extends Controller
 
     private function buildScoreData(Project $project): array
     {
-        $project->load(['assessments', 'samples', 'defects', 'creator']);
+        $project->load(['assessments', 'samples', 'externalSamples', 'defects', 'creator', 'qpDeclarations']);
 
         $breakdown       = $this->scoring->scoreBreakdown($project);
+        $findings        = $this->scoring->failedFindings($project);
         $openDefects     = $project->defects->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
         $resolvedDefects = $project->defects->where('status', 'RESOLVED')->count();
 
-        return array_merge($breakdown, compact('openDefects', 'resolvedDefects'));
+        return array_merge($breakdown, compact('findings', 'openDefects', 'resolvedDefects'));
     }
 
     public function index()
@@ -64,18 +65,26 @@ class ReportController extends Controller
     }
 
     /**
-     * The signed G-IDS report is a formal certificate — it must reflect a fully
+     * The signed E-IDS report is a formal certificate — it must reflect a fully
      * inspected project with every defect resolved, never a partial in-progress state.
      */
     private function reportBlockedReason(Project $project): ?string
     {
         if ($project->inspection_progress < 100) {
-            return 'The signed G-IDS report is not available yet — every sample unit must be inspected first.';
+            return 'The signed E-IDS report is not available yet — every sample unit must be inspected first.';
+        }
+
+        if (!$project->archExternalInspectionComplete()) {
+            return 'The signed E-IDS report is not available yet — Roof, External Wall, Apron/Drain and Car Park sections must be inspected first.';
+        }
+
+        if (!$project->externalInspectionComplete()) {
+            return 'The signed E-IDS report is not available yet — every present External Works element must be inspected first.';
         }
 
         $openOrPending = $project->defects()->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
         if ($openOrPending > 0) {
-            return "{$openOrPending} defect(s) still need to be resolved before the signed G-IDS report can be generated.";
+            return "{$openOrPending} defect(s) still need to be resolved before the signed E-IDS report can be generated.";
         }
 
         return null;

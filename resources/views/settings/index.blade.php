@@ -18,7 +18,7 @@
         <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
                 <span class="material-symbols-outlined text-eids-accent text-lg">calculate</span>
-                <h2 class="font-extrabold text-gray-900 text-sm">G-IDS Rating Thresholds</h2>
+                <h2 class="font-extrabold text-gray-900 text-sm">E-IDS Rating Thresholds</h2>
             </div>
 
             <div class="divide-y divide-gray-100">

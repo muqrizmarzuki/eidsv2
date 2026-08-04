@@ -85,7 +85,7 @@
                 <h1 class="font-extrabold text-2xl text-white tracking-tight">{{ $component['name'] }} ({{ $componentCode }})</h1>
                 <div class="text-white/80 text-sm mt-1.5 flex items-center gap-2 font-medium">
                     <span class="material-symbols-outlined text-base text-eids-light">home_work</span>
-                    {{ $sample->location_name }} &nbsp;·&nbsp; Sample Unit #{{ $sample->sample_index }}
+                    @if($sample->unit_reference){{ $sample->unit_reference }} &nbsp;·&nbsp; @endif{{ $sample->location_name }} &nbsp;·&nbsp; Sample #{{ $sample->sample_index }}
                 </div>
             </div>
             @if($component['weightage'] !== null)
@@ -204,17 +204,13 @@
                             @if($item->guide_tools)
                                 <div>
                                     <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-2">Tools</h4>
-                                    <p class="text-gray-800 whitespace-pre-line">{{ $item->guide_tools }}</p>
+                                    <div class="text-gray-800 guide-rich-content">{!! $item->guide_tools !!}</div>
                                 </div>
                             @endif
                             @if($item->guide_procedure)
                                 <div>
                                     <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-2">Inspection Procedure</h4>
-                                    <ol class="list-decimal list-inside space-y-1 text-gray-800">
-                                        @foreach($item->guide_procedure as $step)
-                                            <li>{{ $step }}</li>
-                                        @endforeach
-                                    </ol>
+                                    <div class="text-gray-800 guide-rich-content">{!! $item->guide_procedure !!}</div>
                                 </div>
                             @endif
                             @if($item->tolerance_text)
@@ -228,7 +224,7 @@
                             @if($item->guide_result_thresholds)
                                 <div>
                                     <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-2">Result</h4>
-                                    <p class="text-gray-800">{{ $item->guide_result_thresholds }}</p>
+                                    <div class="text-gray-800 guide-rich-content">{!! $item->guide_result_thresholds !!}</div>
                                 </div>
                             @endif
                         </div>

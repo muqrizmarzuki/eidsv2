@@ -57,13 +57,13 @@
             <div class="lg:col-span-7 space-y-6">
                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-eids-light text-xs font-extrabold uppercase tracking-widest">
                     <span class="w-2 h-2 rounded-full bg-eids-light animate-pulse"></span>
-                    Malaysian Construction Sector G-IDS Standard
+                    Malaysian Construction Sector E-IDS Standard
                 </div>
                 <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight text-white">
                     Digitising Residential Building Defect Inspections
                 </h1>
                 <p class="text-white/80 text-base sm:text-lg leading-relaxed max-w-2xl font-medium">
-                    The precision inspector's ledger. Streamline site defect recording, automated sample size calculations, 5-point component matrix checks, and instant G-IDS certificate PDF generation.
+                    The precision inspector's ledger. Streamline site defect recording, automated sample size calculations, 5-point component matrix checks, and instant E-IDS certificate PDF generation.
                 </p>
 
                 <div class="pt-4 flex flex-wrap items-center gap-4 justify-center lg:justify-start">
@@ -89,7 +89,7 @@
                     <div class="w-20 h-20 rounded-2xl bg-eids-accent/30 border border-eids-accent/50 text-eids-light flex items-center justify-center mx-auto mb-5 shadow-inner">
                         <span class="material-symbols-outlined text-4xl">analytics</span>
                     </div>
-                    <div class="text-xs uppercase tracking-widest text-eids-light font-bold mb-1">G-IDS Scoring Engine</div>
+                    <div class="text-xs uppercase tracking-widest text-eids-light font-bold mb-1">E-IDS Scoring Engine</div>
                     <div class="text-4xl font-extrabold text-white mb-2">Native CIS 7 Rules</div>
                     <p class="text-white/70 text-xs leading-relaxed font-medium">
                         Auto-calculates S_comp weighted architectural component pass rates, fixed M&amp;E &amp; external scores, and GOOD / MODERATE / WEAK rating thresholds.
@@ -103,7 +103,7 @@
     <section id="features" class="py-16 lg:py-24 max-w-7xl mx-auto px-6 flex-1">
         <div class="text-center max-w-2xl mx-auto mb-16">
             <span class="text-eids-accent text-xs font-extrabold uppercase tracking-widest">Built for Field &amp; Office</span>
-            <h2 class="text-2xl sm:text-4xl font-extrabold text-gray-900 mt-2 tracking-tight">Structured G-IDS Inspection Workflow</h2>
+            <h2 class="text-2xl sm:text-4xl font-extrabold text-gray-900 mt-2 tracking-tight">Structured E-IDS Inspection Workflow</h2>
             <p class="text-gray-600 text-sm mt-3 font-medium">Built specifically for government inspectors, private inspection firms, and developer QC teams in Malaysia.</p>
         </div>
 
@@ -148,7 +148,7 @@
                         <span class="material-symbols-outlined text-2xl">description</span>
                     </div>
                     <h3 class="font-extrabold text-gray-900 text-base mb-2">Formal PDF Certificates</h3>
-                    <p class="text-xs text-gray-600 leading-relaxed font-medium">Exports printable A4 G-IDS score certificates and defect logs ready for client or regulatory sign-off.</p>
+                    <p class="text-xs text-gray-600 leading-relaxed font-medium">Exports printable A4 E-IDS score certificates and defect logs ready for client or regulatory sign-off.</p>
                 </div>
             </div>
         </div>

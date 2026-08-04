@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ChecklistItem;
 use App\Models\WeightageArchitecturalElement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ChecklistItemController extends Controller
 {
@@ -34,19 +35,30 @@ class ChecklistItemController extends Controller
             'tolerance_max_mm' => 'nullable|numeric|min:0',
             'sort_order'      => 'required|integer|min:0',
             'guide_tools'             => 'nullable|string',
-            'guide_procedure_text'    => 'nullable|string',
-            'guide_result_thresholds' => 'nullable|string|max:255',
+            'guide_procedure'         => 'nullable|string',
+            'guide_result_thresholds' => 'nullable|string',
         ]);
-
-        $data['guide_procedure'] = filled($data['guide_procedure_text'] ?? null)
-            ? array_values(array_filter(array_map('trim', explode("\n", $data['guide_procedure_text']))))
-            : null;
-        unset($data['guide_procedure_text']);
 
         $checklistItem->update($data);
 
         return redirect()
             ->route('checklist-items.index', ['component' => $checklistItem->applies_to])
             ->with('success', 'Question updated successfully.');
+    }
+
+    /**
+     * Image upload target for the Guide content rich-text editor — the editor
+     * POSTs the file here on insert and embeds the returned URL as an <img>,
+     * rather than bloating the HTML field with a base64 blob.
+     */
+    public function uploadGuideImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|max:5120',
+        ]);
+
+        $path = $request->file('image')->store('guide-images', 'public');
+
+        return response()->json(['url' => Storage::url($path)]);
     }
 }

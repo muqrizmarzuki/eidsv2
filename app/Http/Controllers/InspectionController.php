@@ -27,7 +27,7 @@ class InspectionController extends Controller
     private function componentRegistry(Project $project): array
     {
         $registry   = WeightageArchitecturalElement::ordered();
-        $components = collect($project->activeComponentCodes())->mapWithKeys(fn ($code) => [
+        $components = collect($project->roomBasedComponentCodes())->mapWithKeys(fn ($code) => [
             $code => ['name' => $registry[$code]->name, 'weightage' => (float) $registry[$code]->breakdown_pct],
         ])->all();
 
@@ -163,8 +163,9 @@ class InspectionController extends Controller
         $this->guardProjectVisible($project);
 
         $breakdown = $this->scoring->scoreBreakdown($project);
+        $findings  = $this->scoring->failedFindings($project);
 
-        return view('projects.score', array_merge(compact('project'), $breakdown));
+        return view('projects.score', array_merge(compact('project', 'findings'), $breakdown));
     }
 
     public function summary(Project $project)
@@ -173,11 +174,12 @@ class InspectionController extends Controller
 
         $project->load(['samples.assessments', 'defects', 'creator']);
         $breakdown       = $this->scoring->scoreBreakdown($project);
+        $findings        = $this->scoring->failedFindings($project);
         $openDefects     = $project->defects->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
         $resolvedDefects = $project->defects->where('status', 'RESOLVED')->count();
 
         return view('projects.summary', array_merge(
-            compact('project', 'openDefects', 'resolvedDefects'),
+            compact('project', 'findings', 'openDefects', 'resolvedDefects'),
             $breakdown
         ));
     }

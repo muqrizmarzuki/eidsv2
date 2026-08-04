@@ -11,17 +11,17 @@
 
 ## 1. System Overview
 
-E-IDS v2 is a specialized web-based building defect inspection and scoring platform for the Malaysian construction sector. Built in compliance with G-IDS / CIS 7 quality standards, E-IDS replaces manual paper-based forms with an end-to-end digital workflow:
+E-IDS v2 is a specialized web-based building defect inspection and scoring platform for the Malaysian construction sector. Built in compliance with E-IDS / CIS 7 quality standards, E-IDS replaces manual paper-based forms with an end-to-end digital workflow:
 
 ```mermaid
 flowchart LR
     A["1. Project Registration & Assignment"] --> B["2. Sample Setup (N)"]
     B --> C["3. 5-Point Component Grid (Cards/Table)"]
     C --> D["4. Defect Tracking (Open -> In Progress -> Pending Verification -> Resolved)"]
-    D --> E["5. G-IDS Score & Signed PDF"]
+    D --> E["5. E-IDS Score & Signed PDF"]
 ```
 
-![Admin dashboard showing project totals, average G-IDS performance, and the Action Required widget](screenshots/02-dashboard.png)
+![Admin dashboard showing project totals, average E-IDS performance, and the Action Required widget](screenshots/02-dashboard.png)
 *The Dashboard is the landing page for Admin and Inspector — project totals, the average score across every visible project, and an Action Required list of what still needs attention.*
 
 ---
@@ -72,7 +72,7 @@ graph TD
 | **Confirm `RESOLVED` or Reject back to `IN_PROGRESS`** | ✅ | ✅ | ❌ |
 | **Mark Project as Completed (sign-off)** | ✅ | ❌ | ❌ |
 | **Manage Users & Role Access** | ✅ | ❌ | ❌ |
-| **Modify G-IDS Formula Settings** | ✅ | ❌ | ❌ |
+| **Modify E-IDS Formula Settings** | ✅ | ❌ | ❌ |
 | **Delete Project (with Modal Confirm)** | ✅ | ❌ | ❌ |
 
 **What "scoped" means in practice:** opening a project or defect you don't have visibility into — whether from a list or by typing the URL directly — returns a "Forbidden" page for every role except Admin. This applies uniformly across Projects, the Dashboard, Defects, and Reports.
@@ -102,8 +102,8 @@ sequenceDiagram
     Admin-->>Cont: 4. Defect now appears under Contractor's "My Defects"
     Cont->>Cont: 5. Contractor marks "Start Repair" (IN_PROGRESS), then "Mark Settled" (PENDING_VERIFICATION) once fixed
     Insp->>Insp: 6. Inspector re-inspects & either Confirms Resolved or Rejects back to IN_PROGRESS
-    Insp->>Admin: 7. System recalculates Final G-IDS Score & Rating (GOOD/MODERATE/WEAK) — Inspector is notified once inspection is 100% done and all defects are resolved
-    Admin->>Admin: 8. Admin clicks "Mark as Completed" (only enabled once inspection is done and every defect is resolved), then exports the Signed G-IDS PDF Certificate
+    Insp->>Admin: 7. System recalculates Final E-IDS Score & Rating (GOOD/MODERATE/WEAK) — Inspector is notified once inspection is 100% done and all defects are resolved
+    Admin->>Admin: 8. Admin clicks "Mark as Completed" (only enabled once inspection is done and every defect is resolved), then exports the Signed E-IDS PDF Certificate
 ```
 
 ![Project detail page with the Case Ledger showing all four phases and their current state](screenshots/05-project-show.png)
@@ -145,7 +145,7 @@ stateDiagram-v2
 
 4. **🟢 RESOLVED (Verified & Closed)**
    - **Trigger**: The Inspector (or Admin) conducts a re-inspection of the specified location on site.
-   - **Action**: Upon verifying the defect has been properly rectified to G-IDS standards, they click **Confirm Resolved**. If the repair is inadequate, they instead click **Reject – Not Fixed**, sending it back to `IN_PROGRESS` for the Contractor to redo.
+   - **Action**: Upon verifying the defect has been properly rectified to E-IDS standards, they click **Confirm Resolved**. If the repair is inadequate, they instead click **Reject – Not Fixed**, sending it back to `IN_PROGRESS` for the Contractor to redo.
 
 ![Defects Register showing one defect in each of the four lifecycle states with their matching action buttons](screenshots/10-defects-register.png)
 *All four states side by side: Open shows Start Repair, In Progress shows Mark Settled, Pending Verification shows Confirm Resolved / Reject – Not Fixed, and Resolved shows Reopen.*
@@ -185,9 +185,9 @@ To eliminate horizontal side-scrolling on mobile and tablet screens during site 
 
 ---
 
-## 6. G-IDS Scoring Framework
+## 6. E-IDS Scoring Framework
 
-The total G-IDS score ($S_{\text{total}}$) is calculated using native CIS 7 rules:
+The total E-IDS score ($S_{\text{total}}$) is calculated using native CIS 7 rules:
 
 $$S_{\text{total}} = S_{\text{arch}} + S_{\text{ME}} + S_{\text{external}}$$
 
@@ -203,8 +203,8 @@ $$S_{\text{total}} = S_{\text{arch}} + S_{\text{ME}} + S_{\text{external}}$$
 > - 🟡 **MODERATE RATING**: Total score $\ge 70.00$ pts and $< 85.00$ pts
 > - 🔴 **WEAK RATING**: Total score $< 70.00$ pts
 
-![G-IDS Score page with the speedometer gauge and component pass-rate breakdown table](screenshots/11-score-page.png)
-*The G-IDS Score page: the gauge's needle position and red/amber/green zones map directly to the rating thresholds above, with the full component-by-component breakdown below.*
+![E-IDS Score page with the speedometer gauge and component pass-rate breakdown table](screenshots/11-score-page.png)
+*The E-IDS Score page: the gauge's needle position and red/amber/green zones map directly to the rating thresholds above, with the full component-by-component breakdown below.*
 
 ---
 
@@ -245,15 +245,15 @@ $$S_{\text{total}} = S_{\text{arch}} + S_{\text{ME}} + S_{\text{external}}$$
 5. Inspector clicks **Confirm Resolved** if the fix holds up, or **Reject – Not Fixed** to send it back to `IN_PROGRESS` for another attempt.
 
 ### Step 5: Score Review (Admin / Inspector)
-1. Once every sample unit is inspected, the certification-seal button in the step bar unlocks — click it, or **G-IDS Score**, to review the final score, rating, and architectural component pass rates.
+1. Once every sample unit is inspected, the certification-seal button in the step bar unlocks — click it, or **E-IDS Score**, to review the final score, rating, and architectural component pass rates.
 2. If any defect is still `OPEN`, `IN_PROGRESS`, or `PENDING_VERIFICATION`, the score page and PDF report stay locked with an explanatory message until every defect reaches `RESOLVED`.
 
 ### Step 6: Completion Sign-off & PDF Export (Admin only)
 1. Once inspection is 100% done and every defect is `RESOLVED`, the project page's **Final Certificate** panel shows a **Mark as Completed** button.
 2. Click it to formally close out the project (status becomes **Completed**) — this is a deliberate action; nothing marks a project Completed automatically.
-3. Click **Generate Official PDF Report** to view or print the formal signed G-IDS Inspection Certificate.
+3. Click **Generate Official PDF Report** to view or print the formal signed E-IDS Inspection Certificate.
 
-![Formal G-IDS Inspection Certificate showing the final score, project metadata, and component breakdown](screenshots/12-report-certificate.png)
+![Formal E-IDS Inspection Certificate showing the final score, project metadata, and component breakdown](screenshots/12-report-certificate.png)
 *The signed certificate — only reachable once inspection is 100% done and every defect is `RESOLVED`. Its "Export Signed PDF Certificate" button in the top bar produces the downloadable file.*
 
 ---

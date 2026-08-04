@@ -32,7 +32,6 @@ class ChecklistItemSeeder extends Seeder
                     'guide_tools' => null,
                     'guide_procedure' => null,
                     'guide_result_thresholds' => null,
-                    'guide_photos' => null,
                 ], $item));
             }
         }
@@ -52,15 +51,15 @@ class ChecklistItemSeeder extends Seeder
                     'defect_group' => 'Alignment and Evenness', 'question_text' => 'Floor levelness is within the tolerated limit.',
                     'method_tool' => 'Spirit Level 1.2 m + Steel Wedge', 'tolerance_text' => '≤ 3 mm / 1.2 m',
                     'input_type' => 'numeric_with_tolerance', 'tolerance_max_mm' => 3.00,
-                    'guide_tools' => "Spirit Level 1.2 m\nSteel Wedge (Feeler Gauge)",
-                    'guide_procedure' => [
-                        'Place the spirit level along the floor in a straight line for 1.2 m.',
-                        'Insert the steel wedge under the spirit level at the gap.',
-                        'Measure the maximum gap (clearance).',
-                        'Record the measurement in millimetres (mm).',
-                        'The system will determine PASS or FAIL automatically.',
-                    ],
-                    'guide_result_thresholds' => 'PASS: ≤ 3 mm · FAIL: > 3 mm',
+                    'guide_tools' => '<p>Spirit Level 1.2 m</p><p>Steel Wedge (Feeler Gauge)</p>',
+                    'guide_procedure' => '<ol>'
+                        . '<li>Place the spirit level along the floor in a straight line for 1.2 m.</li>'
+                        . '<li>Insert the steel wedge under the spirit level at the gap.</li>'
+                        . '<li>Measure the maximum gap (clearance).</li>'
+                        . '<li>Record the measurement in millimetres (mm).</li>'
+                        . '<li>The system will determine PASS or FAIL automatically.</li>'
+                        . '</ol>',
+                    'guide_result_thresholds' => '<p><strong>PASS:</strong> ≤ 3 mm &middot; <strong>FAIL:</strong> &gt; 3 mm</p>',
                 ],
                 ['defect_group' => 'Alignment and Evenness', 'question_text' => 'Floor slope in wet areas is in the correct direction.', 'method_tool' => 'Spirit Level 1.2 m'],
                 ['defect_group' => 'Alignment and Evenness', 'question_text' => 'Joints are aligned with skirting or walls.'],

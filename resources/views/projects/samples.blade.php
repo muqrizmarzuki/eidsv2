@@ -38,7 +38,7 @@
         <div>
             <div class="font-extrabold text-gray-900 text-sm">Sample Units Configuration</div>
             <div class="text-xs text-gray-700 mt-1 leading-relaxed font-medium">
-                Formula: N = max(1, ceil(GFA &divide; {{ $divisor }})) = <strong class="text-eids-primary font-bold">{{ $project->calculated_samples }} sample units</strong>.
+                Formula (Table 3): N = clamp(ceil(Total GFA &divide; {{ $divisor }}), {{ $minSamples }}, {{ $maxSamples }}) = <strong class="text-eids-primary font-bold">{{ $project->calculated_samples }} sample units</strong>, distributed across {{ $project->total_units }} unit(s).
                 @if($endsAtSamples)
                     Assign a room or location name to each sample unit. The assigned inspector will perform the component inspection separately.
                 @else
@@ -77,7 +77,7 @@
                     <span class="material-symbols-outlined text-eids-accent text-lg">home_work</span>
                     Sample Units Location Assignment ({{ $project->samples->count() }})
                 </h2>
-                <span class="text-xs text-gray-500 font-mono font-semibold">GFA: {{ number_format($project->floor_area_sqm, 2) }} m²</span>
+                <span class="text-xs text-gray-500 font-mono font-semibold">Total GFA: {{ number_format($project->floor_area_sqm, 2) }} m²</span>
             </div>
 
             @if($project->samples->isEmpty())
@@ -108,6 +108,13 @@
                             <div class="w-10 h-10 rounded-full bg-eids-primary/10 text-eids-primary border border-eids-primary/20 flex items-center justify-center text-xs font-extrabold shrink-0 shadow-2xs">
                                 #{{ $sample->sample_index }}
                             </div>
+
+                            {{-- Unit reference — which physical unit this sample belongs to --}}
+                            @if($sample->unit_reference)
+                                <span class="shrink-0 text-xs font-bold text-gray-600 bg-gray-100 border border-gray-200 px-2.5 py-1.5 rounded-lg">
+                                    {{ $sample->unit_reference }}
+                                </span>
+                            @endif
 
                             {{-- Location picker --}}
                             <div class="flex-1 flex items-center gap-2">

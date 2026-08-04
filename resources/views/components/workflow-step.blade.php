@@ -82,7 +82,7 @@
             @endforeach
         </div>
 
-        {{-- Step 5: G-IDS Score certification seal --}}
+        {{-- Step 5: E-IDS Score certification seal --}}
         <div class="shrink-0 pl-2"
              x-data="{
                  celebrate: false,
@@ -115,7 +115,7 @@
                         <circle cx="20" cy="20" r="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2.2" />
                         <circle cx="20" cy="20" r="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2" />
                     </svg>
-                    <span class="hidden sm:inline">G-IDS Score</span>
+                    <span class="hidden sm:inline">E-IDS Score</span>
                 </div>
             @endif
         </div>

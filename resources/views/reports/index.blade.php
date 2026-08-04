@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'G-IDS Reports')
+@section('title', 'E-IDS Reports')
 
 @section('breadcrumb')
     <a href="{{ route('dashboard') }}" class="hover:text-gray-800 transition">Dashboard</a>
     <span class="material-symbols-outlined text-sm">chevron_right</span>
-    <span class="text-gray-900 font-bold">G-IDS Reports</span>
+    <span class="text-gray-900 font-bold">E-IDS Reports</span>
 @endsection
 
 @section('content')
@@ -24,7 +24,7 @@
         <div class="w-16 h-16 rounded-2xl bg-eids-primary/5 border border-eids-primary/10 flex items-center justify-center mb-4 text-eids-primary">
             <span class="material-symbols-outlined text-4xl">description</span>
         </div>
-        <div class="text-base text-gray-900 font-extrabold">No G-IDS reports available yet</div>
+        <div class="text-base text-gray-900 font-extrabold">No E-IDS reports available yet</div>
         <p class="text-xs text-gray-500 mt-1 max-w-sm">Reports appear here once a project has completed inspection and scoring. Start by registering and inspecting a project.</p>
         <a href="{{ route('projects.index') }}"
            class="mt-6 px-6 py-2.5 min-h-[44px] bg-eids-primary text-white text-xs font-extrabold rounded-xl hover:bg-eids-dark transition shadow-xs inline-flex items-center gap-2">
@@ -73,7 +73,7 @@
         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-eids-accent text-lg">description</span>
-                <h2 class="font-extrabold text-gray-900 text-sm">Scored G-IDS Inspection Reports</h2>
+                <h2 class="font-extrabold text-gray-900 text-sm">Scored E-IDS Inspection Reports</h2>
             </div>
             <span class="text-xs text-gray-500 font-mono font-semibold">{{ $projects->count() }} report(s) total</span>
         </div>
@@ -132,7 +132,7 @@
                     {{-- Score Precise --}}
                     <div class="text-center shrink-0 hidden md:block px-2">
                         <div class="text-base font-extrabold text-eids-primary font-mono">{{ number_format($score, 2) }}</div>
-                        <div class="text-xs text-gray-500 font-medium">G-IDS pts</div>
+                        <div class="text-xs text-gray-500 font-medium">E-IDS pts</div>
                     </div>
 
                     {{-- Actions --}}

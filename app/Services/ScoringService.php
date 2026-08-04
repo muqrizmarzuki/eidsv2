@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 /**
  * Implements the CIS 7:2021 scoring pipeline: per-component pass rate (location
  * weighted for internal finishes) -> architectural subtotal (Table 2, with
- * proportional redistribution for absent optional elements) -> overall G-IDS
+ * proportional redistribution for absent optional elements) -> overall E-IDS
  * score (Table 1). M&E (Annex B) and External Works (Annex C) are each their
  * own flat pass-rate pool, scored against Table 1's me_pct/external_pct.
  */
@@ -177,7 +177,7 @@ class ScoringService
     }
 
     /**
-     * Full G-IDS score breakdown for a project: architectural subtotal (points),
+     * Full E-IDS score breakdown for a project: architectural subtotal (points),
      * M&E subtotal (Annex B pass rate x Table 1's me_pct), External subtotal
      * (Annex C pass rate x Table 1's external_pct), total score, and rating.
      */
@@ -212,5 +212,48 @@ class ScoringService
     {
         $breakdown = $this->scoreBreakdown($project);
         $project->update(['overall_score' => $breakdown['totalScore']]);
+    }
+
+    /**
+     * Every FAILED checklist answer across architectural, M&E, and External
+     * assessments, with the question text and location — the per-question
+     * detail a formal report needs without listing every passing answer too.
+     */
+    public function failedFindings(Project $project): array
+    {
+        $registry     = WeightageArchitecturalElement::ordered();
+        $extRegistry  = \App\Models\ExternalElement::ordered();
+        $componentName = function (string $code) use ($registry, $extRegistry) {
+            return match (true) {
+                $code === 'ME_FITTING'        => 'M&E Fittings',
+                $registry->has($code)         => $registry[$code]->name,
+                $extRegistry->has($code)      => $extRegistry[$code]->name,
+                default                       => $code,
+            };
+        };
+
+        $assessments = $project->assessments()
+            ->with(['sample', 'externalSample', 'archSample', 'answers' => fn ($q) => $q->where('result', 'FAIL')->with('checklistItem')])
+            ->whereHas('answers', fn ($q) => $q->where('result', 'FAIL'))
+            ->get();
+
+        $findings = [];
+        foreach ($assessments as $assessment) {
+            $location = $assessment->sample?->location_name
+                ?? $assessment->externalSample?->label
+                ?? $assessment->archSample?->label
+                ?? '—';
+            foreach ($assessment->answers as $answer) {
+                $findings[] = [
+                    'component' => $componentName($assessment->component_code),
+                    'location'  => $location,
+                    'question'  => $answer->checklistItem->question_text,
+                    'value'     => $answer->numeric_value,
+                    'remarks'   => $assessment->remarks,
+                ];
+            }
+        }
+
+        return $findings;
     }
 }

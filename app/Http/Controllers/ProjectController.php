@@ -137,20 +137,27 @@ class ProjectController extends Controller
 
         $project = Project::create($data);
 
-        // Auto-generate sample slots
+        // Auto-generate sample slots, distributed across the project's units
+        // per CIS 7:2021 §1.7 ("distributed as uniformly as possible throughout
+        // the project") rather than confined to a single representative unit.
         $locations = json_decode(setting('default_locations', '[]'), true) ?: config('eids.default_locations');
-        for ($i = 0; $i < $project->calculated_samples; $i++) {
-            $name = $locations[$i] ?? "Sample " . ($i + 1);
-            ProjectSample::create([
-                'project_id'    => $project->id,
-                'sample_index'  => $i + 1,
-                'location_name' => $name,
-                'location_type' => ProjectSample::guessLocationType($name),
-            ]);
+        $plan      = ProjectSample::distributeAcrossUnits($project->calculated_samples, $locations, $project->total_units);
+        $rows      = [];
+        foreach ($plan as $i => $entry) {
+            $rows[] = [
+                'project_id'     => $project->id,
+                'unit_reference' => $entry['unit_reference'],
+                'sample_index'   => $i + 1,
+                'location_name'  => $entry['location_name'],
+                'location_type'  => ProjectSample::guessLocationType($entry['location_name']),
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ];
         }
+        ProjectSample::insert($rows);
 
         return redirect()->route('projects.samples', $project)
-            ->with('success', "Project '{$project->project_name}' created. {$project->calculated_samples} sample(s) generated.");
+            ->with('success', "Project '{$project->project_name}' created. {$project->calculated_samples} sample(s) generated across {$project->total_units} unit(s).");
     }
 
     public function edit(Project $project)
@@ -197,11 +204,53 @@ class ProjectController extends Controller
             unset($data['assigned_to']);
         }
 
+        $data['calculated_samples'] = $this->scoring->sampleCount($data['building_category'], (float) $data['floor_area_sqm']);
         $project->update($data);
+
+        $added = $this->growSamplesIfNeeded($project);
+
         $this->scoring->recalculateAndSave($project);
 
+        $message = 'Project updated successfully.';
+        if ($added > 0) {
+            $message .= " {$added} additional sample unit(s) generated to match the recalculated target of {$project->calculated_samples}.";
+        }
+
         return redirect()->route('projects.show', $project)
-            ->with('success', 'Project updated successfully.');
+            ->with('success', $message);
+    }
+
+    /**
+     * If a GFA/category edit raised calculated_samples above the project's
+     * current sample count, generate the extra samples continuing the same
+     * unit-distribution plan — never deletes or renumbers existing samples,
+     * so in-progress inspections are untouched.
+     */
+    private function growSamplesIfNeeded(Project $project): int
+    {
+        $existing = $project->samples()->count();
+        $target   = $project->calculated_samples;
+        if ($target <= $existing) return 0;
+
+        $locations = json_decode(setting('default_locations', '[]'), true) ?: config('eids.default_locations');
+        $fullPlan  = ProjectSample::distributeAcrossUnits($target, $locations, $project->total_units);
+        $newSlice  = array_slice($fullPlan, $existing);
+
+        $rows = [];
+        foreach ($newSlice as $i => $entry) {
+            $rows[] = [
+                'project_id'     => $project->id,
+                'unit_reference' => $entry['unit_reference'],
+                'sample_index'   => $existing + $i + 1,
+                'location_name'  => $entry['location_name'],
+                'location_type'  => ProjectSample::guessLocationType($entry['location_name']),
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ];
+        }
+        ProjectSample::insert($rows);
+
+        return count($rows);
     }
 
     public function markComplete(Project $project)
@@ -216,6 +265,16 @@ class ProjectController extends Controller
         if ($project->inspection_progress < 100) {
             return redirect()->route('projects.show', $project)
                 ->with('error', 'Inspection is not yet complete — every sample unit must be assessed first.');
+        }
+
+        if (!$project->archExternalInspectionComplete()) {
+            return redirect()->route('projects.show', $project)
+                ->with('error', 'Roof, External Wall, Apron/Drain and Car Park sections must be inspected before this project can be marked complete.');
+        }
+
+        if (!$project->externalInspectionComplete()) {
+            return redirect()->route('projects.show', $project)
+                ->with('error', 'Every present External Works element must be inspected before this project can be marked complete.');
         }
 
         $openOrPending = $project->defects()->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
@@ -246,11 +305,14 @@ class ProjectController extends Controller
         $this->guardProjectVisible($project);
 
         $project->load('samples');
-        $divisor          = (float) \App\Models\SamplingRule::forCategory($project->building_category)->gfa_divisor;
+        $rule             = \App\Models\SamplingRule::forCategory($project->building_category);
+        $divisor          = (float) $rule->gfa_divisor;
+        $minSamples       = $rule->min_samples;
+        $maxSamples       = $rule->max_samples;
         $components       = WeightageArchitecturalElement::ordered();
         $defaultLocations = json_decode(setting('default_locations', '[]'), true) ?: config('eids.default_locations');
 
-        return view('projects.samples', compact('project', 'divisor', 'components', 'defaultLocations'));
+        return view('projects.samples', compact('project', 'divisor', 'minSamples', 'maxSamples', 'components', 'defaultLocations'));
     }
 
     public function storeSamples(Request $request, Project $project)

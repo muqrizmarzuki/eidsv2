@@ -16,7 +16,7 @@
     <a href="{{ route('projects.score', $project) }}"
        class="flex items-center gap-2 px-5 py-2.5 bg-eids-primary text-white text-sm font-bold rounded-xl hover:bg-eids-dark transition shadow-xs min-h-[44px]">
         <span class="material-symbols-outlined text-lg">analytics</span>
-        View G-IDS Score &rarr;
+        View E-IDS Score &rarr;
     </a>
 @endsection
 
@@ -33,7 +33,7 @@
             <span class="material-symbols-outlined text-xl">checklist</span>
         </div>
         <div>
-            <h1 class="font-extrabold text-gray-900 text-sm">G-IDS Component Inspection Grid</h1>
+            <h1 class="font-extrabold text-gray-900 text-sm">E-IDS Component Inspection Grid</h1>
             <p class="text-xs text-gray-600 mt-0.5 font-medium">Select any component cell to record 5-point inspection criteria.</p>
         </div>
     </div>
@@ -75,7 +75,10 @@
                         #{{ $sample->sample_index }}
                     </span>
                     <div>
-                        <h2 class="font-extrabold text-gray-900 text-sm leading-tight">{{ $sample->location_name }}</h2>
+                        <h2 class="font-extrabold text-gray-900 text-sm leading-tight">
+                            @if($sample->unit_reference)<span class="text-gray-400 font-bold">{{ $sample->unit_reference }} ·</span>@endif
+                            {{ $sample->location_name }}
+                        </h2>
                         <div class="text-[11px] text-gray-500 font-medium mt-0.5">
                             {{ $doneCount }} of {{ $totalComp }} components inspected
                             @if($doneCount > 0)
@@ -189,7 +192,9 @@
                 <tr class="hover:bg-gray-50/80 transition">
                     <td class="px-5 py-4">
                         <div class="font-extrabold text-gray-900 text-sm">{{ $sample->location_name }}</div>
-                        <div class="text-gray-500 text-xs font-mono font-semibold mt-0.5">Sample Unit #{{ $sample->sample_index }}</div>
+                        <div class="text-gray-500 text-xs font-mono font-semibold mt-0.5">
+                            @if($sample->unit_reference){{ $sample->unit_reference }} · @endif#{{ $sample->sample_index }}
+                        </div>
                     </td>
                     @foreach($components as $code => $comp)
                         @php
@@ -249,13 +254,17 @@
         &larr; Back to Sample Setup
     </a>
     <div class="flex items-center gap-2">
+        <a href="{{ route('projects.building-external', $project) }}" class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
+            <span class="material-symbols-outlined text-base">roofing</span>
+            Roof / Wall / Apron / Car Park
+        </a>
         <a href="{{ route('projects.external', $project) }}" class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
             <span class="material-symbols-outlined text-base">park</span>
             External Works
         </a>
         <a href="{{ route('projects.score', $project) }}" class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-xs font-extrabold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md">
             <span class="material-symbols-outlined text-base">analytics</span>
-            Proceed to G-IDS Score Breakdown &rarr;
+            Proceed to E-IDS Score Breakdown &rarr;
         </a>
     </div>
 </div>

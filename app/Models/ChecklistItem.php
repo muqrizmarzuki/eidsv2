@@ -9,22 +9,30 @@ class ChecklistItem extends Model
     protected $fillable = [
         'applies_to', 'defect_group', 'sort_order', 'question_text',
         'method_tool', 'tolerance_text', 'input_type', 'tolerance_max_mm',
-        'guide_tools', 'guide_procedure', 'guide_result_thresholds', 'guide_photos',
+        'guide_tools', 'guide_procedure', 'guide_result_thresholds',
     ];
 
     protected $casts = [
         'sort_order'       => 'integer',
         'tolerance_max_mm' => 'decimal:2',
-        'guide_procedure'  => 'array',
-        'guide_photos'     => 'array',
     ];
+
+    /**
+     * guide_tools/guide_procedure/guide_result_thresholds hold rich-text
+     * editor HTML (bold, lists, inline images) — "empty" means Quill's own
+     * empty-document markup, not just a blank string.
+     */
+    private function isBlankHtml(?string $html): bool
+    {
+        if (blank($html)) return true;
+        return trim(strip_tags($html)) === '' && !str_contains($html, '<img');
+    }
 
     public function getHasGuideAttribute(): bool
     {
-        return filled($this->guide_tools)
-            || filled($this->guide_procedure)
-            || filled($this->guide_result_thresholds)
-            || filled($this->guide_photos);
+        return !$this->isBlankHtml($this->guide_tools)
+            || !$this->isBlankHtml($this->guide_procedure)
+            || !$this->isBlankHtml($this->guide_result_thresholds);
     }
 
     public function scopeForComponent($query, string $componentCode)

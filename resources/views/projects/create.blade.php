@@ -164,11 +164,12 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Gross Floor Area (GFA m²) *</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Total Project GFA (m²) *</label>
                     <input type="number" name="floor_area_sqm" step="0.01" min="1"
-                           value="{{ old('floor_area_sqm') }}" placeholder="e.g. 210.00" required
+                           value="{{ old('floor_area_sqm') }}" placeholder="e.g. 10500.00" required
                            x-model="gfa"
                            class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-mono font-medium">
+                    <p class="mt-1.5 text-xs text-gray-500 font-medium">The <strong>whole project's</strong> combined floor area (all units together) — per CIS 7:2021 §1.7, not a single unit's size.</p>
                     @error('floor_area_sqm')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
