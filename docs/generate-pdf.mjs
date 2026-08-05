@@ -5,7 +5,20 @@ import path from 'path';
 
 const require = createRequire(import.meta.url);
 const __dir   = path.dirname(fileURLToPath(import.meta.url));
-const md       = readFileSync(path.join(__dir, 'USER_MANUAL.md'), 'utf8');
+
+// Usage: node generate-pdf.mjs [input.md] [output.pdf]
+// Both default to the combined manual for backward compatibility.
+const DEFAULT_NAMES = {
+  'USER_MANUAL.md':            'E-IDS-v2-User-Manual.pdf',
+  'USER_MANUAL-ADMIN.md':      'E-IDS-v2-Admin-Manual.pdf',
+  'USER_MANUAL-INSPECTOR.md':  'E-IDS-v2-Inspector-Manual.pdf',
+  'USER_MANUAL-CONTRACTOR.md': 'E-IDS-v2-Contractor-Manual.pdf',
+};
+
+const inputArg  = process.argv[2] || 'USER_MANUAL.md';
+const outputArg = process.argv[3] || DEFAULT_NAMES[inputArg] || inputArg.replace(/\.md$/, '.pdf');
+
+const md = readFileSync(path.join(__dir, inputArg), 'utf8');
 
 // ── 1. Convert Markdown to HTML via marked ─────────────────────────────────
 const { marked } = await import('/var/www/node_modules/marked/lib/marked.esm.js');
@@ -36,11 +49,14 @@ body = body.replace(
 );
 
 // ── 2. Build the full HTML page ────────────────────────────────────────────
+const titleMatch = md.match(/^#\s+(.+)$/m);
+const docTitle    = titleMatch ? titleMatch[1] : 'E-IDS v2 — User Manual';
+
 const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>E-IDS v2 — User Manual</title>
+<title>${docTitle}</title>
 
 <!-- KaTeX -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -119,7 +135,7 @@ ${body}
 </body>
 </html>`;
 
-const htmlPath = '/tmp/user-manual.html';
+const htmlPath = '/tmp/' + inputArg.replace(/\.md$/, '.html');
 writeFileSync(htmlPath, html);
 console.log('HTML written →', htmlPath);
 
@@ -143,7 +159,7 @@ await page.waitForFunction(() => window.__mermaidDone === true, { timeout: 15000
 // Also wait for KaTeX (deferred scripts)
 await page.waitForTimeout(1500);
 
-const outPdf = path.join(__dir, 'E-IDS-v2-User-Manual.pdf');
+const outPdf = path.join(__dir, outputArg);
 await page.pdf({
   path: outPdf,
   format: 'A4',

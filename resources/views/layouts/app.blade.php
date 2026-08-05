@@ -151,5 +151,12 @@
         cancel="Cancel"
         icon="verified" />
 
+    <x-modal-notify id="confirm-status-change"
+        title="Confirm"
+        message="Are you sure you want to change this defect's status?"
+        confirm="Yes, Confirm"
+        cancel="Cancel"
+        icon="task_alt" />
+
 </body>
 </html>

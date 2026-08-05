@@ -154,13 +154,17 @@
                                 <td class="px-6 py-4">
                                     <div class="flex items-center justify-end gap-2 flex-wrap">
                                         @if($defect->status === 'OPEN' && $canAdvance)
-                                            <form method="POST" action="{{ route('defects.advance', $defect) }}">
-                                                @csrf
-                                                <input type="hidden" name="to" value="IN_PROGRESS">
-                                                <button type="submit" class="px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition min-h-[36px]">
-                                                    Start Repair
-                                                </button>
-                                            </form>
+                                            <button type="button"
+                                                    @click="$dispatch('open-notify', {
+                                                        id: 'confirm-status-change',
+                                                        action: '{{ route('defects.advance', $defect) }}',
+                                                        fields: { to: 'IN_PROGRESS' },
+                                                        title: 'Start Repair?',
+                                                        message: 'Marks this defect as In Progress — repair work begins now.'
+                                                    })"
+                                                    class="px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition min-h-[36px]">
+                                                Start Repair
+                                            </button>
                                         @elseif($defect->status === 'IN_PROGRESS' && $canAdvance)
                                             <button type="button"
                                                     @click="$dispatch('open-notify', { id: 'notify-inspector', action: '{{ route('defects.advance', $defect) }}', fields: { to: 'PENDING_VERIFICATION' } })"
@@ -168,32 +172,44 @@
                                                 Mark Settled
                                             </button>
                                         @elseif($defect->status === 'PENDING_VERIFICATION' && $canConfirmOrReject)
-                                            <form method="POST" action="{{ route('defects.advance', $defect) }}">
-                                                @csrf
-                                                <input type="hidden" name="to" value="RESOLVED">
-                                                <button type="submit" class="px-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition min-h-[36px]">
-                                                    Confirm Resolved
-                                                </button>
-                                            </form>
-                                            <form method="POST" action="{{ route('defects.advance', $defect) }}">
-                                                @csrf
-                                                <input type="hidden" name="to" value="IN_PROGRESS">
-                                                <button type="submit" class="px-3 py-1.5 text-xs font-bold text-red-800 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition min-h-[36px]">
-                                                    Reject – Not Fixed
-                                                </button>
-                                            </form>
+                                            <button type="button"
+                                                    @click="$dispatch('open-notify', {
+                                                        id: 'confirm-status-change',
+                                                        action: '{{ route('defects.advance', $defect) }}',
+                                                        fields: { to: 'RESOLVED' },
+                                                        title: 'Confirm Resolved?',
+                                                        message: 'Confirms the defect has been properly rectified to CIS 7:2021 standards and closes it.'
+                                                    })"
+                                                    class="px-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition min-h-[36px]">
+                                                Confirm Resolved
+                                            </button>
+                                            <button type="button"
+                                                    @click="$dispatch('open-notify', {
+                                                        id: 'notify-contractor',
+                                                        action: '{{ route('defects.advance', $defect) }}',
+                                                        fields: { to: 'IN_PROGRESS' },
+                                                        title: 'Reject & Notify Contractor?',
+                                                        message: 'Sends this defect back to the contractor as not properly fixed — they will see it flagged In Progress again.'
+                                                    })"
+                                                    class="px-3 py-1.5 text-xs font-bold text-red-800 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition min-h-[36px]">
+                                                Reject – Not Fixed
+                                            </button>
                                         @elseif($defect->status === 'PENDING_VERIFICATION')
                                             <span class="px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg">
                                                 Awaiting Verification
                                             </span>
                                         @elseif($defect->status === 'RESOLVED' && $canConfirmOrReject)
-                                            <form method="POST" action="{{ route('defects.advance', $defect) }}">
-                                                @csrf
-                                                <input type="hidden" name="to" value="OPEN">
-                                                <button type="submit" class="px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition min-h-[36px]">
-                                                    Reopen
-                                                </button>
-                                            </form>
+                                            <button type="button"
+                                                    @click="$dispatch('open-notify', {
+                                                        id: 'confirm-status-change',
+                                                        action: '{{ route('defects.advance', $defect) }}',
+                                                        fields: { to: 'OPEN' },
+                                                        title: 'Reopen Defect?',
+                                                        message: 'Reopens a previously resolved defect back to Open — use this only if the issue has recurred.'
+                                                    })"
+                                                    class="px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition min-h-[36px]">
+                                                Reopen
+                                            </button>
                                         @endif
                                         @if(auth()->user()->canInspect())
                                             <a href="{{ route('defects.edit', $defect) }}"
