@@ -18,6 +18,11 @@ class Defect extends Model implements HasMedia
     protected $fillable = [
         'project_id', 'assessment_id', 'component_name', 'location',
         'defect_description', 'photo_path', 'severity', 'status',
+        'contractor_notified_at',
+    ];
+
+    protected $casts = [
+        'contractor_notified_at' => 'datetime',
     ];
 
     public function registerMediaCollections(): void

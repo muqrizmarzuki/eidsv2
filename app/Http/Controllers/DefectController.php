@@ -36,7 +36,11 @@ class DefectController extends Controller
         $defects  = $query->paginate(20)->withQueryString();
         $projects = Project::visibleTo(auth()->user())->orderBy('project_name')->get(['id', 'project_name', 'project_no']);
 
-        return view('defects.index', compact('defects', 'projects'));
+        $notifiedCount = auth()->user()->role === 'contractor'
+            ? Defect::visibleTo(auth()->user())->whereIn('status', ['OPEN', 'IN_PROGRESS'])->whereNotNull('contractor_notified_at')->count()
+            : 0;
+
+        return view('defects.index', compact('defects', 'projects', 'notifiedCount'));
     }
 
     public function create()
@@ -122,6 +126,21 @@ class DefectController extends Controller
 
         return redirect()->route('defects.index')
             ->with('success', 'Defect deleted.');
+    }
+
+    public function notifyContractor(Project $project)
+    {
+        $this->guardProjectVisible($project);
+
+        $count = $project->defects()
+            ->whereIn('status', ['OPEN', 'IN_PROGRESS'])
+            ->whereNull('contractor_notified_at')
+            ->update(['contractor_notified_at' => now()]);
+
+        return redirect()->route('projects.show', $project)
+            ->with('success', $count > 0
+                ? "{$count} defect(s) flagged to the contractor for correction."
+                : 'The contractor has already been notified about all open defects.');
     }
 
     private const TRANSITIONS = [

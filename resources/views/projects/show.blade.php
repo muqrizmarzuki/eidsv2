@@ -25,19 +25,16 @@
 @endsection
 
 @section('content')
-<div class="max-w-5xl mx-auto space-y-6">
+<div class="max-w-7xl mx-auto space-y-6">
 
     {{-- Next Action Hero Card --}}
     <x-next-action-card :action="$nextAction" />
 
-    {{-- Pipeline Step Indicator --}}
-    <x-workflow-step step="1" :project="$project" :role="auth()->user()->role" />
-
     @php
         $statusMap = [
-            'draf'              => ['Draft',         'bg-gray-100 text-gray-700 border-gray-300'],
-            'dalam_pemeriksaan' => ['In Inspection', 'bg-amber-100 text-amber-900 border-amber-300'],
-            'selesai'           => ['Completed',     'bg-emerald-100 text-emerald-900 border-emerald-300'],
+            'draf'              => ['Draft',         'text-gray-500 border-gray-300'],
+            'dalam_pemeriksaan' => ['In Inspection', 'text-amber-700 border-amber-400'],
+            'selesai'           => ['Completed',     'text-emerald-700 border-emerald-500'],
         ];
         [$sLabel, $sCls] = $statusMap[$project->status] ?? ['—', 'bg-gray-100 text-gray-500'];
         $typeMap = ['teres' => 'Terrace', 'semi_d' => 'Semi-D', 'banglo' => 'Bungalow'];
@@ -47,8 +44,10 @@
     <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
         <div class="flex items-start justify-between gap-4 flex-wrap">
             <div>
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="inline-flex px-3 py-1 border rounded-full text-xs font-bold {{ $sCls }}">{{ $sLabel }}</span>
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="inline-flex items-center px-2.5 py-1 border-2 rounded-[3px] text-[10px] font-extrabold uppercase tracking-[0.15em] -rotate-2 font-mono {{ $sCls }}">
+                        {{ $sLabel }}
+                    </span>
                     <span class="text-xs text-gray-500 font-mono font-semibold">{{ $project->project_no }}</span>
                 </div>
                 <h1 class="text-2xl font-extrabold text-gray-900 leading-tight tracking-tight">{{ $project->project_name }}</h1>
@@ -97,7 +96,8 @@
     {{-- Case Ledger: the single source of truth for phase / responsible party / status --}}
     @php
         $readyToComplete = $project->status !== 'selesai' && $project->inspection_progress >= 100 && $openDefects === 0;
-        $canMarkComplete = auth()->user()->isAdmin();
+        $canMarkComplete = auth()->user()->canInspect();
+        $canNotifyContractor = $project->inspection_progress >= 100 && $openDefects > 0 && auth()->user()->canInspect();
 
         $ledger = [
             [
@@ -173,21 +173,38 @@
                     </div>
 
                     <div class="shrink-0 pl-9 sm:pl-0 sm:text-right">
-                        @if($i === 3)
+                        @if($i === 2)
+                            <div class="flex items-center gap-3 flex-wrap justify-end">
+                                @if($canNotifyContractor)
+                                    <button type="button"
+                                            @click="$dispatch('open-notify', {
+                                                id: 'notify-contractor',
+                                                action: '{{ route('projects.defects.notify-contractor', $project) }}',
+                                                message: '{{ addslashes($openDefects) }} open defect(s) will be flagged to {{ addslashes($project->assignedContractor?->name ?? 'the assigned contractor') }} for correction.'
+                                            })"
+                                            class="inline-flex items-center gap-1.5 px-3 py-2 min-h-[36px] bg-eids-primary text-white text-xs font-extrabold rounded-lg hover:bg-eids-dark transition">
+                                        <span class="material-symbols-outlined text-sm">campaign</span>
+                                        Notify Contractor
+                                    </button>
+                                @endif
+                                @if($row['link'])
+                                    <a href="{{ $row['link']['route'] }}" class="inline-flex items-center gap-1 text-xs font-bold text-eids-accent hover:text-eids-primary hover:underline">
+                                        {{ $row['link']['label'] }} &rarr;
+                                    </a>
+                                @endif
+                            </div>
+                        @elseif($i === 3)
                             @if($project->status === 'selesai')
                                 <a href="{{ route('reports.show', $project) }}" class="inline-flex items-center gap-1 text-xs font-bold text-eids-primary hover:underline">
                                     Official PDF Certificate &rarr;
                                 </a>
                             @elseif($readyToComplete && $canMarkComplete)
-                                <form method="POST" action="{{ route('projects.complete', $project) }}">
-                                    @csrf
-                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-[36px] bg-eids-primary text-white text-xs font-extrabold rounded-lg hover:bg-eids-dark transition">
-                                        <span class="material-symbols-outlined text-sm">verified</span>
-                                        Mark as Completed
-                                    </button>
-                                </form>
-                            @elseif($readyToComplete)
-                                <span class="text-xs font-bold text-eids-primary">Awaiting Admin sign-off</span>
+                                <button type="button"
+                                        @click="$dispatch('open-notify', { id: 'sign-off-confirm', action: '{{ route('projects.complete', $project) }}' })"
+                                        class="inline-flex items-center gap-1.5 px-3 py-2 min-h-[36px] bg-eids-primary text-white text-xs font-extrabold rounded-lg hover:bg-eids-dark transition">
+                                    <span class="material-symbols-outlined text-sm">verified</span>
+                                    Sign Off Project
+                                </button>
                             @else
                                 <span class="text-xs text-gray-400 font-medium">Locked</span>
                             @endif
@@ -202,117 +219,16 @@
         </div>
     </div>
 
-    <div class="space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-        {{-- Project Specifications --}}
-        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
-                <h2 class="font-extrabold text-gray-900 mb-5 flex items-center gap-2 text-sm">
-                    <span class="material-symbols-outlined text-eids-accent text-lg">info</span>
-                    Project Specifications & E-IDS Parameters
-                </h2>
-                <dl class="grid grid-cols-2 gap-x-6 gap-y-5 text-sm">
-                    <div>
-                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Developer</dt>
-                        <dd class="text-gray-900 font-semibold">{{ $project->developer_name }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Contractor</dt>
-                        <dd class="text-gray-900 font-semibold">{{ $project->contractor_name }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Building Type</dt>
-                        <dd class="text-gray-900 font-semibold">{{ $typeMap[$project->building_type] ?? $project->building_type }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Building Category (CIS 7:2021)</dt>
-                        <dd class="text-gray-900 font-semibold">Category {{ $project->building_category }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Total Units</dt>
-                        <dd class="text-gray-900 font-semibold">{{ number_format($project->total_units) }} units</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Gross Floor Area (GFA)</dt>
-                        <dd class="text-gray-900 font-semibold font-mono">{{ number_format($project->floor_area_sqm, 2) }} m²</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Calculated Sample Count (N)</dt>
-                        <dd class="text-gray-900 font-semibold text-eids-accent font-mono">{{ $project->calculated_samples }} sample units</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Created By</dt>
-                        <dd class="text-gray-900 font-semibold">{{ $project->creator?->name ?? 'System Admin' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Assigned Inspector</dt>
-                        <dd class="text-gray-900 font-semibold flex items-center gap-1.5">
-                            @if($project->assignedInspector)
-                                <span class="material-symbols-outlined text-xs text-eids-accent">person</span>
-                                {{ $project->assignedInspector->name }}
-                            @else
-                                <span class="text-gray-400 italic">Unassigned (All Inspectors)</span>
-                            @endif
-                        </dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Created Date</dt>
-                        <dd class="text-gray-900 font-semibold">{{ $project->created_at->format('d M Y') }}</dd>
-                    </div>
-                </dl>
-            </div>
-
-            {{-- QP Declarations (Skim Coat / Water-tightness — Table 2's Material & functional test) --}}
-            @php
-                $qp = $project->qpDeclarations->keyBy('item_code');
-                $qpItems = [
-                    'QP_SKIM_COAT'       => 'Skim Coat or Prepacked Plaster',
-                    'QP_WATER_TIGHTNESS' => 'Wet-area Water-tightness Test',
-                ];
-            @endphp
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
-                        <span class="material-symbols-outlined text-eids-accent text-lg">fact_check</span>
-                        QP Declarations (Material &amp; Functional Test)
-                    </h2>
-                </div>
-                <div class="divide-y divide-gray-100">
-                    @foreach($qpItems as $code => $label)
-                        @php $decl = $qp->get($code); @endphp
-                        <div class="px-6 py-4 flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                                <div class="text-sm font-bold text-gray-900">{{ $label }}</div>
-                                <div class="text-xs text-gray-500 mt-0.5">
-                                    @if($decl?->is_earned)
-                                        <span class="text-emerald-700 font-bold">Declared — evidence on file</span>
-                                    @else
-                                        <span class="text-amber-700 font-bold">Not yet declared</span>
-                                    @endif
-                                </div>
-                            </div>
-                            @if(auth()->user()->canInspect())
-                                <form method="POST" action="{{ route('projects.qp-declarations.update', $project) }}" enctype="multipart/form-data" class="flex items-center gap-2">
-                                    @csrf
-                                    <input type="hidden" name="item_code" value="{{ $code }}">
-                                    <input type="hidden" name="declared" value="1">
-                                    <input type="file" name="evidence" accept=".pdf,image/*" required
-                                           class="text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-eids-primary/10 file:text-eids-primary">
-                                    <button type="submit" class="min-h-[36px] px-3 py-1.5 bg-eids-primary text-white text-xs font-bold rounded-lg hover:bg-eids-dark transition">
-                                        Declare
-                                    </button>
-                                </form>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- Sample Units List --}}
+        {{-- Main column: the operational record — what's been inspected --}}
+        <div class="lg:col-span-2">
+            {{-- Sample Units Manifest --}}
             <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
                         <span class="material-symbols-outlined text-eids-accent text-lg">home_work</span>
-                        Sample Units List ({{ $project->samples->count() }})
+                        Sample Units Manifest ({{ $project->samples->count() }})
                     </h2>
                     @if(auth()->user()->canInspect())
                         <a href="{{ route('projects.samples', $project) }}"
@@ -330,8 +246,9 @@
                             <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider border-b border-gray-200 font-bold">
                                 <tr>
                                     <th class="px-6 py-3.5 text-left">Sample #</th>
+                                    <th class="px-4 py-3.5 text-left hidden sm:table-cell">Unit</th>
                                     <th class="px-4 py-3.5 text-left">Location Name</th>
-                                    <th class="px-4 py-3.5 text-left hidden sm:table-cell">Pass Rate</th>
+                                    <th class="px-4 py-3.5 text-left">Pass Rate</th>
                                     <th class="px-6 py-3.5 text-right">Action</th>
                                 </tr>
                             </thead>
@@ -339,13 +256,16 @@
                                 @foreach($project->samples as $sample)
                                     @php
                                         $pr = $sample->pass_rate;
-                                        $prCls = is_null($pr) ? 'text-gray-400' : ($pr >= 80 ? 'text-emerald-700 font-bold' : ($pr >= 60 ? 'text-amber-700 font-bold' : 'text-red-700 font-bold'));
+                                        $prChipCls = is_null($pr) ? 'bg-gray-100 text-gray-500' : ($pr >= 80 ? 'bg-emerald-100 text-emerald-800' : ($pr >= 60 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'));
                                     @endphp
                                     <tr class="hover:bg-gray-50/80 transition">
                                         <td class="px-6 py-4 text-gray-600 text-xs font-mono font-bold">#{{ $sample->sample_index }}</td>
+                                        <td class="px-4 py-4 hidden sm:table-cell text-gray-500 text-xs font-mono font-semibold">{{ $sample->unit_reference ?? '—' }}</td>
                                         <td class="px-4 py-4 text-gray-900 font-semibold">{{ $sample->location_name }}</td>
-                                        <td class="px-4 py-4 hidden sm:table-cell {{ $prCls }}">
-                                            {{ is_null($pr) ? 'Pending Inspection' : number_format($pr, 1) . '%' }}
+                                        <td class="px-4 py-4">
+                                            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-extrabold tabular-nums {{ $prChipCls }}">
+                                                {{ is_null($pr) ? 'Pending' : number_format($pr, 1) . '%' }}
+                                            </span>
                                         </td>
                                         <td class="px-6 py-4 text-right">
                                             @if(auth()->user()->canInspect())
@@ -363,6 +283,119 @@
                     </div>
                 @endif
             </div>
+        </div>
+
+        {{-- Sidebar: the reference sheet — static record, rarely changes --}}
+        <div class="lg:col-span-1 space-y-6">
+
+            {{-- Project Specifications --}}
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6">
+                <h2 class="font-extrabold text-gray-900 mb-5 flex items-center gap-2 text-sm">
+                    <span class="material-symbols-outlined text-eids-accent text-lg">info</span>
+                    Project Specifications
+                </h2>
+                <dl class="space-y-4 text-sm">
+                    <div>
+                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Developer</dt>
+                        <dd class="text-gray-900 font-semibold">{{ $project->developer_name }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Contractor</dt>
+                        <dd class="text-gray-900 font-semibold">{{ $project->contractor_name }}</dd>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-1">
+                            <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Building Type</dt>
+                            <dd class="text-gray-900 font-semibold">{{ $typeMap[$project->building_type] ?? $project->building_type }}</dd>
+                        </div>
+                        <div class="flex-1">
+                            <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">CIS 7:2021</dt>
+                            <dd class="text-gray-900 font-semibold">Category {{ $project->building_category }}</dd>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-1">
+                            <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Total Units</dt>
+                            <dd class="text-gray-900 font-semibold">{{ number_format($project->total_units) }}</dd>
+                        </div>
+                        <div class="flex-1">
+                            <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Sample Count (N)</dt>
+                            <dd class="text-gray-900 font-semibold text-eids-accent font-mono">{{ $project->calculated_samples }}</dd>
+                        </div>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Gross Floor Area (GFA)</dt>
+                        <dd class="text-gray-900 font-semibold font-mono">{{ number_format($project->floor_area_sqm, 2) }} m²</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Assigned Inspector</dt>
+                        <dd class="text-gray-900 font-semibold flex items-center gap-1.5">
+                            @if($project->assignedInspector)
+                                <span class="material-symbols-outlined text-xs text-eids-accent">person</span>
+                                {{ $project->assignedInspector->name }}
+                            @else
+                                <span class="text-gray-400 italic">Unassigned (All Inspectors)</span>
+                            @endif
+                        </dd>
+                    </div>
+                    <div class="flex gap-4 pt-4 border-t border-gray-100">
+                        <div class="flex-1">
+                            <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Created By</dt>
+                            <dd class="text-gray-900 font-semibold">{{ $project->creator?->name ?? 'System Admin' }}</dd>
+                        </div>
+                        <div class="flex-1">
+                            <dt class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Created</dt>
+                            <dd class="text-gray-900 font-semibold">{{ $project->created_at->format('d M Y') }}</dd>
+                        </div>
+                    </div>
+                </dl>
+            </div>
+
+            {{-- QP Declarations (Skim Coat / Water-tightness — Table 2's Material & functional test) --}}
+            @php
+                $qp = $project->qpDeclarations->keyBy('item_code');
+                $qpItems = [
+                    'QP_SKIM_COAT'       => 'Skim Coat or Prepacked Plaster',
+                    'QP_WATER_TIGHTNESS' => 'Wet-area Water-tightness Test',
+                ];
+            @endphp
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
+                        <span class="material-symbols-outlined text-eids-accent text-lg">fact_check</span>
+                        QP Declarations
+                    </h2>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    @foreach($qpItems as $code => $label)
+                        @php $decl = $qp->get($code); @endphp
+                        <div class="px-6 py-4">
+                            <div class="text-sm font-bold text-gray-900">{{ $label }}</div>
+                            <div class="text-xs mt-0.5 mb-2">
+                                @if($decl?->is_earned)
+                                    <span class="text-emerald-700 font-bold">Declared — evidence on file</span>
+                                @else
+                                    <span class="text-amber-700 font-bold">Not yet declared</span>
+                                @endif
+                            </div>
+                            @if(auth()->user()->canInspect())
+                                <form method="POST" action="{{ route('projects.qp-declarations.update', $project) }}" enctype="multipart/form-data" class="flex items-center gap-2">
+                                    @csrf
+                                    <input type="hidden" name="item_code" value="{{ $code }}">
+                                    <input type="hidden" name="declared" value="1">
+                                    <input type="file" name="evidence" accept=".pdf,image/*" required
+                                           class="text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-eids-primary/10 file:text-eids-primary">
+                                    <button type="submit" class="min-h-[36px] px-3 py-1.5 bg-eids-primary text-white text-xs font-bold rounded-lg hover:bg-eids-dark transition shrink-0">
+                                        Declare
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+        </div>
     </div>
 
     {{-- Danger Zone: deliberately quiet — a rare, destructive action, not a competing card --}}

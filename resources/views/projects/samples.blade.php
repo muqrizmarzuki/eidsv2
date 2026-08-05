@@ -12,25 +12,11 @@
     <span class="text-gray-900 font-bold">Configure Samples</span>
 @endsection
 
-@php
-    $endsAtSamples = auth()->user()->isAdmin();
-@endphp
-
-@section('topbar-actions')
-    @unless($endsAtSamples)
-        <a href="{{ route('projects.components', $project) }}"
-           class="flex items-center gap-2 px-5 py-2.5 bg-eids-primary text-white text-sm font-bold rounded-xl hover:bg-eids-dark transition shadow-xs min-h-[44px]">
-            <span class="material-symbols-outlined text-lg">grid_on</span>
-            Next: Components Grid &rarr;
-        </a>
-    @endunless
-@endsection
-
 @section('content')
-<div class="max-w-5xl mx-auto flex flex-col w-full min-h-[calc(100dvh-6rem)] sm:min-h-[calc(100dvh-7rem)] lg:min-h-[calc(100dvh-8rem)]">
+<div class="max-w-5xl mx-auto flex flex-col w-full min-h-[calc(100dvh-6rem)] sm:min-h-[calc(100dvh-7rem)] lg:min-h-[calc(100dvh-8rem)]" x-data="{ open: false }">
 
-    {{-- Pipeline Step Indicator --}}
-    <x-workflow-step step="2" :project="$project" />
+    {{-- Setup Wizard Step Indicator --}}
+    <x-setup-progress step="2" />
 
     {{-- Info Banner --}}
     <div class="bg-eids-primary/5 border border-eids-primary/15 rounded-2xl p-5 mb-6 flex items-start gap-3.5 shadow-2xs">
@@ -39,16 +25,12 @@
             <div class="font-extrabold text-gray-900 text-sm">Sample Units Configuration</div>
             <div class="text-xs text-gray-700 mt-1 leading-relaxed font-medium">
                 Formula (Table 3): N = clamp(ceil(Total GFA &divide; {{ $divisor }}), {{ $minSamples }}, {{ $maxSamples }}) = <strong class="text-eids-primary font-bold">{{ $project->calculated_samples }} sample units</strong>, distributed across {{ $project->total_units }} unit(s).
-                @if($endsAtSamples)
-                    Assign a room or location name to each sample unit. The assigned inspector will perform the component inspection separately.
-                @else
-                    Assign a room or location name to each sample unit before proceeding to the component inspection grid.
-                @endif
+                Assign a room or location name to each sample unit, then save to finalize project setup.
             </div>
         </div>
     </div>
 
-    <form method="POST" action="{{ route('projects.samples.store', $project) }}" class="flex-1 flex flex-col">
+    <form method="POST" action="{{ route('projects.samples.store', $project) }}" class="flex-1 flex flex-col" id="save-project-form">
         @csrf
 
         {{-- Optional Element Presence (Table 2's Car Park / Apron & Perimeter Drain) --}}
@@ -207,17 +189,50 @@
                class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
                 &larr; Return to Project
             </a>
-            <button type="submit"
+            <button type="button" @click="open = true"
                     class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-sm font-extrabold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-eids-accent">
                 <span class="material-symbols-outlined text-lg">save</span>
-                @if($endsAtSamples)
-                    Save Locations
-                @else
-                    Save &amp; Continue to Grid &rarr;
-                @endif
+                Save Project
             </button>
         </div>
     </form>
+
+    {{-- Save Project confirmation --}}
+    <div x-data="{ open: false }" @keydown.escape.window="open = false" x-show="open" x-cloak
+         role="dialog" aria-modal="true" aria-labelledby="save-project-title"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div @click="open = false" class="absolute inset-0 bg-black/50 backdrop-blur-xs"></div>
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 z-10 border border-gray-100">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-eids-primary/10 text-eids-primary">
+                    <span class="material-symbols-outlined filled text-xl">task_alt</span>
+                </div>
+                <div>
+                    <h3 id="save-project-title" class="font-bold text-gray-900 text-base leading-tight">Save Project?</h3>
+                    <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                        {{ $project->samples->count() }} sample unit(s) configured. Saving will finalize project setup
+                        &mdash; the assigned inspector can then begin the Components Grid inspection.
+                    </p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" @click="open = false"
+                        class="min-h-[44px] px-5 py-2.5 text-xs font-bold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-xl transition focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    Cancel
+                </button>
+                <button type="button" @click="document.getElementById('save-project-form').submit()"
+                        class="min-h-[44px] px-6 py-2.5 text-xs font-bold text-white rounded-xl shadow-sm transition focus:outline-none focus:ring-2 focus:ring-eids-accent bg-eids-primary hover:bg-eids-dark">
+                    Yes, Save Project
+                </button>
+            </div>
+        </div>
+    </div>
 
 </div>
 @endsection

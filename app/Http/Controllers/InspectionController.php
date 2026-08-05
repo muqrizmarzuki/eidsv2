@@ -153,9 +153,15 @@ class InspectionController extends Controller
                 ->with('success', "{$componentCode} saved — next: {$nextCode}.");
         }
 
-        return redirect()
+        $redirect = redirect()
             ->route('projects.components', $project)
             ->with('success', "All components for {$sample->location_name} completed.");
+
+        if ($project->fresh()->inspection_progress >= 100) {
+            $redirect->with('inspection_complete', true);
+        }
+
+        return $redirect;
     }
 
     public function score(Project $project)

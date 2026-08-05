@@ -129,5 +129,27 @@
         confirm="Yes, Delete"
         cancel="Cancel" />
 
+    {{-- Global Notify Modal — reused for contractor/inspector notify actions --}}
+    <x-modal-notify id="notify-contractor"
+        title="Notify Contractor?"
+        message="Open defects will be flagged to the contractor for correction."
+        confirm="Yes, Notify Contractor"
+        cancel="Cancel"
+        icon="campaign" />
+
+    <x-modal-notify id="notify-inspector"
+        title="Notify Inspector?"
+        message="This will notify the inspector that this defect is ready for reinspection."
+        confirm="Yes, Notify Inspector"
+        cancel="Cancel"
+        icon="fact_check" />
+
+    <x-modal-notify id="sign-off-confirm"
+        title="Sign Off Project?"
+        message="This marks the project as Completed and unlocks the official E-IDS certificate."
+        confirm="Yes, Sign Off"
+        cancel="Cancel"
+        icon="verified" />
+
 </body>
 </html>

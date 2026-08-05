@@ -318,7 +318,10 @@ class Project extends Model
                     'projects.components', ['project' => $this], 'Continue Inspecting'
                 );
             }
-            return $actionable('task_alt', 'Inspection complete — notify your Admin.', 'projects.score', ['project' => $this], 'View E-IDS Score');
+            if ($openDefects > 0) {
+                return $waiting('warning', "{$openDefects} defect(s) still open — notify the Contractor or await their fix.");
+            }
+            return $actionable('verified', 'All defects resolved — ready to sign off.', 'projects.show', ['project' => $this], 'Sign Off Project');
         }
 
         return $waiting('info', '');

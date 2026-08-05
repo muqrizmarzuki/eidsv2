@@ -22,6 +22,16 @@
 
 @section('content')
 
+    @if($notifiedCount > 0)
+        <div class="bg-eids-primary/5 border border-eids-primary/15 rounded-2xl p-5 mb-6 flex items-start gap-3.5 shadow-2xs">
+            <span class="material-symbols-outlined text-eids-accent text-2xl shrink-0 mt-0.5">campaign</span>
+            <div>
+                <div class="font-extrabold text-gray-900 text-sm">{{ $notifiedCount }} defect(s) flagged for your action</div>
+                <div class="text-xs text-gray-700 mt-1 font-medium">The inspector has flagged these defects as needing correction on your assigned project(s).</div>
+            </div>
+        </div>
+    @endif
+
     {{-- Filters --}}
     <form method="GET" class="flex flex-wrap gap-3 mb-6 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
         <div class="relative flex-1 min-w-56">
@@ -152,13 +162,11 @@
                                                 </button>
                                             </form>
                                         @elseif($defect->status === 'IN_PROGRESS' && $canAdvance)
-                                            <form method="POST" action="{{ route('defects.advance', $defect) }}">
-                                                @csrf
-                                                <input type="hidden" name="to" value="PENDING_VERIFICATION">
-                                                <button type="submit" class="px-3 py-1.5 text-xs font-bold text-blue-800 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition min-h-[36px]">
-                                                    Mark Settled
-                                                </button>
-                                            </form>
+                                            <button type="button"
+                                                    @click="$dispatch('open-notify', { id: 'notify-inspector', action: '{{ route('defects.advance', $defect) }}', fields: { to: 'PENDING_VERIFICATION' } })"
+                                                    class="px-3 py-1.5 text-xs font-bold text-blue-800 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition min-h-[36px]">
+                                                Mark Settled
+                                            </button>
                                         @elseif($defect->status === 'PENDING_VERIFICATION' && $canConfirmOrReject)
                                             <form method="POST" action="{{ route('defects.advance', $defect) }}">
                                                 @csrf

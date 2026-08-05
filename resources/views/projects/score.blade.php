@@ -70,7 +70,8 @@
         $modArc  = $arcPath($ratingMod, $ratingBaik);
         $goodArc = $arcPath($ratingBaik, $gaugeMax);
 
-        [$needleX, $needleY] = $pointAt($angleFor($totalScore), $gaugeR - 22);
+        $needleAngle = $angleFor($totalScore);
+        [$needleX, $needleY] = $pointAt($needleAngle, $gaugeR - 22);
 
         // Decorative tick marks around the outer edge of the arc.
         $tickCount = 32;
@@ -84,7 +85,30 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
         {{-- Total Score Card --}}
-        <div class="lg:col-span-1 bg-eids-primary rounded-2xl p-6 text-white flex flex-col items-center justify-center text-center shadow-md border border-white/10 relative overflow-hidden">
+        <div class="lg:col-span-1 bg-eids-primary rounded-2xl p-6 text-white flex flex-col items-center justify-center text-center shadow-md border border-white/10 relative overflow-hidden"
+             x-data="{
+                 settled: true,
+                 displayScore: {{ $totalScore }},
+                 init() {
+                     const key = 'eids-score-animated-{{ $project->id }}';
+                     if (localStorage.getItem(key)) return;
+                     localStorage.setItem(key, '1');
+                     this.settled = false;
+                     this.displayScore = 0;
+                     requestAnimationFrame(() => {
+                         this.settled = true;
+                         const target = {{ $totalScore }};
+                         const duration = 1200;
+                         const start = performance.now();
+                         const tick = (now) => {
+                             const t = Math.min((now - start) / duration, 1);
+                             this.displayScore = (target * t).toFixed(2);
+                             if (t < 1) requestAnimationFrame(tick);
+                         };
+                         requestAnimationFrame(tick);
+                     });
+                 }
+             }">
             <div class="text-xs text-eids-light uppercase tracking-widest font-extrabold mb-2">E-IDS Final Score</div>
 
             {{-- Radial gauge --}}
@@ -95,13 +119,15 @@
                 <path d="{{ $weakArc }}" stroke="#f87171" stroke-width="8"  fill="none" stroke-linecap="round" />
                 <path d="{{ $modArc }}"  stroke="#fbbf24" stroke-width="11" fill="none" stroke-linecap="round" />
                 <path d="{{ $goodArc }}" stroke="#34d399" stroke-width="14" fill="none" stroke-linecap="round" />
-                <line x1="{{ $gaugeCx }}" y1="{{ $gaugeCy }}" x2="{{ $needleX }}" y2="{{ $needleY }}"
-                      stroke="white" stroke-width="4" stroke-linecap="round" />
+                <g :style="'transform-origin:{{ $gaugeCx }}px {{ $gaugeCy }}px; transform: rotate(' + (settled ? 0 : {{ $gaugeStart - $needleAngle }}) + 'deg); transition: transform 1.2s cubic-bezier(.16,1,.3,1);'">
+                    <line x1="{{ $gaugeCx }}" y1="{{ $gaugeCy }}" x2="{{ $needleX }}" y2="{{ $needleY }}"
+                          stroke="white" stroke-width="4" stroke-linecap="round" />
+                </g>
                 <circle cx="{{ $gaugeCx }}" cy="{{ $gaugeCy }}" r="14" fill="white" fill-opacity="0.12" />
                 <circle cx="{{ $gaugeCx }}" cy="{{ $gaugeCy }}" r="7" fill="white" />
             </svg>
 
-            <div class="text-4xl lg:text-5xl font-extrabold tracking-tight -mt-1">{{ number_format($totalScore, 2) }}</div>
+            <div class="text-4xl lg:text-5xl font-extrabold tracking-tight -mt-1" x-text="displayScore">{{ number_format($totalScore, 2) }}</div>
             <div class="text-white/70 text-xs mt-1 font-semibold">out of {{ number_format($gaugeMax, 2) }} max pts</div>
             <div class="mt-4 px-4 py-1.5 rounded-full text-xs font-extrabold tracking-wider uppercase
                 @if($rating === 'GOOD') bg-emerald-500 text-white
@@ -235,9 +261,9 @@
                 &larr; Return to Inspection Grid
             </a>
         @endif
-        <a href="{{ route('reports.show', $project) }}" class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-xs font-extrabold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md">
-            <span class="material-symbols-outlined text-base">description</span>
-            Generate Official E-IDS Certificate PDF &rarr;
+        <a href="{{ route('reports.show', $project) }}" class="inline-flex items-center gap-1 text-xs font-bold text-eids-primary hover:text-eids-dark hover:underline">
+            <span class="material-symbols-outlined text-sm">print</span>
+            Generate Official PDF Report &rarr;
         </a>
     </div>
 

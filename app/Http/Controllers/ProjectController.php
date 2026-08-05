@@ -256,7 +256,7 @@ class ProjectController extends Controller
     public function markComplete(Project $project)
     {
         $this->guardProjectVisible($project);
-        abort_unless(auth()->user()->isAdmin(), 403);
+        abort_unless(auth()->user()->canInspect(), 403);
 
         if ($project->status === 'selesai') {
             return redirect()->route('projects.show', $project);
@@ -342,14 +342,7 @@ class ProjectController extends Controller
         ]);
         $this->scoring->recalculateAndSave($project);
 
-        $user = auth()->user();
-
-        if ($user->isAdmin()) {
-            return redirect()->route('projects.show', $project)
-                ->with('success', 'Sample locations saved. The assigned inspector can now begin the component inspection.');
-        }
-
-        return redirect()->route('projects.components', $project)
-            ->with('success', 'Sample locations saved. Select components to inspect.');
+        return redirect()->route('projects.show', $project)
+            ->with('success', 'Project setup saved. The assigned inspector can now begin the component inspection.');
     }
 }

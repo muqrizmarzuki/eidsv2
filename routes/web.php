@@ -53,8 +53,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     });
 
-    Route::middleware('role:admin')->group(function () {
+    Route::middleware('role:admin,inspector')->group(function () {
         Route::post('/projects/{project}/complete', [ProjectController::class, 'markComplete'])->name('projects.complete');
+        Route::post('/projects/{project}/defects/notify-contractor', [DefectController::class, 'notifyContractor'])->name('projects.defects.notify-contractor');
     });
 
     Route::middleware('role:admin,inspector')->group(function () {

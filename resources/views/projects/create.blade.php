@@ -17,6 +17,9 @@
 @endphp
 
 @section('content')
+<div class="max-w-3xl mx-auto">
+    <x-setup-progress step="1" />
+</div>
 <div class="max-w-3xl mx-auto" x-data="{
     gfa: '{{ old('floor_area_sqm') }}',
     category: '{{ old('building_category', 'A') }}',

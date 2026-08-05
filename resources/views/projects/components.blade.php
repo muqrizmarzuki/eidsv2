@@ -21,10 +21,39 @@
 @endsection
 
 @section('content')
-<div class="max-w-5xl mx-auto" x-data="{ viewMode: 'cards' }">
+<div class="max-w-5xl mx-auto" x-data="{ viewMode: 'cards', showComplete: @json(session('inspection_complete', false)) }">
 
 {{-- Pipeline Step Indicator --}}
 <x-workflow-step step="3" :project="$project" />
+
+{{-- All Inspections Complete celebration modal --}}
+<div x-show="showComplete" x-cloak @keydown.escape.window="showComplete = false"
+     role="dialog" aria-modal="true" aria-labelledby="inspection-complete-title"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div @click="showComplete = false" class="absolute inset-0 bg-black/50 backdrop-blur-xs"></div>
+    <div x-show="showComplete"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 z-10 border border-gray-100 text-center">
+        <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+            <span class="material-symbols-outlined filled text-3xl">task_alt</span>
+        </div>
+        <h3 id="inspection-complete-title" class="font-extrabold text-gray-900 text-lg leading-tight">All Inspections Complete!</h3>
+        <p class="text-sm text-gray-500 mt-2 leading-relaxed">Every sample unit has been assessed. You're ready to view the E-IDS Score.</p>
+        <div class="flex justify-center gap-3 mt-6">
+            <button type="button" @click="showComplete = false"
+                    class="min-h-[44px] px-5 py-2.5 text-xs font-bold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-xl transition">
+                Stay Here
+            </button>
+            <a href="{{ route('projects.score', $project) }}"
+               class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-xs font-extrabold rounded-xl hover:bg-eids-dark transition inline-flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">analytics</span>
+                View E-IDS Score &rarr;
+            </a>
+        </div>
+    </div>
+</div>
 
 {{-- Header Banner & View Switcher Toggle --}}
 <div class="mb-6 bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
