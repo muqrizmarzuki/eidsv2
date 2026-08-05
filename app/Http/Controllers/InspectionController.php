@@ -150,7 +150,7 @@ class InspectionController extends Controller
         if ($nextCode) {
             return redirect()
                 ->route('projects.inspect', [$project, $sample, 'component' => $nextCode])
-                ->with('success', "{$componentCode} saved — next: {$nextCode}.");
+                ->with('success', "{$componentCode} saved. Next: {$nextCode}.");
         }
 
         $redirect = redirect()

@@ -92,10 +92,10 @@
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">CIS 7:2021 Building Category *</label>
                     <select name="building_category" required x-model="category"
                             class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
-                        <option value="A" {{ old('building_category', 'A') === 'A' ? 'selected' : '' }}>Category A — Landed Housing</option>
-                        <option value="B" {{ old('building_category') === 'B' ? 'selected' : '' }}>Category B — Stratified Housing</option>
-                        <option value="C" {{ old('building_category') === 'C' ? 'selected' : '' }}>Category C — Commercial/Industrial (no CCS)</option>
-                        <option value="D" {{ old('building_category') === 'D' ? 'selected' : '' }}>Category D — Commercial/Industrial (with CCS)</option>
+                        <option value="A" {{ old('building_category', 'A') === 'A' ? 'selected' : '' }}>Category A: Landed Housing</option>
+                        <option value="B" {{ old('building_category') === 'B' ? 'selected' : '' }}>Category B: Stratified Housing</option>
+                        <option value="C" {{ old('building_category') === 'C' ? 'selected' : '' }}>Category C: Commercial/Industrial (no CCS)</option>
+                        <option value="D" {{ old('building_category') === 'D' ? 'selected' : '' }}>Category D: Commercial/Industrial (with CCS)</option>
                     </select>
                     @error('building_category')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
@@ -172,7 +172,7 @@
                            value="{{ old('floor_area_sqm') }}" placeholder="e.g. 10500.00" required
                            x-model="gfa"
                            class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent font-mono font-medium">
-                    <p class="mt-1.5 text-xs text-gray-500 font-medium">The <strong>whole project's</strong> combined floor area (all units together) — per CIS 7:2021 §1.7, not a single unit's size.</p>
+                    <p class="mt-1.5 text-xs text-gray-500 font-medium">The <strong>whole project's</strong> combined floor area (all units together), per CIS 7:2021 §1.7, not a single unit's size.</p>
                     @error('floor_area_sqm')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 

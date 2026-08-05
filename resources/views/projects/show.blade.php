@@ -373,7 +373,7 @@
                             <div class="text-sm font-bold text-gray-900">{{ $label }}</div>
                             <div class="text-xs mt-0.5 mb-2">
                                 @if($decl?->is_earned)
-                                    <span class="text-emerald-700 font-bold">Declared — evidence on file</span>
+                                    <span class="text-emerald-700 font-bold">Declared, evidence on file</span>
                                 @else
                                     <span class="text-amber-700 font-bold">Not yet declared</span>
                                 @endif

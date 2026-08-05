@@ -29,7 +29,7 @@
                         <option value="">Select project...</option>
                         @foreach($projects as $proj)
                             <option value="{{ $proj->id }}" {{ old('project_id') == $proj->id ? 'selected' : '' }}>
-                                {{ $proj->project_no }} — {{ $proj->project_name }}
+                                {{ $proj->project_no }} &middot; {{ $proj->project_name }}
                             </option>
                         @endforeach
                     </select>
@@ -44,7 +44,7 @@
                             <option value="">Select component...</option>
                             @foreach(\App\Models\WeightageArchitecturalElement::ordered() as $code => $comp)
                                 <option value="{{ $comp->name }}" {{ old('component_name') === $comp->name ? 'selected' : '' }}>
-                                    {{ $code }} — {{ $comp->name }}
+                                    {{ $code }} &middot; {{ $comp->name }}
                                 </option>
                             @endforeach
                             <option value="Other" {{ old('component_name') === 'Other' ? 'selected' : '' }}>Other Site Observation</option>

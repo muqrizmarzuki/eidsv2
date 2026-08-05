@@ -264,7 +264,7 @@ class ProjectController extends Controller
 
         if ($project->inspection_progress < 100) {
             return redirect()->route('projects.show', $project)
-                ->with('error', 'Inspection is not yet complete — every sample unit must be assessed first.');
+                ->with('error', 'Inspection is not yet complete. Every sample unit must be assessed first.');
         }
 
         if (!$project->archExternalInspectionComplete()) {

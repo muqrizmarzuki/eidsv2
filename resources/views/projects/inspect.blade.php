@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Inspect — ' . $componentCode)
+@section('title', 'Inspect: ' . $componentCode)
 
 @section('breadcrumb')
     <a href="{{ route('dashboard') }}" class="hover:text-gray-800 transition">Dashboard</a>

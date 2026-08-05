@@ -71,15 +71,15 @@ class ReportController extends Controller
     private function reportBlockedReason(Project $project): ?string
     {
         if ($project->inspection_progress < 100) {
-            return 'The signed E-IDS report is not available yet — every sample unit must be inspected first.';
+            return 'The signed E-IDS report is not available yet. Every sample unit must be inspected first.';
         }
 
         if (!$project->archExternalInspectionComplete()) {
-            return 'The signed E-IDS report is not available yet — Roof, External Wall, Apron/Drain and Car Park sections must be inspected first.';
+            return 'The signed E-IDS report is not available yet. Roof, External Wall, Apron/Drain and Car Park sections must be inspected first.';
         }
 
         if (!$project->externalInspectionComplete()) {
-            return 'The signed E-IDS report is not available yet — every present External Works element must be inspected first.';
+            return 'The signed E-IDS report is not available yet. Every present External Works element must be inspected first.';
         }
 
         $openOrPending = $project->defects()->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();

@@ -221,7 +221,7 @@
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                 <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
                     <span class="material-symbols-outlined text-red-500 text-lg">fact_check</span>
-                    Detailed Findings — Failed Checklist Items ({{ count($findings) }})
+                    Detailed Findings: Failed Checklist Items ({{ count($findings) }})
                 </h2>
             </div>
             <div class="overflow-x-auto">

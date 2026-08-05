@@ -20,7 +20,7 @@
         <div>
             <div class="font-extrabold text-gray-900 text-sm">Building-Level Architectural Components (Table 3)</div>
             <div class="text-xs text-gray-700 mt-1 leading-relaxed font-medium">
-                Roof, External Wall, Apron &amp; Perimeter Drain and Car Park aren't tied to any specific room —
+                Roof, External Wall, Apron &amp; Perimeter Drain and Car Park aren't tied to any specific room;
                 the standard samples them as building sections/lengths. Roof and External Wall sample count is
                 50% of the project's units (min 4 sections); Apron/Drain and Car Park use a minimum of 2 length-sections.
             </div>

@@ -24,7 +24,7 @@
 
     <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-            <h2 class="font-extrabold text-gray-900 text-sm">{{ $components[$activeCode]->name ?? $activeCode }} — {{ $items->count() }} question(s)</h2>
+            <h2 class="font-extrabold text-gray-900 text-sm">{{ $components[$activeCode]->name ?? $activeCode }} &middot; {{ $items->count() }} question(s)</h2>
         </div>
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider font-bold">

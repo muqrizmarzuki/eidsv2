@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Inspection Report — ' . $project->project_no)
+@section('title', 'Inspection Report: ' . $project->project_no)
 
 @section('breadcrumb')
     <a href="{{ route('dashboard') }}" class="hover:text-gray-800 transition">Dashboard</a>
@@ -189,7 +189,7 @@
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
                         <span class="material-symbols-outlined text-red-500 text-lg">fact_check</span>
-                        Detailed Findings — Failed Checklist Items ({{ count($findings) }})
+                        Detailed Findings: Failed Checklist Items ({{ count($findings) }})
                     </h2>
                 </div>
                 <div class="overflow-x-auto">

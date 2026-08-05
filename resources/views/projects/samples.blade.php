@@ -216,8 +216,8 @@
                 <div>
                     <h3 id="save-project-title" class="font-bold text-gray-900 text-base leading-tight">Save Project?</h3>
                     <p class="text-xs text-gray-500 mt-1 leading-relaxed">
-                        {{ $project->samples->count() }} sample unit(s) configured. Saving will finalize project setup
-                        &mdash; the assigned inspector can then begin the Components Grid inspection.
+                        {{ $project->samples->count() }} sample unit(s) configured. Saving will finalize project setup,
+                        and the assigned inspector can then begin the Components Grid inspection.
                     </p>
                 </div>
             </div>

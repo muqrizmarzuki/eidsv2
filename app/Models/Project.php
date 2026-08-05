@@ -293,13 +293,13 @@ class Project extends Model
             }
             if (!$inspectionDone) {
                 $name = $this->assignedInspector->name ?? 'the assigned inspector';
-                return $waiting('grid_on', "Inspector {$name} is still inspecting — {$inspectedCount}/{$totalSamples} sample units done.");
+                return $waiting('grid_on', "Inspector {$name} is still inspecting: {$inspectedCount}/{$totalSamples} sample units done.");
             }
             if ($openDefects > 0 || $pendingVerify > 0) {
                 $count = $openDefects + $pendingVerify;
-                return $waiting('warning', "{$count} defect(s) still open — waiting on Contractor & Inspector verification.");
+                return $waiting('warning', "{$count} defect(s) still open, waiting on Contractor & Inspector verification.");
             }
-            return $actionable('analytics', 'Inspection complete — ready to generate the signed E-IDS PDF.', 'reports.show', ['project' => $this], 'Generate PDF Report');
+            return $actionable('analytics', 'Inspection complete, ready to generate the signed E-IDS PDF.', 'reports.show', ['project' => $this], 'Generate PDF Report');
         }
 
         if ($user->role === 'inspector') {
@@ -314,14 +314,14 @@ class Project extends Model
             }
             if (!$inspectionDone) {
                 return $actionable(
-                    'grid_on', "Continue — {$inspectedCount}/{$totalSamples} sample units done.",
+                    'grid_on', "Continue: {$inspectedCount}/{$totalSamples} sample units done.",
                     'projects.components', ['project' => $this], 'Continue Inspecting'
                 );
             }
             if ($openDefects > 0) {
-                return $waiting('warning', "{$openDefects} defect(s) still open — notify the Contractor or await their fix.");
+                return $waiting('warning', "{$openDefects} defect(s) still open. Notify the Contractor or await their fix.");
             }
-            return $actionable('verified', 'All defects resolved — ready to sign off.', 'projects.show', ['project' => $this], 'Sign Off Project');
+            return $actionable('verified', 'All defects resolved, ready to sign off.', 'projects.show', ['project' => $this], 'Sign Off Project');
         }
 
         return $waiting('info', '');

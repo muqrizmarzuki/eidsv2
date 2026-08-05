@@ -163,7 +163,7 @@
                                class="flex items-center gap-2 p-2.5 rounded-xl hover:bg-gray-50 transition text-xs">
                                 <span class="material-symbols-outlined text-base text-eids-accent shrink-0">{{ $action['icon'] }}</span>
                                 <span class="font-bold text-gray-900 shrink-0">{{ $project->project_name }}</span>
-                                <span class="text-gray-500 truncate">— {{ $action['text'] }}</span>
+                                <span class="text-gray-500 truncate">&middot; {{ $action['text'] }}</span>
                             </a>
                         @endforeach
                     </div>

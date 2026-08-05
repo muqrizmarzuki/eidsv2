@@ -103,7 +103,7 @@
                             <input type="hidden" name="locations[]" :value="loc">
                         </div>
                     </template>
-                    <p x-show="locs.length === 0" class="text-xs text-gray-400 italic py-1">No default locations defined — samples will default to "Sample 1", "Sample 2", etc.</p>
+                    <p x-show="locs.length === 0" class="text-xs text-gray-400 italic py-1">No default locations defined. Samples will default to "Sample 1", "Sample 2", etc.</p>
                 </div>
 
                 {{-- Add Location Input --}}
@@ -139,7 +139,7 @@
         <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
                 <span class="material-symbols-outlined text-eids-accent text-lg">gavel</span>
-                <h2 class="font-extrabold text-gray-900 text-sm">CIS 7:2021 — Overall Weightage by Building Category (Table 1)</h2>
+                <h2 class="font-extrabold text-gray-900 text-sm">CIS 7:2021: Overall Weightage by Building Category (Table 1)</h2>
             </div>
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider font-bold">
@@ -289,7 +289,7 @@
         </div>
 
         <div class="flex items-center justify-between mb-8 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
-            <p class="text-xs text-gray-500 font-medium">A project with an absent optional element (Car Park, Apron/Drain) automatically rescales the rest to still sum to 100% — see §4.4 of the design spec.</p>
+            <p class="text-xs text-gray-500 font-medium">A project with an absent optional element (Car Park, Apron/Drain) automatically rescales the rest to still sum to 100% (see §4.4 of the design spec).</p>
             <button type="submit"
                     class="min-h-[44px] flex items-center gap-2 px-6 py-2.5 bg-eids-primary text-white text-sm font-extrabold rounded-xl hover:bg-eids-dark transition shadow-md">
                 <span class="material-symbols-outlined text-lg">save</span>

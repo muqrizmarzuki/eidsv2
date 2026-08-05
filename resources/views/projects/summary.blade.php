@@ -183,7 +183,7 @@
             @if(!empty($findings))
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-50">
-                        <h2 class="font-semibold text-gray-800 text-sm">Detailed Findings — Failed Items ({{ count($findings) }})</h2>
+                        <h2 class="font-semibold text-gray-800 text-sm">Detailed Findings: Failed Items ({{ count($findings) }})</h2>
                     </div>
                     <table class="w-full text-sm">
                         <thead class="bg-gray-50 text-xs text-gray-400 uppercase tracking-wider">

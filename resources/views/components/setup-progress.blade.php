@@ -18,7 +18,7 @@
                 {{ $num }}
             </span>
             <span class="text-xs {{ $isCurrent ? 'font-extrabold text-eids-primary' : ($isDone ? 'font-semibold text-gray-700' : 'font-medium text-gray-400') }}">
-                Step {{ $num }} of 2 &mdash; {{ $label }}
+                Step {{ $num }} of 2: {{ $label }}
             </span>
         </div>
     @endforeach

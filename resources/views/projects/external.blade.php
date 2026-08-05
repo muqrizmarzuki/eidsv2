@@ -20,8 +20,8 @@
         <div>
             <div class="font-extrabold text-gray-900 text-sm">External Works (Annex C)</div>
             <div class="text-xs text-gray-700 mt-1 leading-relaxed font-medium">
-                Add or remove instances of each external element this project has (e.g. 3 separate playgrounds) —
-                each instance gets its own full Table 6 sample set. The External Works score is a flat pass-rate
+                Add or remove instances of each external element this project has (e.g. 3 separate playgrounds).
+                Each instance gets its own full Table 6 sample set. The External Works score is a flat pass-rate
                 across every instance's checklist answers.
             </div>
         </div>

@@ -43,7 +43,7 @@
             <option value="">All Projects</option>
             @foreach($projects as $proj)
                 <option value="{{ $proj->id }}" {{ request('project_id') == $proj->id ? 'selected' : '' }}>
-                    {{ $proj->project_no }} — {{ $proj->project_name }}
+                    {{ $proj->project_no }} &middot; {{ $proj->project_name }}
                 </option>
             @endforeach
         </select>
@@ -160,7 +160,7 @@
                                                         action: '{{ route('defects.advance', $defect) }}',
                                                         fields: { to: 'IN_PROGRESS' },
                                                         title: 'Start Repair?',
-                                                        message: 'Marks this defect as In Progress — repair work begins now.'
+                                                        message: 'Marks this defect as In Progress. Repair work begins now.'
                                                     })"
                                                     class="px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition min-h-[36px]">
                                                 Start Repair
@@ -189,10 +189,10 @@
                                                         action: '{{ route('defects.advance', $defect) }}',
                                                         fields: { to: 'IN_PROGRESS' },
                                                         title: 'Reject & Notify Contractor?',
-                                                        message: 'Sends this defect back to the contractor as not properly fixed — they will see it flagged In Progress again.'
+                                                        message: 'Sends this defect back to the contractor as not properly fixed. They will see it flagged In Progress again.'
                                                     })"
                                                     class="px-3 py-1.5 text-xs font-bold text-red-800 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition min-h-[36px]">
-                                                Reject – Not Fixed
+                                                Reject (Not Fixed)
                                             </button>
                                         @elseif($defect->status === 'PENDING_VERIFICATION')
                                             <span class="px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg">
@@ -205,7 +205,7 @@
                                                         action: '{{ route('defects.advance', $defect) }}',
                                                         fields: { to: 'OPEN' },
                                                         title: 'Reopen Defect?',
-                                                        message: 'Reopens a previously resolved defect back to Open — use this only if the issue has recurred.'
+                                                        message: 'Reopens a previously resolved defect back to Open. Use this only if the issue has recurred.'
                                                     })"
                                                     class="px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition min-h-[36px]">
                                                 Reopen

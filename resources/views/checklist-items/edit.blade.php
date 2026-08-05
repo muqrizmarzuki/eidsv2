@@ -97,10 +97,10 @@
 
         <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 mb-6 space-y-5">
             <h2 class="font-extrabold text-gray-900 text-sm border-b border-gray-100 pb-3 flex items-center justify-between">
-                Guide Content (optional — the "?" icon only shows when this is filled in)
+                Guide Content (optional; the "?" icon only shows when this is filled in)
             </h2>
             <p class="text-xs text-gray-500 -mt-3">
-                Format freely — bold, lists, and inline images all render exactly as shown here in the inspector's Guide popup.
+                Format freely: bold, lists, and inline images all render exactly as shown here in the inspector's Guide popup.
             </p>
 
             <div>
@@ -173,7 +173,7 @@
             const hidden = document.getElementById(`input-${name}`);
             const quill = new Quill(`#editor-${name}`, {
                 theme: 'snow',
-                placeholder: 'Optional — leave blank to hide the Guide icon for this question.',
+                placeholder: 'Optional. Leave blank to hide the Guide icon for this question.',
                 modules: {
                     toolbar: {
                         container: toolbar,
