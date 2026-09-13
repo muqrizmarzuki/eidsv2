@@ -284,7 +284,7 @@
                     <span class="material-symbols-outlined text-base">description</span>
                     Generate Report
                 </a>
-                <a href="{{ route('reports.pdf', $project) }}"
+                <a href="{{ route('reports.pdf', $project) }}" data-no-loading
                    class="flex items-center gap-2 w-full px-4 py-2.5 border border-eids-accent/30 text-eids-primary text-sm font-medium rounded-lg hover:bg-eids-accent/5 transition">
                     <span class="material-symbols-outlined text-base">picture_as_pdf</span>
                     Download PDF

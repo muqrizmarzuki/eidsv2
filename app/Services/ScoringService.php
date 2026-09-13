@@ -232,18 +232,24 @@ class ScoringService
             };
         };
 
-        $assessments = $project->assessments()
-            ->with(['sample', 'externalSample', 'archSample', 'answers' => fn ($q) => $q->where('result', 'FAIL')->with('checklistItem')])
-            ->whereHas('answers', fn ($q) => $q->where('result', 'FAIL'))
-            ->get();
+        // loadMissing so a caller (e.g. ReportController::buildScoreData) that
+        // already eager-loaded ->assessments isn't hit with a second, separate
+        // query here — only the nested relations still missing are fetched.
+        $project->loadMissing([
+            'assessments.sample', 'assessments.externalSample', 'assessments.archSample',
+            'assessments.answers.checklistItem',
+        ]);
 
         $findings = [];
-        foreach ($assessments as $assessment) {
+        foreach ($project->assessments as $assessment) {
+            $failedAnswers = $assessment->answers->where('result', 'FAIL');
+            if ($failedAnswers->isEmpty()) continue;
+
             $location = $assessment->sample?->location_name
                 ?? $assessment->externalSample?->label
                 ?? $assessment->archSample?->label
                 ?? '—';
-            foreach ($assessment->answers as $answer) {
+            foreach ($failedAnswers as $answer) {
                 $findings[] = [
                     'component' => $componentName($assessment->component_code),
                     'location'  => $location,

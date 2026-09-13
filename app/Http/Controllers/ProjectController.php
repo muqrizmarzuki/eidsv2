@@ -19,15 +19,27 @@ class ProjectController extends Controller
 
     public function dashboard()
     {
-        $visible         = Project::visibleTo(auth()->user());
-        $total           = $visible->clone()->count();
-        $active          = $visible->clone()->where('status', 'dalam_pemeriksaan')->count();
-        $completed       = $visible->clone()->where('status', 'selesai')->count();
-        $draft           = $visible->clone()->where('status', 'draf')->count();
+        $visible = Project::visibleTo(auth()->user());
+
+        $statusCounts = $visible->clone()
+            ->selectRaw('status, count(*) as c')
+            ->groupBy('status')
+            ->pluck('c', 'status');
+        $total     = $statusCounts->sum();
+        $active    = $statusCounts->get('dalam_pemeriksaan', 0);
+        $completed = $statusCounts->get('selesai', 0);
+        $draft     = $statusCounts->get('draf', 0);
+
         $recent          = $visible->clone()->with(['creator', 'assignedInspector'])->latest()->take(8)->get();
         $avgScore        = $visible->clone()->where('overall_score', '>', 0)->avg('overall_score') ?? 0;
-        $openDefects     = Defect::visibleTo(auth()->user())->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
-        $resolvedDefects = Defect::visibleTo(auth()->user())->where('status', 'RESOLVED')->count();
+
+        $defectCounts    = Defect::visibleTo(auth()->user())
+            ->selectRaw("count(case when status in ('OPEN','IN_PROGRESS','PENDING_VERIFICATION') then 1 end) as open_c")
+            ->selectRaw("count(case when status = 'RESOLVED' then 1 end) as resolved_c")
+            ->first();
+        $openDefects     = $defectCounts->open_c ?? 0;
+        $resolvedDefects = $defectCounts->resolved_c ?? 0;
+
         $ratingBaik      = (float) setting('rating_baik', 85);
         $ratingMod       = (float) setting('rating_sederhana', 70);
         $meScore         = (float) WeightageOverall::forCategory('A')->me_pct;
@@ -35,7 +47,8 @@ class ProjectController extends Controller
         $actionRequired = collect();
         if (in_array(auth()->user()->role, ['admin', 'inspector'])) {
             $actionRequired = $visible->clone()
-                ->with(['assignedInspector'])
+                ->with(['assignedInspector', 'samples', 'defects'])
+                ->withCount('assessments')
                 ->get()
                 ->filter(function ($project) {
                     $action = $project->nextActionFor(auth()->user());
@@ -86,7 +99,7 @@ class ProjectController extends Controller
     {
         $this->guardProjectVisible($project);
 
-        $project->load(['samples', 'defects', 'creator', 'assignedInspector', 'qpDeclarations']);
+        $project->load(['samples', 'defects', 'creator', 'assignedInspector', 'qpDeclarations', 'assessments']);
         $openDefects     = $project->defects->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
         $resolvedDefects = $project->defects->where('status', 'RESOLVED')->count();
 
@@ -275,12 +288,6 @@ class ProjectController extends Controller
         if (!$project->externalInspectionComplete()) {
             return redirect()->route('projects.show', $project)
                 ->with('error', 'Every present External Works element must be inspected before this project can be marked complete.');
-        }
-
-        $openOrPending = $project->defects()->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
-        if ($openOrPending > 0) {
-            return redirect()->route('projects.show', $project)
-                ->with('error', "{$openOrPending} defect(s) still need to be resolved before this project can be marked complete.");
         }
 
         $project->update(['status' => 'selesai']);

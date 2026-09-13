@@ -95,7 +95,7 @@
 
     {{-- Case Ledger: the single source of truth for phase / responsible party / status --}}
     @php
-        $readyToComplete = $project->status !== 'selesai' && $project->inspection_progress >= 100 && $openDefects === 0;
+        $readyToComplete = $project->status !== 'selesai' && $project->inspection_progress >= 100;
         $canMarkComplete = auth()->user()->canInspect();
         $canNotifyContractor = $project->inspection_progress >= 100 && $openDefects > 0 && auth()->user()->canInspect();
 

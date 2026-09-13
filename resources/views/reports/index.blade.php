@@ -33,11 +33,6 @@
     </div>
 @else
     {{-- Rating Distribution Stats --}}
-    @php
-        $good     = $projects->filter(fn($p) => $p->overall_score >= $ratingBaik)->count();
-        $moderate = $projects->filter(fn($p) => $p->overall_score >= $ratingMod && $p->overall_score < $ratingBaik)->count();
-        $weak     = $projects->filter(fn($p) => $p->overall_score < $ratingMod)->count();
-    @endphp
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5 flex items-center gap-4">
             <div class="w-12 h-12 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center shrink-0 text-emerald-800">
@@ -75,7 +70,7 @@
                 <span class="material-symbols-outlined text-eids-accent text-lg">description</span>
                 <h2 class="font-extrabold text-gray-900 text-sm">Scored E-IDS Inspection Reports</h2>
             </div>
-            <span class="text-xs text-gray-500 font-mono font-semibold">{{ $projects->count() }} report(s) total</span>
+            <span class="text-xs text-gray-500 font-mono font-semibold">{{ $projects->total() }} report(s) total</span>
         </div>
         <div class="divide-y divide-gray-100">
             @foreach($projects as $project)
@@ -142,7 +137,7 @@
                             <span class="material-symbols-outlined text-base">visibility</span>
                             View Report
                         </a>
-                        <a href="{{ route('reports.pdf', $project) }}"
+                        <a href="{{ route('reports.pdf', $project) }}" data-no-loading
                            class="flex items-center gap-1.5 px-3.5 py-2.5 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-100 transition min-h-[44px]"
                            title="Download Formal PDF Certificate">
                             <span class="material-symbols-outlined text-base text-red-600">picture_as_pdf</span>
@@ -152,6 +147,7 @@
                 </div>
             @endforeach
         </div>
+        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50/50">{{ $projects->links() }}</div>
     </div>
 @endif
 @endsection

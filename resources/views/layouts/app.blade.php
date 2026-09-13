@@ -18,6 +18,8 @@
 </head>
 <body class="h-full bg-gray-50 font-sans antialiased text-gray-900 selection:bg-eids-accent selection:text-white" x-data="{ sidebarOpen: false }">
 
+    <x-page-loader />
+
     <x-toast />
 
     {{-- Mobile Overlay --}}

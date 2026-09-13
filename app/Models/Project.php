@@ -27,6 +27,14 @@ class Project extends Model
         'apron_drain_present'  => 'boolean',
     ];
 
+    /**
+     * Per-instance memo for getInspectionProgressAttribute() — a custom
+     * accessor is never cached by Eloquent, so without this it re-runs an
+     * assessments COUNT query every single time ->inspection_progress is
+     * read (and it's read many times per row across dashboard/index/show).
+     */
+    private ?int $inspectionProgressCache = null;
+
     public function samples()
     {
         return $this->hasMany(ProjectSample::class);
@@ -260,19 +268,33 @@ class Project extends Model
     {
         $total = $this->calculated_samples * count($this->inspectableComponentCodes());
         if ($total === 0) return 0;
-        $done = $this->assessments()->count();
-        return (int) min(100, round(($done / $total) * 100));
+
+        if ($this->inspectionProgressCache === null) {
+            $done = $this->attributes['assessments_count']
+                ?? ($this->relationLoaded('assessments') ? $this->assessments->count() : $this->assessments()->count());
+            $this->inspectionProgressCache = (int) min(100, round(($done / $total) * 100));
+        }
+
+        return $this->inspectionProgressCache;
     }
 
     public function nextActionFor(User $user): array
     {
         $hasNamedLocations = $this->samples->contains(fn ($s) => !str_starts_with($s->location_name, 'Sample '));
-        $inspectionStarted = $this->assessments()->exists();
+        $inspectionStarted = isset($this->attributes['assessments_count'])
+            ? $this->attributes['assessments_count'] > 0
+            : ($this->relationLoaded('assessments') ? $this->assessments->isNotEmpty() : $this->assessments()->exists());
         $inspectionDone    = $this->inspection_progress >= 100;
         $inspectedCount    = $this->samples->whereNotNull('pass_rate')->count();
         $totalSamples      = $this->samples->count();
-        $openDefects       = $this->defects()->whereIn('status', ['OPEN', 'IN_PROGRESS'])->count();
-        $pendingVerify     = $this->defects()->where('status', 'PENDING_VERIFICATION')->count();
+
+        if ($this->relationLoaded('defects')) {
+            $openDefects   = $this->defects->whereIn('status', ['OPEN', 'IN_PROGRESS'])->count();
+            $pendingVerify = $this->defects->where('status', 'PENDING_VERIFICATION')->count();
+        } else {
+            $openDefects   = $this->defects()->whereIn('status', ['OPEN', 'IN_PROGRESS'])->count();
+            $pendingVerify = $this->defects()->where('status', 'PENDING_VERIFICATION')->count();
+        }
 
         $waiting = fn (string $icon, string $text) => [
             'icon' => $icon, 'text' => $text, 'actionable' => false,

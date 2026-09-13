@@ -102,6 +102,10 @@ class Defect extends Model implements HasMedia
 
     public function scopeVisibleTo($query, User $user)
     {
+        if ($user->role === 'admin') {
+            return $query;
+        }
+
         return $query->whereHas('project', fn ($q) => $q->visibleTo($user));
     }
 }

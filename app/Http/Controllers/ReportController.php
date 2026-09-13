@@ -14,7 +14,11 @@ class ReportController extends Controller
 
     private function buildScoreData(Project $project): array
     {
-        $project->load(['assessments', 'samples', 'externalSamples', 'defects', 'creator', 'qpDeclarations']);
+        $project->load([
+            'assessments.sample', 'assessments.externalSample', 'assessments.archSample',
+            'assessments.answers.checklistItem',
+            'samples', 'externalSamples', 'defects', 'creator', 'qpDeclarations',
+        ]);
 
         $breakdown       = $this->scoring->scoreBreakdown($project);
         $findings        = $this->scoring->failedFindings($project);
@@ -26,17 +30,23 @@ class ReportController extends Controller
 
     public function index()
     {
-        $projects = Project::visibleTo(auth()->user())
-            ->where('overall_score', '>', 0)
-            ->with('creator')
-            ->withCount('defects')
-            ->orderByDesc('updated_at')
-            ->get();
-
         $ratingBaik = (float) setting('rating_baik', 85);
         $ratingMod  = (float) setting('rating_sederhana', 70);
 
-        return view('reports.index', compact('projects', 'ratingBaik', 'ratingMod'));
+        $base = Project::visibleTo(auth()->user())->where('overall_score', '>', 0);
+
+        $good     = $base->clone()->where('overall_score', '>=', $ratingBaik)->count();
+        $moderate = $base->clone()->where('overall_score', '>=', $ratingMod)->where('overall_score', '<', $ratingBaik)->count();
+        $weak     = $base->clone()->where('overall_score', '<', $ratingMod)->count();
+
+        $projects = $base->clone()
+            ->with('creator')
+            ->withCount('defects')
+            ->orderByDesc('updated_at')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('reports.index', compact('projects', 'ratingBaik', 'ratingMod', 'good', 'moderate', 'weak'));
     }
 
     public function show(Project $project)
