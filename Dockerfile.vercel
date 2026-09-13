@@ -2,20 +2,27 @@ FROM muqrizmarzuki25/laraveldebian-php8.3:esilibus
 
 WORKDIR /var/www
 
-# Copy all application files
+# Step 1: Copy only dependency definitions first (caches Composer & NPM layers)
+COPY composer.json composer.lock package.json package-lock.json* ./
+
+# Step 2: Install dependencies without running package scripts yet
+RUN composer install --no-interaction --no-dev --no-scripts --no-autoloader --prefer-dist \
+    && npm ci --no-audit --prefer-offline 2>/dev/null || npm install --no-audit
+
+# Step 3: Copy full application files
 COPY . /var/www
 
-# Install PHP and JS dependencies during build instead of runtime
-# This makes the image ready for Kubernetes
-RUN composer install --no-interaction --optimize-autoloader --no-dev \
-    && npm install \
-    && npm run build
+# Step 4: Build assets, clean up node_modules to save hundreds of MBs, and finalize Composer
+RUN npm run build \
+    && rm -rf node_modules \
+    && composer dump-autoload --optimize --no-dev \
+    && php artisan storage:link
 
-# Set permissions for Laravel
+# Step 5: Fix permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 EXPOSE 80
 
-# The base image already has supervisord configured
-CMD ["/bin/sh", "-c", "php artisan optimize && exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
+# Run supervisor via exec so it receives OS termination signals (SIGTERM) properly in Kubernetes
+CMD ["/bin/sh", "-c", "php artisan config:cache && php artisan route:cache && php artisan view:cache && exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
