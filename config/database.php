@@ -85,7 +85,7 @@ return [
             ]) : [],
         ],
 
-        'pgsql' => [
+       'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
@@ -97,9 +97,12 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslmode' => env('DB_SSLMODE', 'require'), // Enforce require for Neon
+            'options' => [
+                PDO::ATTR_EMULATE_PREPARES => true, // <-- ADD THIS LINE
+            ],
         ],
-
+        
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

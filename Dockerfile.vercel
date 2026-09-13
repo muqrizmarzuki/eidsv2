@@ -5,6 +5,13 @@ WORKDIR /var/www
 # Step 1: Copy only dependency definitions first (caches Composer & NPM layers)
 COPY composer.json composer.lock package.json package-lock.json* ./
 
+# The base image only ships pdo_mysql/pdo_sqlite — install Postgres support
+# (e.g. for Neon) so DB_CONNECTION=pgsql works without a driver error.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq-dev \
+    && docker-php-ext-install pdo_pgsql pgsql \
+    && rm -rf /var/lib/apt/lists/*
+    
 # Step 2: Install dependencies without running package scripts yet
 RUN composer install --no-interaction --no-dev --no-scripts --no-autoloader --prefer-dist \
     && npm ci --no-audit --prefer-offline 2>/dev/null || npm install --no-audit

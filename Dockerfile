@@ -2,6 +2,13 @@ FROM muqrizmarzuki25/laraveldebian-php8.3:esilibus
 
 WORKDIR /var/www
 
+# The base image only ships pdo_mysql/pdo_sqlite — install Postgres support
+# (e.g. for Neon) so DB_CONNECTION=pgsql works without a driver error.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq-dev \
+    && docker-php-ext-install pdo_pgsql pgsql \
+    && rm -rf /var/lib/apt/lists/*
+
 # The base image's default memory_limit (128M) is too low for bulk operations
 # at real inspection scale (CIS 7:2021 Table 3 allows up to 700 samples per
 # project) — e.g. seeding or recalculating a large project's score.
