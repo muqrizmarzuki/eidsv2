@@ -64,7 +64,7 @@ class DefectController extends Controller
         $this->guardProjectVisible(Project::findOrFail($data['project_id']));
 
         if ($request->hasFile('photo')) {
-            $data['photo_path'] = $request->file('photo')->store('defect_photos', 'public');
+            $data['photo_path'] = $request->file('photo')->store('defect_photos', config('filesystems.default'));
         }
 
         $defect = Defect::create($data);
@@ -105,7 +105,7 @@ class DefectController extends Controller
         unset($data['status']);
 
         if ($request->hasFile('photo')) {
-            $data['photo_path'] = $request->file('photo')->store('defect_photos', 'public');
+            $data['photo_path'] = $request->file('photo')->store('defect_photos', config('filesystems.default'));
         }
 
         $defect->update($data);

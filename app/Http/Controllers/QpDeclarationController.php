@@ -32,7 +32,7 @@ class QpDeclarationController extends Controller
         $declaration->declared = $declared;
 
         if ($request->hasFile('evidence')) {
-            $declaration->evidence_path = $request->file('evidence')->store("qp-declarations/{$project->id}", 'public');
+            $declaration->evidence_path = $request->file('evidence')->store("qp-declarations/{$project->id}", config('filesystems.default'));
         }
 
         $declaration->declared_at = $declared ? now() : null;

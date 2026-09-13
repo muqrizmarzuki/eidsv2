@@ -60,6 +60,26 @@ return [
             'report' => false,
         ],
 
+        // Cloudflare R2 — S3-compatible, so it reuses the "s3" driver. R2 has
+        // no region concept ("auto" is the convention) and requires the
+        // path-style endpoint (bucket-in-path, not bucket-as-subdomain).
+        // Requires: composer require league/flysystem-aws-s3-v3
+        'r2' => [
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID'),
+            'secret' => env('R2_SECRET_ACCESS_KEY'),
+            'region' => env('R2_DEFAULT_REGION', 'auto'),
+            'bucket' => env('R2_BUCKET'),
+            // e.g. https://<account_id>.r2.cloudflarestorage.com
+            'endpoint' => env('R2_ENDPOINT'),
+            // The public base URL files are served from — either the bucket's
+            // r2.dev public URL or a custom domain mapped to the bucket.
+            'url' => env('R2_URL'),
+            'use_path_style_endpoint' => true,
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*
