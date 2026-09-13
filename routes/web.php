@@ -5,6 +5,7 @@ use App\Http\Controllers\BuildingExternalController;
 use App\Http\Controllers\ChecklistItemController;
 use App\Http\Controllers\DefectController;
 use App\Http\Controllers\ExternalInspectionController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\QpDeclarationController;
@@ -12,6 +13,9 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+
+// ── Health check (public, no auth) ────────────────────────────────────────────
+Route::get('/db-check', [HealthController::class, 'dbCheck'])->name('db-check');
 
 // ── Auth (guest only) ─────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
