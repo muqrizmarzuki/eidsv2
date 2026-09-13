@@ -66,7 +66,8 @@ class ReportController extends Controller
 
     /**
      * The signed E-IDS report is a formal certificate — it must reflect a fully
-     * inspected project with every defect resolved, never a partial in-progress state.
+     * inspected project, never a partial in-progress state. Open defects no longer
+     * block generation; they are listed in the report itself.
      */
     private function reportBlockedReason(Project $project): ?string
     {
@@ -80,11 +81,6 @@ class ReportController extends Controller
 
         if (!$project->externalInspectionComplete()) {
             return 'The signed E-IDS report is not available yet. Every present External Works element must be inspected first.';
-        }
-
-        $openOrPending = $project->defects()->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
-        if ($openOrPending > 0) {
-            return "{$openOrPending} defect(s) still need to be resolved before the signed E-IDS report can be generated.";
         }
 
         return null;

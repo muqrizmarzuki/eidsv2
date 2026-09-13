@@ -40,7 +40,7 @@ class ReportGenerationGateTest extends TestCase
         $response->assertSessionHas('error');
     }
 
-    public function test_report_pdf_is_blocked_when_defects_are_still_open(): void
+    public function test_report_pdf_is_available_even_when_defects_are_still_open(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $project = $this->fullyInspectedProject();
@@ -48,8 +48,7 @@ class ReportGenerationGateTest extends TestCase
 
         $response = $this->actingAs($admin)->get("/reports/{$project->id}/pdf");
 
-        $response->assertRedirect("/projects/{$project->id}");
-        $response->assertSessionHas('error');
+        $response->assertOk();
     }
 
     public function test_report_is_available_once_inspection_is_done_and_defects_resolved(): void
