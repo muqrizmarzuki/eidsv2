@@ -19,5 +19,11 @@
         }
       ]
     }
+  ],
+  "crons": [
+    {
+      "path": "/db-check",
+      "schedule": "*/5 * * * *"
+    }
   ]
 }
