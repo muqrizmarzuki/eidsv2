@@ -5,31 +5,32 @@ WORKDIR /var/www
 # Step 1: Copy only dependency definitions first (caches Composer & NPM layers)
 COPY composer.json composer.lock package.json package-lock.json* ./
 
-# The base image only ships pdo_mysql/pdo_sqlite — install Postgres support
-# (e.g. for Neon) so DB_CONNECTION=pgsql works without a driver error.
+# Step 2: Install PostgreSQL PDO extension and dependencies cleanly
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libpq-dev \
-    && docker-php-ext-install pdo_pgsql pgsql \
+    && docker-php-ext-configure pdo_pgsql --with-pdo-pgsql=/usr \
+    && docker-php-ext-install -j$(nproc) pdo pdo_pgsql pgsql \
+    && docker-php-ext-enable pdo_pgsql pgsql \
     && rm -rf /var/lib/apt/lists/*
-    
-# Step 2: Install dependencies without running package scripts yet
+
+# Step 3: Install dependencies without running package scripts yet
 RUN composer install --no-interaction --no-dev --no-scripts --no-autoloader --prefer-dist \
     && npm ci --no-audit --prefer-offline 2>/dev/null || npm install --no-audit
 
-# Step 3: Copy full application files
+# Step 4: Copy full application files
 COPY . /var/www
 
-# Step 4: Build assets, clean up node_modules to save hundreds of MBs, and finalize Composer
+# Step 5: Build assets, clean up node_modules to save space, and finalize Composer
 RUN npm run build \
     && rm -rf node_modules \
     && composer dump-autoload --optimize --no-dev \
     && php artisan storage:link
 
-# Step 5: Fix permissions
+# Step 6: Fix permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 EXPOSE 80
 
-# Run supervisor via exec so it receives OS termination signals (SIGTERM) properly in Kubernetes
-CMD ["/bin/sh", "-c", "php artisan optimize:clear && php artisan optimize && exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
+# Run supervisor via exec so it receives OS termination signals (SIGTERM) properly
+CMD ["/bin/sh", "-c", "php artisan config:clear && php artisan optimize:clear && php artisan optimize && exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
