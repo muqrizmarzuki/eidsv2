@@ -275,21 +275,6 @@ class ProjectController extends Controller
             return redirect()->route('projects.show', $project);
         }
 
-        if ($project->inspection_progress < 100) {
-            return redirect()->route('projects.show', $project)
-                ->with('error', 'Inspection is not yet complete. Every sample unit must be assessed first.');
-        }
-
-        if (!$project->archExternalInspectionComplete()) {
-            return redirect()->route('projects.show', $project)
-                ->with('error', 'Roof, External Wall, Apron/Drain and Car Park sections must be inspected before this project can be marked complete.');
-        }
-
-        if (!$project->externalInspectionComplete()) {
-            return redirect()->route('projects.show', $project)
-                ->with('error', 'Every present External Works element must be inspected before this project can be marked complete.');
-        }
-
         $project->update(['status' => 'selesai']);
 
         return redirect()->route('projects.show', $project)

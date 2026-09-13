@@ -95,7 +95,7 @@
 
     {{-- Case Ledger: the single source of truth for phase / responsible party / status --}}
     @php
-        $readyToComplete = $project->status !== 'selesai' && $project->inspection_progress >= 100;
+        $readyToComplete = $project->status !== 'selesai';
         $canMarkComplete = auth()->user()->canInspect();
         $canNotifyContractor = $project->inspection_progress >= 100 && $openDefects > 0 && auth()->user()->canInspect();
 
@@ -205,8 +205,6 @@
                                     <span class="material-symbols-outlined text-sm">verified</span>
                                     Sign Off Project
                                 </button>
-                            @else
-                                <span class="text-xs text-gray-400 font-medium">Locked</span>
                             @endif
                         @elseif($row['link'])
                             <a href="{{ $row['link']['route'] }}" class="inline-flex items-center gap-1 text-xs font-bold text-eids-accent hover:text-eids-primary hover:underline">
