@@ -19,9 +19,10 @@ COPY . /var/www
 
 # Install PHP and JS dependencies during build instead of runtime
 # This makes the image ready for Kubernetes
-RUN composer install --no-interaction --optimize-autoloader --no-dev \
-    && npm install \
-    && npm run build
+RUN npm install -g pnpm \
+    && composer install --no-interaction --optimize-autoloader --no-dev \
+    && pnpm install --frozen-lockfile \
+    && pnpm run build
 
 # Set permissions for Laravel
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \

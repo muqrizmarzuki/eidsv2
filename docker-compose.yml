@@ -7,7 +7,7 @@ services:
       - -c
       - |
         composer install --no-interaction --optimize-autoloader --prefer-dist
-        npm install
+        npm install -g pnpm && pnpm install
         exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
     ports:
       - "2006:80"
