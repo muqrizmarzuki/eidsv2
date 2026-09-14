@@ -10,6 +10,15 @@
             margin: 34px 32px 60px 32px;
         }
 
+        {{-- dompdf applies @page margin to the <html> root frame's style, but the
+             universal `*` reset above also matches <html> and is merged in afterward,
+             silently zeroing it back out. Re-assert the margin here: a tag selector
+             has higher specificity than `*` so this wins the cascade regardless of
+             source order. --}}
+        html {
+            margin: 34px 32px 60px 32px;
+        }
+
         body { font-family: 'DejaVu Sans', sans-serif; font-size: 9.5px; color: #24292f; line-height: 1.5; }
 
         h1, h2, .serif, .header h1, .score-val, .section-header, .total-row td, .kicker {
@@ -60,8 +69,9 @@
         .sub-row  td  { background: #f6f8fa; color: #57606a; font-style: italic; }
         .arch-row td  { background: #eaeef2; font-weight: bold; }
 
-        .dl { padding: 12px 14px 4px; overflow: hidden; }
-        .dl-item { float: left; width: 33.33%; padding: 0 10px 10px 0; box-sizing: border-box; }
+        .dl { display: table; width: 100%; table-layout: fixed; padding: 12px 14px; }
+        .dl-row { display: table-row; }
+        .dl-item { display: table-cell; width: 33.33%; padding: 0 10px 10px 0; vertical-align: top; }
         .dl-item dt { font-size: 7.5px; color: #8c959f; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
         .dl-item dd { font-weight: bold; color: #101828; font-size: 10px; }
 
@@ -78,8 +88,10 @@
             border-top: 1px solid #d0d7de;
             letter-spacing: 0.2px;
         }
+        {{-- dompdf has a built-in "page" counter but no "pages" (grand total) counter --
+             that would need its isPhpEnabled option, which we don't want to turn on. --}}
         .doc-footer .page-num:after {
-            content: "Page " counter(page) " of " counter(pages);
+            content: "Page " counter(page);
         }
     </style>
 </head>
@@ -115,13 +127,21 @@
 <div class="section section-compact">
     <div class="section-header">Project Information</div>
     <div class="dl">
-        <div class="dl-item"><dt>Developer</dt><dd>{{ $project->developer_name }}</dd></div>
-        <div class="dl-item"><dt>Contractor</dt><dd>{{ $project->contractor_name }}</dd></div>
-        <div class="dl-item"><dt>Building Type</dt><dd>{{ $typeMap[$project->building_type] ?? '' }}</dd></div>
-        <div class="dl-item"><dt>Total Units</dt><dd>{{ number_format($project->total_units) }}</dd></div>
-        <div class="dl-item"><dt>GFA</dt><dd>{{ number_format($project->floor_area_sqm, 2) }} m²</dd></div>
-        <div class="dl-item"><dt>Inspector</dt><dd>{{ $project->creator?->name ?? '—' }}</dd></div>
-        <div class="dl-item"><dt>CIS 7:2021 Category</dt><dd>Category {{ $project->building_category }}</dd></div>
+        <div class="dl-row">
+            <div class="dl-item"><dt>Developer</dt><dd>{{ $project->developer_name }}</dd></div>
+            <div class="dl-item"><dt>Contractor</dt><dd>{{ $project->contractor_name }}</dd></div>
+            <div class="dl-item"><dt>Building Type</dt><dd>{{ $typeMap[$project->building_type] ?? '' }}</dd></div>
+        </div>
+        <div class="dl-row">
+            <div class="dl-item"><dt>Total Units</dt><dd>{{ number_format($project->total_units) }}</dd></div>
+            <div class="dl-item"><dt>GFA</dt><dd>{{ number_format($project->floor_area_sqm, 2) }} m²</dd></div>
+            <div class="dl-item"><dt>Inspector</dt><dd>{{ $project->creator?->name ?? '—' }}</dd></div>
+        </div>
+        <div class="dl-row">
+            <div class="dl-item"><dt>CIS 7:2021 Category</dt><dd>Category {{ $project->building_category }}</dd></div>
+            <div class="dl-item"></div>
+            <div class="dl-item"></div>
+        </div>
     </div>
 </div>
 
