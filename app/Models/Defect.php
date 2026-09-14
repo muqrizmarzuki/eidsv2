@@ -83,6 +83,21 @@ class Defect extends Model implements HasMedia
 
     public function getPhotoBase64Attribute(): ?string
     {
+        if ($this->hasMedia('photos')) {
+            $media = $this->getFirstMedia('photos');
+            if ($media) {
+                try {
+                    $contents = Storage::disk($media->disk)->get($media->getPathRelativeToRoot());
+                    if ($contents !== null) {
+                        $mime = $media->mime_type ?: 'image/jpeg';
+                        return 'data:' . $mime . ';base64,' . base64_encode($contents);
+                    }
+                } catch (\Throwable $e) {
+                    // Fall through to legacy path handling below.
+                }
+            }
+        }
+
         $path = $this->local_photo_path;
         if ($path && file_exists($path)) {
             $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
@@ -95,6 +110,25 @@ class Defect extends Model implements HasMedia
             $data = file_get_contents($path);
             return 'data:' . $mime . ';base64,' . base64_encode($data);
         }
+
+        if ($this->photo_path) {
+            try {
+                $disk = Storage::disk(config('filesystems.default'));
+                if ($disk->exists($this->photo_path)) {
+                    $ext = strtolower(pathinfo($this->photo_path, PATHINFO_EXTENSION));
+                    $mime = match($ext) {
+                        'png' => 'image/png',
+                        'webp' => 'image/webp',
+                        'gif' => 'image/gif',
+                        default => 'image/jpeg',
+                    };
+                    return 'data:' . $mime . ';base64,' . base64_encode($disk->get($this->photo_path));
+                }
+            } catch (\Throwable $e) {
+                // No usable copy found; fall through to null.
+            }
+        }
+
         return null;
     }
 
