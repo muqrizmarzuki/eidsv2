@@ -1,36 +1,138 @@
-FROM muqrizmarzuki25/laraveldebian-php8.3:esilibus
+# syntax=docker/dockerfile:1
 
-WORKDIR /var/www
+# ---------------------------------------------------------------------------
+# Stage 1 — Build front-end assets (Vite + Tailwind) with pnpm
+# ---------------------------------------------------------------------------
+FROM node:22-bookworm-slim AS assets
 
-# Step 1: Copy only dependency definitions first (caches Composer & pnpm layers)
-COPY composer.json composer.lock package.json pnpm-lock.yaml* ./
+WORKDIR /build
 
-# Step 2: Install PostgreSQL PDO extension and dependencies cleanly
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq-dev \
-    && docker-php-ext-configure pdo_pgsql --with-pdo-pgsql=/usr \
-    && docker-php-ext-install -j$(nproc) pdo pdo_pgsql pgsql \
-    && docker-php-ext-enable pdo_pgsql pgsql \
-    && rm -rf /var/lib/apt/lists/*
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Step 3: Install dependencies using pnpm & Composer
-RUN npm install -g pnpm \
-    && composer install --no-interaction --no-dev --no-scripts --no-autoloader --prefer-dist \
-    && pnpm install --frozen-lockfile
+# Dependency manifests first so this layer caches across source-only changes
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile
 
-# Step 4: Copy full application files
-COPY . /var/www
+# Only what Vite actually reads
+COPY vite.config.js ./
+COPY resources ./resources
+RUN pnpm run build
 
-# Step 5: Build assets, clean up node_modules to save space, and optimize Composer autoloader
-RUN pnpm run build \
-    && rm -rf node_modules \
-    && composer dump-autoload --optimize --no-dev
 
-# Step 6: Fix permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+# ---------------------------------------------------------------------------
+# Stage 2 — Shared PHP base: FrankenPHP + every extension this app needs.
+# Both the Composer stage and the runtime derive from it, so the extensions
+# are compiled exactly once.
+# ---------------------------------------------------------------------------
+FROM dunglas/frankenphp:1-php8.3-bookworm AS php-base
+
+WORKDIR /app
+
+#   pdo_pgsql/pgsql             -> Postgres
+#   gd, exif                    -> spatie/laravel-medialibrary + spatie/image
+#   zip, intl, bcmath           -> dompdf + framework
+#   opcache, pcntl, sockets     -> performance / long-running worker support
+RUN install-php-extensions \
+        pdo_pgsql \
+        pgsql \
+        gd \
+        exif \
+        zip \
+        intl \
+        bcmath \
+        opcache \
+        pcntl \
+        sockets
+
+# Production PHP defaults + aggressive opcache (no timestamp checks: image is immutable)
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
+    && printf '%s\n' \
+        'opcache.enable=1' \
+        'opcache.enable_cli=0' \
+        'opcache.memory_consumption=192' \
+        'opcache.interned_strings_buffer=32' \
+        'opcache.max_accelerated_files=30000' \
+        'opcache.validate_timestamps=0' \
+        'realpath_cache_size=4096K' \
+        'realpath_cache_ttl=600' \
+        'memory_limit=512M' \
+        'upload_max_filesize=64M' \
+        'post_max_size=64M' \
+        'expose_php=0' \
+        > "$PHP_INI_DIR/conf.d/zz-app.ini"
+
+
+# ---------------------------------------------------------------------------
+# Stage 3 — Composer dependencies (no app code, so it caches well)
+# ---------------------------------------------------------------------------
+FROM php-base AS vendor
+
+COPY --from=composer/composer:2-bin /composer /usr/bin/composer
+
+COPY composer.json composer.lock ./
+RUN composer install \
+        --no-interaction \
+        --no-dev \
+        --no-scripts \
+        --no-autoloader \
+        --prefer-dist \
+    && composer clear-cache
+
+
+# ---------------------------------------------------------------------------
+# Stage 4 — Runtime: FrankenPHP (Caddy + PHP in one binary, binds on exec)
+# ---------------------------------------------------------------------------
+FROM php-base AS runtime
+
+COPY --from=composer/composer:2-bin /composer /usr/bin/composer
+
+# Application source
+COPY . /app
+
+# Vendor tree from stage 3, built assets from stage 1
+COPY --from=vendor /app/vendor /app/vendor
+COPY --from=assets /build/public/build /app/public/build
+
+# Now that app code is present, finish the autoloader and run package discovery.
+# NOTE: config:cache is deliberately NOT run here — Vercel injects environment
+# variables at runtime, and baking build-time env into a config cache is wrong.
+RUN composer dump-autoload --optimize --no-dev --classmap-authoritative \
+    && php artisan package:discover --ansi
+
+# Writable paths
+RUN mkdir -p \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+        bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# FrankenPHP configuration.
+#   SERVER_NAME ":80"  -> listen on all interfaces, plain HTTP, no auto-TLS
+#                         (Vercel terminates TLS in front of the container)
+#   SERVER_ROOT        -> Laravel's public/ directory
+ENV SERVER_NAME=":80" \
+    SERVER_ROOT="public/" \
+    CADDY_GLOBAL_OPTIONS="auto_https off" \
+    APP_ENV=production \
+    APP_DEBUG=false \
+    LOG_CHANNEL=stderr
+
+# Honour Vercel's injected $PORT, then hand off to FrankenPHP immediately.
+RUN printf '%s\n' \
+        '#!/bin/sh' \
+        'set -e' \
+        'if [ -n "$PORT" ]; then' \
+        '  export SERVER_NAME=":$PORT"' \
+        'fi' \
+        'exec docker-php-entrypoint frankenphp run --config /etc/frankenphp/Caddyfile "$@"' \
+        > /usr/local/bin/start.sh \
+    && chmod +x /usr/local/bin/start.sh
 
 EXPOSE 80
 
-# Launch supervisord immediately so the web server binds to port 80 with zero boot delay
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Single binary, single process — Caddy is listening the moment this execs.
+# No supervisord, no php-fpm socket, no boot delay.
+ENTRYPOINT ["/usr/local/bin/start.sh"]
