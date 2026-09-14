@@ -1,11 +1,5 @@
 {
   "regions": ["sin1"],
-  "functions": {
-    "api/**": {
-      "maxDuration": 60,
-      "memory": 1024
-    }
-  },
   "headers": [
     {
       "source": "/build/assets/:path*",
