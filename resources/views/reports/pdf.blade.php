@@ -5,44 +5,78 @@
     <title>E-IDS Report: {{ $project->project_no }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #1a1a1a; line-height: 1.4; }
 
-        .header { background: #00342b; color: #fff; padding: 20px 24px; margin-bottom: 16px; }
-        .header h1 { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
-        .header .sub { font-size: 10px; color: rgba(255,255,255,0.6); }
+        @page {
+            margin: 34px 32px 60px 32px;
+        }
 
-        .score-hero { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .score-val { font-size: 32px; font-weight: bold; }
-        .badge { display: inline-block; padding: 3px 12px; border-radius: 99px; font-size: 10px; font-weight: bold; }
-        .badge-good     { background: #10b981; color: #fff; }
-        .badge-moderate { background: #f59e0b; color: #fff; }
-        .badge-weak     { background: #ef4444; color: #fff; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 9.5px; color: #24292f; line-height: 1.5; }
 
-        .section { border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 14px; overflow: hidden; }
-        .section-header { background: #f9fafb; padding: 8px 12px; font-weight: bold; font-size: 10px;
-                          border-bottom: 1px solid #e5e7eb; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }
+        h1, h2, .serif, .header h1, .score-val, .section-header, .total-row td, .kicker {
+            font-family: 'DejaVu Serif', serif;
+        }
 
-        table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
-        th    { background: #f3f4f6; padding: 6px 10px; text-align: left; font-weight: bold;
-                color: #6b7280; text-transform: uppercase; font-size: 8.5px; letter-spacing: 0.5px; border-bottom: 1px solid #e5e7eb; }
-        td    { padding: 6px 10px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+        {{-- Masthead --}}
+        .masthead { border-bottom: 2.5px solid #00342b; padding-bottom: 10px; margin-bottom: 4px; }
+        .kicker { font-size: 8px; letter-spacing: 1.6px; text-transform: uppercase; color: #00342b; font-weight: bold; margin-bottom: 6px; }
+
+        .header { color: #101828; padding: 0 0 16px 0; margin-bottom: 18px; }
+        .header h1 { font-size: 19px; font-weight: bold; margin-bottom: 5px; letter-spacing: 0.2px; }
+        .header .sub { font-size: 9px; color: #57606a; }
+
+        .score-hero { display: flex; justify-content: space-between; align-items: flex-end; }
+        .score-block { text-align: right; border-left: 1.5px solid #d0d7de; padding-left: 18px; }
+        .score-val { font-size: 30px; font-weight: bold; color: #00342b; letter-spacing: 0.5px; }
+        .score-val .of { font-size: 12px; font-weight: normal; color: #8c959f; }
+        .score-label { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #57606a; margin: 3px 0 6px; }
+        .badge { display: inline-block; padding: 3px 14px; border-radius: 2px; font-size: 8.5px; font-weight: bold;
+                 letter-spacing: 0.8px; text-transform: uppercase; }
+        .badge-good     { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .badge-moderate { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+        .badge-weak     { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+        .section { border: 1px solid #d0d7de; margin-bottom: 16px; overflow: hidden; page-break-inside: avoid; }
+        .section-header { background: #f6f8fa; padding: 8px 14px; font-weight: bold; font-size: 10.5px;
+                          border-bottom: 1.5px solid #00342b; color: #00342b; text-transform: uppercase; letter-spacing: 0.8px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 9px; }
+        thead { display: table-header-group; }
+        tr    { page-break-inside: avoid; }
+        th    { background: #f6f8fa; padding: 7px 10px; text-align: left; font-weight: bold;
+                color: #57606a; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.7px;
+                border-top: 1px solid #d0d7de; border-bottom: 1px solid #d0d7de; }
+        td    { padding: 6.5px 10px; border-bottom: 1px solid #eaeef2; color: #24292f; }
         .text-center { text-align: center; }
         .text-right  { text-align: right; }
 
-        .pass { color: #059669; font-weight: bold; }
-        .fail { color: #dc2626; font-weight: bold; }
-        .muted { color: #9ca3af; }
+        .pass { color: #047857; font-weight: bold; }
+        .fail { color: #b91c1c; font-weight: bold; }
+        .muted { color: #8c959f; }
 
-        .total-row td { background: #00342b; color: #fff; font-weight: bold; font-size: 11px; padding: 8px 10px; }
-        .sub-row  td  { background: #f9fafb; color: #6b7280; }
-        .arch-row td  { background: #f3f4f6; font-weight: bold; }
+        .total-row td { background: #00342b; color: #fff; font-weight: bold; font-size: 11px; padding: 9px 10px; letter-spacing: 0.4px; }
+        .sub-row  td  { background: #f6f8fa; color: #57606a; font-style: italic; }
+        .arch-row td  { background: #eaeef2; font-weight: bold; }
 
-        .dl { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 10px 12px; }
-        .dl-item dt { font-size: 8px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1px; }
-        .dl-item dd { font-weight: bold; color: #111827; }
+        .dl { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px 6px; padding: 12px 14px; }
+        .dl-item dt { font-size: 7.5px; color: #8c959f; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
+        .dl-item dd { font-weight: bold; color: #101828; font-size: 10px; }
 
-        .footer { text-align: center; color: #9ca3af; font-size: 8px; margin-top: 20px; padding-top: 8px;
-                  border-top: 1px solid #e5e7eb; }
+        .doc-footer {
+            position: fixed;
+            bottom: -44px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #8c959f;
+            font-size: 7.5px;
+            font-style: italic;
+            padding-top: 8px;
+            border-top: 1px solid #d0d7de;
+            letter-spacing: 0.2px;
+        }
+        .doc-footer .page-num:after {
+            content: "Page " counter(page) " of " counter(pages);
+        }
     </style>
 </head>
 <body>
@@ -55,16 +89,19 @@
 @endphp
 
 {{-- Header --}}
+<div class="masthead">
+    <div class="kicker">Electronic Inspection Defect System &nbsp;·&nbsp; Official Inspection Report</div>
+</div>
 <div class="header">
     <div class="score-hero">
         <div>
             <h1>{{ $project->project_name }}</h1>
             <div class="sub">{{ $project->project_no }} &nbsp;·&nbsp; {{ $typeMap[$project->building_type] ?? '' }} &nbsp;·&nbsp; {{ $project->location }}</div>
-            <div class="sub" style="margin-top:4px">E-IDS Inspection Report &nbsp;·&nbsp; {{ $project->updated_at ? $project->updated_at->format('d M Y') : now()->format('d M Y') }}</div>
+            <div class="sub" style="margin-top:4px">Report Date: {{ $project->updated_at ? $project->updated_at->format('d M Y') : now()->format('d M Y') }}</div>
         </div>
-        <div style="text-align:center">
-            <div class="score-val">{{ number_format($totalScore, 2) }}</div>
-            <div class="sub" style="margin-bottom:4px">E-IDS Score</div>
+        <div class="score-block">
+            <div class="score-val">{{ number_format($totalScore, 2) }}<span class="of"> / 100</span></div>
+            <div class="score-label">E-IDS Composite Score</div>
             <span class="badge {{ $badgeCls[$rating] ?? '' }}">{{ $ratingMap[$rating] ?? $rating }}</span>
         </div>
     </div>
@@ -231,24 +268,24 @@
                             @php
                                 $imgSrc = $defect->photo_base64 ?? $defect->local_photo_path ?? $defect->photo_url;
                             @endphp
-                            <td style="width: 50%; vertical-align: top; border: 1px solid #e5e7eb; border-radius: 4px; padding: 0; background: #fafafa; overflow: hidden;">
-                                <div style="width: 100%; height: 160px; text-align: center; background: #f3f4f6; border-bottom: 1px solid #e5e7eb; overflow: hidden;">
+                            <td style="width: 50%; vertical-align: top; border: 1px solid #d0d7de; padding: 0; background: #fff; overflow: hidden;">
+                                <div style="width: 100%; height: 160px; text-align: center; background: #f6f8fa; border-bottom: 1px solid #d0d7de; overflow: hidden;">
                                     @if($imgSrc)
                                         <img src="{{ $imgSrc }}" style="max-width: 100%; max-height: 160px; vertical-align: middle;" />
                                     @else
-                                        <div style="padding-top: 65px; color: #9ca3af; font-size: 9px;">No image available</div>
+                                        <div style="padding-top: 65px; color: #8c959f; font-size: 9px;">No image available</div>
                                     @endif
                                 </div>
-                                <div style="padding: 8px;">
-                                    <div style="font-weight: bold; font-size: 9.5px; color: #111827; margin-bottom: 2px;">
+                                <div style="padding: 9px 10px;">
+                                    <div style="font-family: 'DejaVu Serif', serif; font-weight: bold; font-size: 9.5px; color: #101828; margin-bottom: 3px;">
                                         Defect #{{ $chunkIndex * 2 + $itemIndex + 1 }}: {{ $defect->component_name }}
                                     </div>
-                                    <div style="font-size: 8px; color: #6b7280; margin-bottom: 4px;">
+                                    <div style="font-size: 7.5px; color: #57606a; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px;">
                                         Location: <strong>{{ $defect->location }}</strong> &nbsp;|&nbsp;
                                         Severity: <strong>{{ ucfirst($defect->severity) }}</strong> &nbsp;|&nbsp;
                                         Status: <strong>{{ $defect->status_label }}</strong>
                                     </div>
-                                    <div style="font-size: 8.5px; color: #374151; line-height: 1.3;">
+                                    <div style="font-size: 8.5px; color: #24292f; line-height: 1.35;">
                                         {{ Str::limit($defect->defect_description, 140) }}
                                     </div>
                                 </div>
@@ -264,8 +301,9 @@
     </div>
 @endif
 
-<div class="footer">
+<div class="doc-footer">
     Generated by E-IDS, Electronic Inspection Defect System &nbsp;·&nbsp; {{ now()->format('d M Y H:i') }}
+    &nbsp;·&nbsp; <span class="page-num"></span>
 </div>
 
 </body>

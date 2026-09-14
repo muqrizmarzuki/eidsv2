@@ -10,6 +10,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('pdfExport', () => ({
+                loading: false,
+                async download(url, filename) {
+                    if (this.loading) return;
+                    this.loading = true;
+                    try {
+                        const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                        if (!response.ok) throw new Error('PDF generation failed');
+
+                        const blob = await response.blob();
+                        const disposition = response.headers.get('Content-Disposition') || '';
+                        const match = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+                        const name = match ? decodeURIComponent(match[1]) : (filename || 'report') + '.pdf';
+
+                        const objectUrl = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = objectUrl;
+                        link.download = name;
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                        window.URL.revokeObjectURL(objectUrl);
+                    } catch (e) {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', msg: 'Failed to generate PDF. Please try again.' } }));
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+            }));
+        });
+    </script>
     <style>
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .material-symbols-outlined.filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }

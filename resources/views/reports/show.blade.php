@@ -11,11 +11,11 @@
 @endsection
 
 @section('topbar-actions')
-    <a href="{{ route('reports.pdf', $project) }}" data-no-loading
+    <x-pdf-export-button :href="route('reports.pdf', $project)" :filename="$project->project_no"
        class="flex items-center gap-2 px-5 py-2.5 bg-eids-primary text-white text-sm font-bold rounded-xl hover:bg-eids-dark transition shadow-xs min-h-[44px]">
         <span class="material-symbols-outlined text-lg">picture_as_pdf</span>
         Export Signed PDF Certificate &rarr;
-    </a>
+    </x-pdf-export-button>
 @endsection
 
 @section('content')
@@ -325,10 +325,10 @@
             <a href="{{ route('projects.score', $project) }}" class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
                 &larr; Score Summary
             </a>
-            <a href="{{ route('reports.pdf', $project) }}" data-no-loading class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-xs font-extrabold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md">
+            <x-pdf-export-button :href="route('reports.pdf', $project)" :filename="$project->project_no" class="min-h-[44px] px-6 py-2.5 bg-eids-primary text-white text-xs font-extrabold rounded-xl hover:bg-eids-dark transition flex items-center gap-2 shadow-md">
                 <span class="material-symbols-outlined text-base">picture_as_pdf</span>
                 Export Signed PDF Certificate &rarr;
-            </a>
+            </x-pdf-export-button>
         </div>
 
     </div>

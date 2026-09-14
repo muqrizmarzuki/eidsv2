@@ -137,12 +137,12 @@
                             <span class="material-symbols-outlined text-base">visibility</span>
                             View Report
                         </a>
-                        <a href="{{ route('reports.pdf', $project) }}" data-no-loading
+                        <x-pdf-export-button :href="route('reports.pdf', $project)" :filename="$project->project_no"
                            class="flex items-center gap-1.5 px-3.5 py-2.5 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-100 transition min-h-[44px]"
                            title="Download Formal PDF Certificate">
                             <span class="material-symbols-outlined text-base text-red-600">picture_as_pdf</span>
                             PDF
-                        </a>
+                        </x-pdf-export-button>
                     </div>
                 </div>
             @endforeach
