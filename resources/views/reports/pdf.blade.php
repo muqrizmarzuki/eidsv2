@@ -60,7 +60,8 @@
         .sub-row  td  { background: #f6f8fa; color: #57606a; font-style: italic; }
         .arch-row td  { background: #eaeef2; font-weight: bold; }
 
-        .dl { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px 6px; padding: 12px 14px; }
+        .dl { padding: 12px 14px 4px; overflow: hidden; }
+        .dl-item { float: left; width: 33.33%; padding: 0 10px 10px 0; box-sizing: border-box; }
         .dl-item dt { font-size: 7.5px; color: #8c959f; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
         .dl-item dd { font-weight: bold; color: #101828; font-size: 10px; }
 
