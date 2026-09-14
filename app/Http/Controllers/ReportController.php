@@ -17,7 +17,7 @@ class ReportController extends Controller
         $project->load([
             'assessments.sample', 'assessments.externalSample', 'assessments.archSample',
             'assessments.answers.checklistItem',
-            'samples', 'externalSamples', 'defects', 'creator', 'qpDeclarations',
+            'samples', 'externalSamples', 'defects.media', 'creator', 'qpDeclarations',
         ]);
 
         $breakdown       = $this->scoring->scoreBreakdown($project);

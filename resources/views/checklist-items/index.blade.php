@@ -33,7 +33,7 @@
                     <th class="px-4 py-3 text-left">Question</th>
                     <th class="px-4 py-3 text-left">Group</th>
                     <th class="px-4 py-3 text-left">Type</th>
-                    <th class="px-4 py-3 text-center">Guide</th>
+                    <th class="px-4 py-3 text-left">Tool / Method</th>
                     <th class="px-6 py-3 text-right">Edit</th>
                 </tr>
             </thead>
@@ -44,12 +44,8 @@
                         <td class="px-4 py-3 text-gray-900 font-medium">{{ $item->question_text }}</td>
                         <td class="px-4 py-3 text-gray-500 text-xs">{{ $item->defect_group }}</td>
                         <td class="px-4 py-3 text-gray-500 text-xs">{{ $item->input_type === 'numeric_with_tolerance' ? 'Numeric (' . $item->tolerance_text . ')' : 'Pass/Fail' }}</td>
-                        <td class="px-4 py-3 text-center">
-                            @if($item->has_guide)
-                                <span class="text-emerald-700 font-bold text-xs">Yes</span>
-                            @else
-                                <span class="text-gray-300 text-xs">—</span>
-                            @endif
+                        <td class="px-4 py-3 text-xs font-semibold text-eids-primary">
+                            {{ $item->method_tool ?? 'Visual' }}
                         </td>
                         <td class="px-6 py-3 text-right">
                             <a href="{{ route('checklist-items.edit', $item) }}" class="text-xs font-bold text-eids-accent hover:underline">Edit</a>

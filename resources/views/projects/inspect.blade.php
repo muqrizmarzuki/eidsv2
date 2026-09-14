@@ -29,7 +29,6 @@
 <div class="max-w-5xl mx-auto flex flex-col w-full min-h-[calc(100dvh-6rem)] sm:min-h-[calc(100dvh-7rem)] lg:min-h-[calc(100dvh-8rem)]"
      x-data="{
          answers: {{ Js::from($initialAnswers) }},
-         guideOpen: null,
          statusFor(id) {
              const a = this.answers[id];
              if (a.type === 'numeric_with_tolerance') {
@@ -130,9 +129,8 @@
                         <tr>
                             <th class="px-4 py-3 text-left w-10">No.</th>
                             <th class="px-4 py-3 text-left">Inspection Question</th>
-                            <th class="px-4 py-3 text-left hidden md:table-cell">Method / Tool</th>
+                            <th class="px-4 py-3 text-left">Tool / Method (CIS 7:2021)</th>
                             <th class="px-4 py-3 text-center hidden sm:table-cell">Limit</th>
-                            <th class="px-4 py-3 text-center w-12">Guide</th>
                             <th class="px-4 py-3 text-center">Result</th>
                         </tr>
                     </thead>
@@ -141,18 +139,13 @@
                             <tr class="align-top">
                                 <td class="px-4 py-4 text-gray-400 font-mono text-xs">{{ $i + 1 }}</td>
                                 <td class="px-4 py-4 text-gray-900 font-semibold max-w-xs">{{ $item->question_text }}</td>
-                                <td class="px-4 py-4 text-gray-600 text-xs hidden md:table-cell">{{ $item->method_tool ?? 'Visual' }}</td>
-                                <td class="px-4 py-4 text-gray-600 text-xs text-center hidden sm:table-cell font-mono">{{ $item->tolerance_text ?? '-' }}</td>
-                                <td class="px-4 py-4 text-center">
-                                    @if($item->has_guide)
-                                        <button type="button" @click="guideOpen = {{ $item->id }}"
-                                                class="w-7 h-7 rounded-full bg-eids-primary/10 text-eids-primary border border-eids-primary/20 hover:bg-eids-primary hover:text-white transition flex items-center justify-center mx-auto">
-                                            <span class="material-symbols-outlined text-base">help</span>
-                                        </button>
-                                    @else
-                                        <span class="text-gray-300 text-xs">—</span>
-                                    @endif
+                                <td class="px-4 py-4 text-xs font-semibold text-eids-primary">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-eids-primary/5 text-eids-primary border border-eids-primary/10 rounded-lg">
+                                        <span class="material-symbols-outlined text-xs">build</span>
+                                        {{ $item->method_tool ?? 'Visual' }}
+                                    </span>
                                 </td>
+                                <td class="px-4 py-4 text-gray-600 text-xs text-center hidden sm:table-cell font-mono">{{ $item->tolerance_text ?? '-' }}</td>
                                 <td class="px-4 py-4">
                                     @if($item->input_type === 'numeric_with_tolerance')
                                         <div class="flex items-center gap-2 justify-center">
@@ -184,60 +177,8 @@
                     </tbody>
                 </table>
             </div>
-            <div class="px-6 py-3 text-[11px] text-gray-400 border-t border-gray-100">Meets CIS 7:2021. The system will automatically record the result.</div>
+            <div class="px-6 py-3 text-[11px] text-gray-400 border-t border-gray-100">Meets CIS 7:2021 standards. Results are recorded automatically.</div>
         </div>
-
-        {{-- Guide Modals --}}
-        @foreach($items as $item)
-            @if($item->has_guide)
-                <div x-show="guideOpen === {{ $item->id }}" x-cloak
-                     class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
-                     @click.self="guideOpen = null">
-                    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-y-auto">
-                        <div class="bg-eids-primary text-white px-6 py-4 rounded-t-2xl flex items-center justify-between sticky top-0">
-                            <h3 class="font-extrabold text-sm">{{ $item->question_text }}</h3>
-                            <button type="button" @click="guideOpen = null" class="text-white/80 hover:text-white">
-                                <span class="material-symbols-outlined">close</span>
-                            </button>
-                        </div>
-                        <div class="p-6 space-y-5 text-sm">
-                            @if($item->guide_tools)
-                                <div>
-                                    <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-2">Tools</h4>
-                                    <div class="text-gray-800 guide-rich-content">{!! $item->guide_tools !!}</div>
-                                </div>
-                            @endif
-                            @if($item->guide_procedure)
-                                <div>
-                                    <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-2">Inspection Procedure</h4>
-                                    <div class="text-gray-800 guide-rich-content">{!! $item->guide_procedure !!}</div>
-                                </div>
-                            @endif
-                            @if($item->tolerance_text)
-                                <div>
-                                    <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-2">Limit (CIS 7:2021)</h4>
-                                    <div class="inline-block bg-emerald-50 border border-emerald-200 text-emerald-900 font-mono font-bold px-4 py-2 rounded-lg">
-                                        {{ $item->tolerance_text }}
-                                    </div>
-                                </div>
-                            @endif
-                            @if($item->guide_result_thresholds)
-                                <div>
-                                    <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-wider mb-2">Result</h4>
-                                    <div class="text-gray-800 guide-rich-content">{!! $item->guide_result_thresholds !!}</div>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="p-4 border-t border-gray-100">
-                            <button type="button" @click="guideOpen = null"
-                                    class="w-full min-h-[44px] bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-bold rounded-xl transition">
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            @endif
-        @endforeach
 
         {{-- Documentation & Photo Evidence Card --}}
         <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 mb-6">

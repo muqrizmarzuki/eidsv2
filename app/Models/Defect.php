@@ -58,6 +58,46 @@ class Defect extends Model implements HasMedia
         return $this->photo_path ? Storage::url($this->photo_path) : null;
     }
 
+    public function getLocalPhotoPathAttribute(): ?string
+    {
+        if ($this->hasMedia('photos')) {
+            $media = $this->getFirstMedia('photos');
+            if ($media && file_exists($media->getPath())) {
+                return $media->getPath();
+            }
+        }
+
+        if ($this->photo_path) {
+            $path = storage_path('app/public/' . $this->photo_path);
+            if (file_exists($path)) {
+                return $path;
+            }
+            $publicPath = public_path('storage/' . $this->photo_path);
+            if (file_exists($publicPath)) {
+                return $publicPath;
+            }
+        }
+
+        return null;
+    }
+
+    public function getPhotoBase64Attribute(): ?string
+    {
+        $path = $this->local_photo_path;
+        if ($path && file_exists($path)) {
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            $mime = match($ext) {
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                'gif' => 'image/gif',
+                default => 'image/jpeg',
+            };
+            $data = file_get_contents($path);
+            return 'data:' . $mime . ';base64,' . base64_encode($data);
+        }
+        return null;
+    }
+
     public function project()
     {
         return $this->belongsTo(Project::class);

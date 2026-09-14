@@ -269,6 +269,57 @@
             </div>
         @endif
 
+        {{-- Annex: Defect Photographic Evidence Gallery --}}
+        @php
+            $defectsWithPhotos = $project->defects->filter(fn($d) => !empty($d->photo_url));
+        @endphp
+        @if($defectsWithPhotos->isNotEmpty())
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                    <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
+                        <span class="material-symbols-outlined text-eids-accent text-lg">photo_library</span>
+                        Annex: Defect Photographic Evidence ({{ $defectsWithPhotos->count() }})
+                    </h2>
+                    <span class="text-xs text-gray-500 font-semibold">Photo Annex</span>
+                </div>
+                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                    @foreach($defectsWithPhotos as $i => $defect)
+                        @php
+                            $sevCls = ['low' => 'bg-gray-100 text-gray-700 border-gray-300', 'medium' => 'bg-amber-100 text-amber-900 border-amber-300', 'high' => 'bg-red-100 text-red-900 border-red-300'];
+                        @endphp
+                        <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50/30 flex flex-col group">
+                            <div class="relative aspect-4/3 bg-gray-100 overflow-hidden border-b border-gray-200">
+                                <a href="{{ $defect->photo_url }}" target="_blank" title="Click to view full photo" class="block w-full h-full">
+                                    <img src="{{ $defect->photo_url }}" alt="Defect photo for {{ $defect->component_name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-200" />
+                                </a>
+                                <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-xs text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md">
+                                    Defect #{{ $loop->iteration }}
+                                </span>
+                            </div>
+                            <div class="p-4 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div class="font-extrabold text-gray-900 text-xs mb-0.5">{{ $defect->component_name }}</div>
+                                    <div class="text-gray-500 text-[11px] font-medium mb-2 flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-xs">location_on</span>
+                                        {{ $defect->location }}
+                                    </div>
+                                    <p class="text-gray-700 text-xs line-clamp-3 leading-relaxed">{{ $defect->defect_description }}</p>
+                                </div>
+                                <div class="mt-3 pt-3 border-t border-gray-200/60 flex items-center justify-between gap-1">
+                                    <span class="inline-flex px-2 py-0.5 border rounded-full font-extrabold uppercase tracking-wider text-[9px] {{ $sevCls[$defect->severity] ?? '' }}">
+                                        {{ $defect->severity }}
+                                    </span>
+                                    <span class="inline-flex px-2 py-0.5 border rounded-full font-extrabold uppercase tracking-wider text-[9px] {{ $defect->status_badge_class }}">
+                                        {{ $defect->status_label }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         {{-- Bottom Action Bar --}}
         <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex-wrap gap-3">
             <a href="{{ route('projects.score', $project) }}" class="min-h-[44px] px-5 py-2.5 text-xs font-extrabold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
