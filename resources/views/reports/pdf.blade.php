@@ -24,8 +24,10 @@
         .header h1 { font-size: 19px; font-weight: bold; margin-bottom: 5px; letter-spacing: 0.2px; }
         .header .sub { font-size: 9px; color: #57606a; }
 
-        .score-hero { display: flex; justify-content: space-between; align-items: flex-end; }
-        .score-block { text-align: right; border-left: 1.5px solid #d0d7de; padding-left: 18px; }
+        .score-hero { display: table; width: 100%; table-layout: fixed; }
+        .score-hero-left { display: table-cell; vertical-align: bottom; }
+        .score-block { display: table-cell; vertical-align: bottom; width: 220px; text-align: right;
+                        border-left: 1.5px solid #d0d7de; padding-left: 18px; }
         .score-val { font-size: 30px; font-weight: bold; color: #00342b; letter-spacing: 0.5px; }
         .score-val .of { font-size: 12px; font-weight: normal; color: #8c959f; }
         .score-label { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #57606a; margin: 3px 0 6px; }
@@ -35,7 +37,8 @@
         .badge-moderate { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
         .badge-weak     { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 
-        .section { border: 1px solid #d0d7de; margin-bottom: 16px; overflow: hidden; page-break-inside: avoid; }
+        .section { border: 1px solid #d0d7de; margin-bottom: 16px; overflow: hidden; }
+        .section-compact { page-break-inside: avoid; }
         .section-header { background: #f6f8fa; padding: 8px 14px; font-weight: bold; font-size: 10.5px;
                           border-bottom: 1.5px solid #00342b; color: #00342b; text-transform: uppercase; letter-spacing: 0.8px; }
 
@@ -94,7 +97,7 @@
 </div>
 <div class="header">
     <div class="score-hero">
-        <div>
+        <div class="score-hero-left">
             <h1>{{ $project->project_name }}</h1>
             <div class="sub">{{ $project->project_no }} &nbsp;·&nbsp; {{ $typeMap[$project->building_type] ?? '' }} &nbsp;·&nbsp; {{ $project->location }}</div>
             <div class="sub" style="margin-top:4px">Report Date: {{ $project->updated_at ? $project->updated_at->format('d M Y') : now()->format('d M Y') }}</div>
@@ -108,7 +111,7 @@
 </div>
 
 {{-- Project Info --}}
-<div class="section">
+<div class="section section-compact">
     <div class="section-header">Project Information</div>
     <div class="dl">
         <div class="dl-item"><dt>Developer</dt><dd>{{ $project->developer_name }}</dd></div>
@@ -171,7 +174,7 @@
 </div>
 
 {{-- QP Declarations --}}
-<div class="section">
+<div class="section section-compact">
     <div class="section-header">QP Declarations (Material &amp; Functional Test)</div>
     <table>
         <thead>
