@@ -15,7 +15,12 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // ── Health check (public, no auth) ────────────────────────────────────────────
-Route::get('/db-check', [HealthController::class, 'dbCheck'])->name('db-check');
+Route::get('/db-check', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => now()->toIso8601String(),
+    ], 200);
+});
 
 // ── Auth (guest only) ─────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
