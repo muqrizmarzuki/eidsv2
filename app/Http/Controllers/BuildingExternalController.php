@@ -109,25 +109,20 @@ class BuildingExternalController extends Controller
         $el            = WeightageArchitecturalElement::where('component_code', $componentCode)->firstOrFail();
         $items         = ChecklistItem::forComponent($componentCode)->get();
 
-        $data = $request->validate([
-            'answers' => 'required|array',
-            'remarks' => 'nullable|string|max:1000',
-            'photo'   => 'nullable|image|max:5120',
-        ]);
-
-        $photoPath = null;
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store("inspections/building-external/{$project->id}/{$sample->id}", 'public');
-        }
-
         $existing = ComponentAssessment::where([
             'project_id'     => $project->id,
             'arch_sample_id' => $sample->id,
             'component_code' => $componentCode,
         ])->first();
 
+        $data = $request->validate([
+            'answers' => 'required|array',
+            'remarks' => 'nullable|string|max:1000',
+        ] + $this->photoRules($existing), $this->photoMessages());
+
+        $photos = $request->file('photos', []);
+
         $payload = ['remarks' => $data['remarks'] ?? null];
-        if ($photoPath) $payload['photo_path'] = $photoPath;
 
         if ($existing) {
             $existing->update($payload);
@@ -143,13 +138,13 @@ class BuildingExternalController extends Controller
         [$overallStatus, $failCount] = $this->saveAnswers($assessment, $items, $data['answers']);
         $assessment->update(['overall_sample_status' => $overallStatus]);
 
-        if ($request->hasFile('photo')) {
-            $assessment->addMediaFromRequest('photo')->toMediaCollection('photos');
+        if ($photos) {
+            $this->attachPhotos($photos, $assessment);
         }
 
         $this->syncDefect(
             $assessment, $overallStatus, $failCount, $project->id, $componentCode,
-            $el->name, $sample->label, $data['remarks'] ?? null, $request->hasFile('photo')
+            $el->name, $sample->label, $data['remarks'] ?? null, $photos
         );
 
         $this->scoring->recalculateAndSave($project);

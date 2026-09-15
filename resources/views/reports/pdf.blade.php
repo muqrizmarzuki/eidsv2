@@ -277,20 +277,41 @@
 
 {{-- Defect Photo Annex --}}
 @php
-    $defectsWithPhotos = $project->defects->filter(fn($d) => !empty($d->photo_base64) || !empty($d->local_photo_path) || !empty($d->photo_url));
+    // One card per photo: a defect with three photos gets three full-size tiles
+    // rather than three thumbnails crammed into one. dompdf cannot fetch from
+    // R2, so each source is a base64 data URI.
+    $defectNo    = 0;
+    $photoCards  = $project->defects->flatMap(function ($defect) use (&$defectNo) {
+        $sources = $defect->photos_base64;
+
+        if ($sources->isEmpty()) {
+            return collect();
+        }
+
+        $defectNo++;
+
+        return $sources->map(fn ($src, $i) => [
+            'defect' => $defect,
+            'src'    => $src,
+            'number' => $defectNo,
+            'index'  => $i + 1,
+            'total'  => $sources->count(),
+        ]);
+    })->values();
 @endphp
 
-@if($defectsWithPhotos->isNotEmpty())
+@if($photoCards->isNotEmpty())
     <div style="page-break-before: always;"></div>
     <div class="section">
-        <div class="section-header">Annex: Defect Photographic Evidence ({{ $defectsWithPhotos->count() }} Photo{{ $defectsWithPhotos->count() > 1 ? 's' : '' }})</div>
+        <div class="section-header">Annex: Defect Photographic Evidence ({{ $photoCards->count() }} Photo{{ $photoCards->count() > 1 ? 's' : '' }})</div>
         <div style="padding: 8px;">
             <table style="width: 100%; border-collapse: separate; border-spacing: 8px;">
-                @foreach($defectsWithPhotos->chunk(2) as $chunkIndex => $chunk)
+                @foreach($photoCards->chunk(2) as $chunk)
                     <tr>
-                        @foreach($chunk as $itemIndex => $defect)
+                        @foreach($chunk as $card)
                             @php
-                                $imgSrc = $defect->photo_base64 ?? $defect->local_photo_path ?? $defect->photo_url;
+                                $defect = $card['defect'];
+                                $imgSrc = $card['src'];
                             @endphp
                             <td style="width: 50%; vertical-align: top; border: 1px solid #d0d7de; padding: 0; background: #fff; overflow: hidden;">
                                 <div style="width: 100%; height: 160px; text-align: center; background: #f6f8fa; border-bottom: 1px solid #d0d7de; overflow: hidden;">
@@ -302,7 +323,7 @@
                                 </div>
                                 <div style="padding: 9px 10px;">
                                     <div style="font-family: 'DejaVu Serif', serif; font-weight: bold; font-size: 9.5px; color: #101828; margin-bottom: 3px;">
-                                        Defect #{{ $chunkIndex * 2 + $itemIndex + 1 }}: {{ $defect->component_name }}
+                                        Defect #{{ $card['number'] }}: {{ $defect->component_name }}@if($card['total'] > 1) <span style="font-weight: normal; color: #57606a;">&middot; Photo {{ $card['index'] }} of {{ $card['total'] }}</span>@endif
                                     </div>
                                     <div style="font-size: 7.5px; color: #57606a; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px;">
                                         Location: <strong>{{ $defect->location }}</strong> &nbsp;|&nbsp;

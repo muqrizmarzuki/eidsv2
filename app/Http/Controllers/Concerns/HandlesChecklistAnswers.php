@@ -14,6 +14,8 @@ use Illuminate\Support\Collection;
  */
 trait HandlesChecklistAnswers
 {
+    use AttachesPhotos;
+
     /**
      * Saves one answer per checklist item, derives overall PASS/FAIL, and
      * returns [overallStatus, failCount].
@@ -63,7 +65,7 @@ trait HandlesChecklistAnswers
         string $componentName,
         string $locationLabel,
         ?string $remarks,
-        bool $hasNewPhoto
+        array $photos
     ): void {
         if ($overallStatus === 'FAIL') {
             $defect = Defect::updateOrCreate(
@@ -79,13 +81,16 @@ trait HandlesChecklistAnswers
                 ]
             );
 
-            if ($hasNewPhoto) {
-                $defect->addMediaFromRequest('photo')->toMediaCollection('photos');
-            } elseif ($assessment->hasMedia('photos')) {
-                $mediaItem = $assessment->getFirstMedia('photos');
-                if ($mediaItem) {
-                    $mediaItem->copy($defect, 'photos');
-                }
+            if ($photos) {
+                // The same uploads the assessment just got — attach them straight
+                // from the request temp files rather than round-tripping via R2.
+                $this->attachPhotos($photos, $defect);
+            } elseif (! $defect->hasMedia('photos')) {
+                // No new uploads (e.g. answers were edited into a FAIL later), so
+                // pull the assessment's existing photos across once. Each copy
+                // downloads from the media disk, so only do it when the defect
+                // has nothing yet — never on every re-save.
+                $assessment->getMedia('photos')->each(fn ($media) => $media->copy($defect, 'photos'));
             }
         } else {
             Defect::where('assessment_id', $assessment->id)->delete();

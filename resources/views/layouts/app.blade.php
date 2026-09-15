@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>E-IDS: @yield('title', 'Dashboard')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,6 +39,133 @@
                         window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', msg: 'Failed to generate PDF. Please try again.' } }));
                     } finally {
                         this.loading = false;
+                    }
+                },
+            }));
+
+            /**
+             * Photo evidence picker: previews what was chosen, shrinks it to fit
+             * the 3 MB server cap before it ever leaves the phone, and deletes
+             * saved photos one at a time without losing the rest of the form.
+             */
+            Alpine.data('photoPicker', (config = {}) => ({
+                max: config.max ?? 3,
+                used: config.used ?? 0,
+                queued: [],
+                busy: false,
+                error: '',
+
+                get remaining() {
+                    return Math.max(0, this.max - this.used - this.queued.length);
+                },
+
+                async pick(event) {
+                    const input = event.target;
+                    const picked = Array.from(input.files || []);
+                    if (!picked.length) return;
+
+                    this.busy = true;
+                    this.error = '';
+                    try {
+                        const room = this.remaining;
+                        if (picked.length > room) {
+                            this.error = room > 0
+                                ? `Only ${room} more photo${room === 1 ? '' : 's'} can be added.`
+                                : `A maximum of ${this.max} photos is allowed. Delete one first.`;
+                        }
+
+                        for (const file of picked.slice(0, room)) {
+                            const shrunk = await this.downscale(file);
+                            this.queued.push({ file: shrunk, src: URL.createObjectURL(shrunk) });
+                        }
+                        this.sync(input);
+                    } finally {
+                        this.busy = false;
+                    }
+                },
+
+                sync(input) {
+                    const bundle = new DataTransfer();
+                    this.queued.forEach((item) => bundle.items.add(item.file));
+                    input.files = bundle.files;
+                },
+
+                removeQueued(index, input) {
+                    URL.revokeObjectURL(this.queued[index].src);
+                    this.queued.splice(index, 1);
+                    this.sync(input);
+                    this.error = '';
+                },
+
+                /**
+                 * A site photo off a phone is routinely 4-8 MB, which the 3 MB
+                 * rule would reject mid-inspection. Resize to 1600px on the long
+                 * edge and step the JPEG quality down until it fits.
+                 */
+                async downscale(file) {
+                    const LIMIT = 3 * 1024 * 1024;
+                    const MAX_EDGE = 1600;
+
+                    if (!file.type.startsWith('image/')) return file;
+
+                    let bitmap;
+                    try {
+                        bitmap = await createImageBitmap(file);
+                    } catch (e) {
+                        return file; // Unsupported format — let the server rule decide.
+                    }
+
+                    const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+                    if (scale === 1 && file.size <= LIMIT) {
+                        bitmap.close?.();
+                        return file;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.round(bitmap.width * scale);
+                    canvas.height = Math.round(bitmap.height * scale);
+                    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                    bitmap.close?.();
+
+                    let blob = null;
+                    for (const quality of [0.82, 0.7, 0.6, 0.5]) {
+                        blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+                        if (blob && blob.size <= LIMIT) break;
+                    }
+
+                    if (!blob || blob.size >= file.size) return file;
+
+                    return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', {
+                        type: 'image/jpeg',
+                        lastModified: Date.now(),
+                    });
+                },
+
+                async destroy(event) {
+                    const button = event.currentTarget;
+                    const id = button.dataset.deletePhoto;
+                    if (!id || this.busy) return;
+                    if (!window.confirm('Delete this photo? This cannot be undone.')) return;
+
+                    this.busy = true;
+                    try {
+                        const response = await fetch(`/media/${id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        });
+                        if (!response.ok) throw new Error('delete failed');
+
+                        button.closest('[data-photo-tile]')?.remove();
+                        this.used = Math.max(0, this.used - 1);
+                        this.error = '';
+                    } catch (e) {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', msg: 'Could not delete the photo. Please try again.' } }));
+                    } finally {
+                        this.busy = false;
                     }
                 },
             }));

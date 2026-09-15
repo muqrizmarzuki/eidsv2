@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AttachesPhotos;
 use App\Models\Defect;
 use App\Models\Project;
 use Illuminate\Http\Request;
 
 class DefectController extends Controller
 {
+    use AttachesPhotos;
+
     public function index(Request $request)
     {
         $query = Defect::visibleTo(auth()->user())->with(['project', 'media'])->latest();
@@ -58,19 +61,14 @@ class DefectController extends Controller
             'defect_description' => 'required|string',
             'severity'           => 'required|in:low,medium,high',
             'status'             => 'required|in:OPEN,IN_PROGRESS,PENDING_VERIFICATION,RESOLVED',
-            'photo'              => 'nullable|image|max:5120',
-        ]);
+        ] + $this->photoRules(), $this->photoMessages());
 
         $this->guardProjectVisible(Project::findOrFail($data['project_id']));
 
-        if ($request->hasFile('photo')) {
-            $data['photo_path'] = $request->file('photo')->store('defect_photos', config('filesystems.default'));
-        }
-
         $defect = Defect::create($data);
 
-        if ($request->hasFile('photo')) {
-            $defect->addMediaFromRequest('photo')->toMediaCollection('photos');
+        if ($photos = $request->file('photos', [])) {
+            $this->attachPhotos($photos, $defect);
         }
 
         return redirect()->route('defects.index')
@@ -95,8 +93,7 @@ class DefectController extends Controller
             'location'           => 'required|string|max:255',
             'defect_description' => 'required|string',
             'severity'           => 'required|in:low,medium,high',
-            'photo'              => 'nullable|image|max:5120',
-        ]);
+        ] + $this->photoRules($defect), $this->photoMessages());
 
         $this->guardProjectVisible(Project::findOrFail($data['project_id']));
 
@@ -104,14 +101,10 @@ class DefectController extends Controller
         // TRANSITIONS map — the edit form must never move a defect's status.
         unset($data['status']);
 
-        if ($request->hasFile('photo')) {
-            $data['photo_path'] = $request->file('photo')->store('defect_photos', config('filesystems.default'));
-        }
-
         $defect->update($data);
 
-        if ($request->hasFile('photo')) {
-            $defect->addMediaFromRequest('photo')->toMediaCollection('photos');
+        if ($photos = $request->file('photos', [])) {
+            $this->attachPhotos($photos, $defect);
         }
 
         return redirect()->route('defects.index')

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 use Spatie\MediaLibrary\HasMedia;
@@ -25,21 +26,20 @@ class Defect extends Model implements HasMedia
         'contractor_notified_at' => 'datetime',
     ];
 
+    /**
+     * Up to three photos per record — the ceiling is enforced at validation
+     * (AttachesPhotos::photoRules) so an over-limit upload is refused outright
+     * rather than silently pushing the oldest evidence out of the collection.
+     *
+     * No conversions are registered on purpose. Nothing in the app renders a
+     * derived size, and generating them would make every upload download the
+     * original back from R2, resize it, and push two more objects — expensive
+     * work inside a serverless request. Register them here if a thumbnail is
+     * ever actually needed, and give the queue a worker.
+     */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('photos');
-    }
-
-    public function registerMediaConversions(?Media $media = null): void
-    {
-        $this->addMediaConversion('thumb')
-            ->width(300)
-            ->height(300)
-            ->sharpen(10);
-
-        $this->addMediaConversion('preview')
-            ->width(800)
-            ->height(600);
     }
 
     public function getPhotoUrlAttribute(): ?string
@@ -50,12 +50,13 @@ class Defect extends Model implements HasMedia
         return $this->photo_path ? Storage::url($this->photo_path) : null;
     }
 
+    /**
+     * Kept for callers that ask for a thumbnail — there is no `thumb`
+     * conversion, so this is the original photo (see registerMediaCollections).
+     */
     public function getThumbUrlAttribute(): ?string
     {
-        if ($this->hasMedia('photos')) {
-            return $this->getFirstMediaUrl('photos', 'thumb');
-        }
-        return $this->photo_path ? Storage::url($this->photo_path) : null;
+        return $this->photo_url;
     }
 
     public function getLocalPhotoPathAttribute(): ?string
@@ -81,48 +82,73 @@ class Defect extends Model implements HasMedia
         return null;
     }
 
-    public function getPhotoBase64Attribute(): ?string
+    /**
+     * Every photo on this defect as a browser-reachable URL, oldest first.
+     *
+     * @return Collection<int, string>
+     */
+    public function getPhotoUrlsAttribute(): Collection
     {
         if ($this->hasMedia('photos')) {
-            $media = $this->getFirstMedia('photos');
-            if ($media) {
-                try {
-                    $contents = Storage::disk($media->disk)->get($media->getPathRelativeToRoot());
-                    if ($contents !== null) {
-                        $mime = $media->mime_type ?: 'image/jpeg';
-                        return 'data:' . $mime . ';base64,' . base64_encode($contents);
-                    }
-                } catch (\Throwable $e) {
-                    // Fall through to legacy path handling below.
-                }
-            }
+            return $this->getMedia('photos')->map(fn (Media $media) => $media->getUrl())->values();
         }
 
-        $path = $this->local_photo_path;
-        if ($path && file_exists($path)) {
-            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-            $mime = match($ext) {
-                'png' => 'image/png',
-                'webp' => 'image/webp',
-                'gif' => 'image/gif',
-                default => 'image/jpeg',
-            };
-            $data = file_get_contents($path);
-            return 'data:' . $mime . ';base64,' . base64_encode($data);
+        return collect([$this->photo_url])->filter()->values();
+    }
+
+    /**
+     * Every photo as a base64 data URI, for dompdf — which has no network access
+     * and so cannot fetch an R2 URL. Big, but the forms downscale before upload.
+     *
+     * @return Collection<int, string>
+     */
+    public function getPhotosBase64Attribute(): Collection
+    {
+        if ($this->hasMedia('photos')) {
+            return $this->getMedia('photos')
+                ->map(fn (Media $media) => $this->mediaDataUri($media))
+                ->filter()
+                ->values();
+        }
+
+        return collect([$this->legacyPhotoDataUri()])->filter()->values();
+    }
+
+    public function getPhotoBase64Attribute(): ?string
+    {
+        return $this->photos_base64->first();
+    }
+
+    /** Reads one media item off its own disk (R2 in production), local copy as backstop. */
+    private function mediaDataUri(Media $media): ?string
+    {
+        try {
+            $contents = Storage::disk($media->disk)->get($media->getPathRelativeToRoot());
+            if ($contents !== null) {
+                return 'data:' . ($media->mime_type ?: 'image/jpeg') . ';base64,' . base64_encode($contents);
+            }
+        } catch (\Throwable $e) {
+            // Fall through to the local copy, if this deployment has one.
+        }
+
+        $path = $media->getPath();
+
+        return file_exists($path) ? $this->fileDataUri($path) : null;
+    }
+
+    /** Pre-media-library rows still carry a bare `photo_path` on some disk. */
+    private function legacyPhotoDataUri(): ?string
+    {
+        if ($path = $this->local_photo_path) {
+            return $this->fileDataUri($path);
         }
 
         if ($this->photo_path) {
             try {
                 $disk = Storage::disk(config('filesystems.default'));
                 if ($disk->exists($this->photo_path)) {
-                    $ext = strtolower(pathinfo($this->photo_path, PATHINFO_EXTENSION));
-                    $mime = match($ext) {
-                        'png' => 'image/png',
-                        'webp' => 'image/webp',
-                        'gif' => 'image/gif',
-                        default => 'image/jpeg',
-                    };
-                    return 'data:' . $mime . ';base64,' . base64_encode($disk->get($this->photo_path));
+                    return 'data:' . $this->mimeForExtension($this->photo_path)
+                        . ';base64,' . base64_encode($disk->get($this->photo_path));
                 }
             } catch (\Throwable $e) {
                 // No usable copy found; fall through to null.
@@ -130,6 +156,25 @@ class Defect extends Model implements HasMedia
         }
 
         return null;
+    }
+
+    private function fileDataUri(string $path): ?string
+    {
+        if (! file_exists($path)) {
+            return null;
+        }
+
+        return 'data:' . $this->mimeForExtension($path) . ';base64,' . base64_encode(file_get_contents($path));
+    }
+
+    private function mimeForExtension(string $path): string
+    {
+        return match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+            'png'  => 'image/png',
+            'webp' => 'image/webp',
+            'gif'  => 'image/gif',
+            default => 'image/jpeg',
+        };
     }
 
     public function project()

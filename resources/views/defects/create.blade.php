@@ -89,23 +89,7 @@
                     </div>
                 </div>
 
-                <div x-data="{ src: null }">
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Defect Photo Evidence (Optional)</label>
-                    <div class="relative border-2 border-dashed border-gray-300 rounded-2xl hover:border-eids-accent transition bg-gray-50/50"
-                         :class="src ? 'border-eids-accent bg-emerald-50/30' : ''">
-                        <input type="file" name="photo" accept="image/*"
-                               @change="src = URL.createObjectURL($event.target.files[0])"
-                               class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
-                        <div x-show="!src" class="flex flex-col items-center justify-center py-8 text-center px-4">
-                            <span class="material-symbols-outlined text-gray-400 text-3xl mb-1">add_a_photo</span>
-                            <div class="text-xs font-bold text-gray-800">Tap to upload defect photo</div>
-                            <div class="text-[11px] text-gray-500 mt-1">Supports JPG, PNG up to 5MB</div>
-                        </div>
-                        <div x-show="src" x-cloak class="p-2">
-                            <img :src="src" class="w-full rounded-xl object-cover max-h-48">
-                        </div>
-                    </div>
-                </div>
+                <x-photo-uploader label="Defect Photo Evidence (Optional)" />
             </div>
         </div>
 

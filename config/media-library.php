@@ -233,10 +233,14 @@ return [
     ],
 
     /*
-     * The path where to store temporary files while performing image conversions.
-     * If set to null, storage_path('media-library/temp') will be used.
+     * The path where to store temporary files while performing image conversions
+     * and while copying media between models.
+     *
+     * Spatie's default is storage_path('media-library/temp'), which is not a
+     * safe assumption on serverless hosts where the deployment directory is
+     * read-only — the system temp dir is the one place always writable there.
      */
-    'temporary_directory_path' => null,
+    'temporary_directory_path' => env('MEDIA_TEMPORARY_DIRECTORY_PATH', sys_get_temp_dir().'/media-library'),
 
     /*
      * The engine that should perform the image conversions.

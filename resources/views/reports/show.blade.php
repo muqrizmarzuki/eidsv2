@@ -271,29 +271,48 @@
 
         {{-- Annex: Defect Photographic Evidence Gallery --}}
         @php
-            $defectsWithPhotos = $project->defects->filter(fn($d) => !empty($d->photo_url));
+            // One tile per photo — a defect with three photos shows three tiles.
+            $defectNo   = 0;
+            $photoCards = $project->defects->flatMap(function ($defect) use (&$defectNo) {
+                $urls = $defect->photo_urls;
+
+                if ($urls->isEmpty()) {
+                    return collect();
+                }
+
+                $defectNo++;
+
+                return $urls->map(fn ($url, $i) => [
+                    'defect' => $defect,
+                    'url'    => $url,
+                    'number' => $defectNo,
+                    'index'  => $i + 1,
+                    'total'  => $urls->count(),
+                ]);
+            })->values();
         @endphp
-        @if($defectsWithPhotos->isNotEmpty())
+        @if($photoCards->isNotEmpty())
             <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                     <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
                         <span class="material-symbols-outlined text-eids-accent text-lg">photo_library</span>
-                        Annex: Defect Photographic Evidence ({{ $defectsWithPhotos->count() }})
+                        Annex: Defect Photographic Evidence ({{ $photoCards->count() }})
                     </h2>
                     <span class="text-xs text-gray-500 font-semibold">Photo Annex</span>
                 </div>
                 <div class="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-                    @foreach($defectsWithPhotos as $i => $defect)
+                    @foreach($photoCards as $card)
                         @php
+                            $defect = $card['defect'];
                             $sevCls = ['low' => 'bg-gray-100 text-gray-700 border-gray-300', 'medium' => 'bg-amber-100 text-amber-900 border-amber-300', 'high' => 'bg-red-100 text-red-900 border-red-300'];
                         @endphp
                         <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50/30 flex flex-col group">
                             <div class="relative aspect-4/3 bg-gray-100 overflow-hidden border-b border-gray-200">
-                                <a href="{{ $defect->photo_url }}" target="_blank" title="Click to view full photo" class="block w-full h-full">
-                                    <img src="{{ $defect->photo_url }}" alt="Defect photo for {{ $defect->component_name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-200" />
+                                <a href="{{ $card['url'] }}" target="_blank" title="Click to view full photo" class="block w-full h-full">
+                                    <img src="{{ $card['url'] }}" alt="Defect photo for {{ $defect->component_name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-200" />
                                 </a>
                                 <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-xs text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md">
-                                    Defect #{{ $loop->iteration }}
+                                    Defect #{{ $card['number'] }}@if($card['total'] > 1) &middot; Photo {{ $card['index'] }}/{{ $card['total'] }}@endif
                                 </span>
                             </div>
                             <div class="p-4 flex-1 flex flex-col justify-between">

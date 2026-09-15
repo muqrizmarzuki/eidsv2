@@ -7,6 +7,7 @@ use App\Http\Controllers\DefectController;
 use App\Http\Controllers\ExternalInspectionController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\InspectionController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\QpDeclarationController;
 use App\Http\Controllers\ReportController;
@@ -109,6 +110,12 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin,inspector,contractor')->group(function () {
         Route::post('/defects/{defect}/advance', [DefectController::class, 'advanceStatus'])->name('defects.advance');
+    });
+
+    // Photo evidence — one media item at a time, from the inspection form or a
+    // defect form. Contractors may view evidence but never remove it.
+    Route::middleware('role:admin,inspector')->group(function () {
+        Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
     });
 
     // Reports — Contractor excluded (no Dashboard/Projects/Reports access)

@@ -97,26 +97,21 @@ class InspectionController extends Controller
 
         $items = ChecklistItem::forComponent($componentCode)->get();
 
-        $data = $request->validate([
-            'component_code' => 'required|string',
-            'answers'        => 'required|array',
-            'remarks'        => 'nullable|string|max:1000',
-            'photo'          => 'nullable|image|max:5120',
-        ]);
-
-        $photoPath = null;
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store("inspections/{$project->id}/{$sample->id}", 'public');
-        }
-
         $existing = ComponentAssessment::where([
             'project_id'     => $project->id,
             'sample_id'      => $sample->id,
             'component_code' => $componentCode,
         ])->first();
 
+        $data = $request->validate([
+            'component_code' => 'required|string',
+            'answers'        => 'required|array',
+            'remarks'        => 'nullable|string|max:1000',
+        ] + $this->photoRules($existing), $this->photoMessages());
+
+        $photos = $request->file('photos', []);
+
         $payload = ['remarks' => $data['remarks'] ?? null];
-        if ($photoPath) $payload['photo_path'] = $photoPath;
 
         if ($existing) {
             $existing->update($payload);
@@ -132,15 +127,15 @@ class InspectionController extends Controller
         [$overallStatus, $failCount] = $this->saveAnswers($assessment, $items, $data['answers']);
         $assessment->update(['overall_sample_status' => $overallStatus]);
 
-        if ($request->hasFile('photo')) {
-            $assessment->addMediaFromRequest('photo')->toMediaCollection('photos');
+        if ($photos) {
+            $this->attachPhotos($photos, $assessment);
         }
 
         $componentName = $this->componentRegistry($project)[$componentCode]['name'];
 
         $this->syncDefect(
             $assessment, $overallStatus, $failCount, $project->id, $componentCode,
-            $componentName, $sample->location_name, $data['remarks'] ?? null, $request->hasFile('photo')
+            $componentName, $sample->location_name, $data['remarks'] ?? null, $photos
         );
 
         $this->scoring->recalculateAndSave($project);

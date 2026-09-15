@@ -41,11 +41,6 @@
          get overall() {
              return Object.keys(this.answers).some(id => this.statusFor(id) === 'FAIL') ? 'FAIL' : 'PASS';
          },
-         photoSrc: {{ $assessment?->photo_url ? "'" . $assessment->photo_url . "'" : 'null' }},
-         handlePhoto(e) {
-             const f = e.target.files[0];
-             if (f) this.photoSrc = URL.createObjectURL(f);
-         }
      }">
 
     {{-- Pipeline Step Indicator --}}
@@ -189,34 +184,8 @@
 
             <div class="space-y-5">
                 {{-- Photo Upload --}}
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                        Upload Defect Photo Evidence (Optional)
-                    </label>
-                    <div class="relative border-2 border-dashed border-gray-300 rounded-2xl hover:border-eids-accent transition bg-gray-50/50"
-                         :class="photoSrc ? 'border-eids-accent bg-emerald-50/30' : ''">
-                        <input type="file" name="photo" accept="image/*" @change="handlePhoto"
-                               class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
-                        <div x-show="!photoSrc" class="flex flex-col items-center justify-center py-8 text-center px-4">
-                            <span class="material-symbols-outlined text-gray-400 text-4xl mb-2">add_a_photo</span>
-                            <div class="text-xs font-bold text-gray-800">Tap to take photo or select file</div>
-                            <div class="text-[11px] text-gray-500 mt-1">Supports JPG, PNG up to 5MB</div>
-                        </div>
-                        <div x-show="photoSrc" x-cloak class="p-3">
-                            <img :src="photoSrc" class="w-full rounded-xl object-cover max-h-56">
-                        </div>
-                    </div>
-                    <div x-show="photoSrc" x-cloak class="mt-2 flex items-center justify-between gap-2">
-                        <span class="text-xs text-gray-600 font-medium flex items-center gap-1.5">
-                            <span class="material-symbols-outlined text-base text-emerald-700">image</span>
-                            Photo attached
-                        </span>
-                        <a :href="photoSrc" target="_blank" rel="noopener"
-                           class="text-xs font-bold text-eids-accent hover:text-eids-primary hover:underline">
-                            View full size &rarr;
-                        </a>
-                    </div>
-                </div>
+                <x-photo-uploader label="Upload Defect Photo Evidence (Optional)"
+                                  :photos="$assessment?->getMedia('photos')" />
 
                 {{-- Inspection Remarks --}}
                 <div>

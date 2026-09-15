@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -21,21 +22,20 @@ class ComponentAssessment extends Model implements HasMedia
         'na' => 'boolean',
     ];
 
+    /**
+     * Up to three photos per record — the ceiling is enforced at validation
+     * (AttachesPhotos::photoRules) so an over-limit upload is refused outright
+     * rather than silently pushing the oldest evidence out of the collection.
+     *
+     * No conversions are registered on purpose. Nothing in the app renders a
+     * derived size, and generating them would make every upload download the
+     * original back from R2, resize it, and push two more objects — expensive
+     * work inside a serverless request. Register them here if a thumbnail is
+     * ever actually needed, and give the queue a worker.
+     */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('photos');
-    }
-
-    public function registerMediaConversions(?Media $media = null): void
-    {
-        $this->addMediaConversion('thumb')
-            ->width(300)
-            ->height(300)
-            ->sharpen(10);
-
-        $this->addMediaConversion('preview')
-            ->width(800)
-            ->height(600);
     }
 
     public function getPhotoUrlAttribute(): ?string
@@ -46,12 +46,27 @@ class ComponentAssessment extends Model implements HasMedia
         return $this->photo_path ? Storage::url($this->photo_path) : null;
     }
 
+    /**
+     * Kept for callers that ask for a thumbnail — there is no `thumb`
+     * conversion, so this is the original photo (see registerMediaCollections).
+     */
     public function getThumbUrlAttribute(): ?string
     {
+        return $this->photo_url;
+    }
+
+    /**
+     * Every photo on this assessment as a browser-reachable URL, oldest first.
+     *
+     * @return Collection<int, string>
+     */
+    public function getPhotoUrlsAttribute(): Collection
+    {
         if ($this->hasMedia('photos')) {
-            return $this->getFirstMediaUrl('photos', 'thumb');
+            return $this->getMedia('photos')->map(fn (Media $media) => $media->getUrl())->values();
         }
-        return $this->photo_path ? Storage::url($this->photo_path) : null;
+
+        return collect([$this->photo_url])->filter()->values();
     }
 
     public function project()
