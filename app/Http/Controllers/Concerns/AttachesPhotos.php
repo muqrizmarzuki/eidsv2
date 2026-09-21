@@ -13,8 +13,8 @@ use Spatie\MediaLibrary\HasMedia;
  */
 trait AttachesPhotos
 {
-    /** Photos one record may carry. Evidence, not an album — three is plenty. */
-    private const MAX_PHOTOS = 3;
+    /** Photos one record may carry. */
+    private const MAX_PHOTOS = 10;
 
     /** Per-photo ceiling in kilobytes. The forms downscale to fit before uploading. */
     private const MAX_PHOTO_KB = 3072;

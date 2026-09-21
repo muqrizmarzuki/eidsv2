@@ -1,7 +1,7 @@
 @props([
     'photos' => null,
     'label'  => 'Photo Evidence (Optional)',
-    'max'    => 3,
+    'max'    => 10,
 ])
 
 @php
