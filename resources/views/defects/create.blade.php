@@ -20,11 +20,11 @@
                 <span class="material-symbols-outlined text-red-500 text-lg">warning</span>
                 Defect Information &amp; Photo Documentation
             </h2>
-            <div class="space-y-5">
+            <div class="space-y-5" x-data="{ projectId: '{{ old('project_id') }}' }">
 
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Target Project *</label>
-                    <select name="project_id" required
+                    <select name="project_id" required x-model="projectId" @change="$refs.unitSelect.value = ''"
                             class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
                         <option value="">Select project...</option>
                         @foreach($projects as $proj)
@@ -38,11 +38,11 @@
 
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">House / Unit (Optional)</label>
-                    <select name="unit_id"
+                    <select name="unit_id" x-ref="unitSelect"
                             class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
                         <option value="">Not linked to a specific house</option>
-                        @foreach($units->groupBy('project_id') as $projectId => $projectUnits)
-                            <optgroup label="{{ $projectUnits->first()->project->project_name }}">
+                        @foreach($units->groupBy('project_id') as $projectId2 => $projectUnits)
+                            <optgroup label="{{ $projectUnits->first()->project->project_name }}" x-show="!projectId || projectId == '{{ $projectId2 }}'">
                                 @foreach($projectUnits as $u)
                                     <option value="{{ $u->id }}" data-project-id="{{ $u->project_id }}"
                                             {{ old('unit_id') == $u->id ? 'selected' : '' }}>
@@ -52,7 +52,7 @@
                             </optgroup>
                         @endforeach
                     </select>
-                    <p class="mt-1 text-xs text-gray-500">Pick the house this defect belongs to, so it can appear on that house's defects report.</p>
+                    <p class="mt-1 text-xs text-gray-500">Pick the house this defect belongs to, so it can appear on that house's defects report. Only houses under the selected project are shown.</p>
                     @error('unit_id')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
