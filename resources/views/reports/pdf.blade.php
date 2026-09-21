@@ -194,29 +194,6 @@
     </table>
 </div>
 
-{{-- QP Declarations --}}
-<div class="section section-compact">
-    <div class="section-header">QP Declarations (Material &amp; Functional Test)</div>
-    <table>
-        <thead>
-            <tr><th>Item</th><th class="text-center">Status</th></tr>
-        </thead>
-        <tbody>
-            @php
-                $qp = $project->qpDeclarations->keyBy('item_code');
-                $qpItems = ['QP_SKIM_COAT' => 'Skim Coat or Prepacked Plaster', 'QP_WATER_TIGHTNESS' => 'Wet-area Water-tightness Test'];
-            @endphp
-            @foreach($qpItems as $code => $label)
-                @php $decl = $qp->get($code); @endphp
-                <tr>
-                    <td>{{ $label }}</td>
-                    <td class="text-center {{ $decl?->is_earned ? 'pass' : 'fail' }}">{{ $decl?->is_earned ? 'Declared' : 'Not Declared' }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-</div>
-
 {{-- Detailed Findings --}}
 @if(!empty($findings))
     <div class="section">
@@ -226,7 +203,7 @@
                 <tr>
                     <th>Component</th>
                     <th>Location</th>
-                    <th>Question</th>
+                    <th>Inspection Criteria</th>
                     <th>Remarks</th>
                 </tr>
             </thead>

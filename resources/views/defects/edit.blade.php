@@ -36,6 +36,26 @@
                     @error('project_id')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
                 </div>
 
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">House / Unit (Optional)</label>
+                    <select name="unit_id"
+                            class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-eids-accent bg-white font-medium">
+                        <option value="">Not linked to a specific house</option>
+                        @foreach($units->groupBy('project_id') as $projectId => $projectUnits)
+                            <optgroup label="{{ $projectUnits->first()->project->project_name }}">
+                                @foreach($projectUnits as $u)
+                                    <option value="{{ $u->id }}" data-project-id="{{ $u->project_id }}"
+                                            {{ old('unit_id', $defect->unit_id) == $u->id ? 'selected' : '' }}>
+                                        {{ $u->unit_reference }}{{ $u->owner_name ? " — {$u->owner_name}" : '' }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Pick the house this defect belongs to, so it can appear on that house's defects report.</p>
+                    @error('unit_id')<p class="mt-1 text-xs text-red-600 font-bold">{{ $message }}</p>@enderror
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Component *</label>

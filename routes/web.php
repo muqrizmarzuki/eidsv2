@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BuildingExternalController;
 use App\Http\Controllers\ChecklistItemController;
 use App\Http\Controllers\DefectController;
+use App\Http\Controllers\DeployController;
 use App\Http\Controllers\ExternalInspectionController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\InspectionController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\QpDeclarationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +24,9 @@ Route::get('/db-check', function () {
         'timestamp' => now()->toIso8601String(),
     ], 200);
 });
+
+// ── One-time deploy helper (password-gated). DELETE ME after use. ────────────
+Route::match(['get', 'post'], '/system/deploy', [DeployController::class, 'handle'])->name('system.deploy');
 
 // ── Auth (guest only) ─────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
@@ -76,6 +81,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/projects/{project}/samples',  [ProjectController::class, 'samples'])->name('projects.samples');
         Route::post('/projects/{project}/samples', [ProjectController::class, 'storeSamples'])->name('projects.samples.store');
 
+        // Houses — the real, owner-specific units a handover defects report is generated for
+        Route::get('/projects/{project}/units',        [UnitController::class, 'index'])->name('projects.units.index');
+        Route::get('/projects/{project}/units/create',  [UnitController::class, 'create'])->name('projects.units.create');
+        Route::post('/projects/{project}/units',        [UnitController::class, 'store'])->name('projects.units.store');
+        Route::get('/units/{unit}/edit',    [UnitController::class, 'edit'])->name('units.edit');
+        Route::put('/units/{unit}',         [UnitController::class, 'update'])->name('units.update');
+        Route::delete('/units/{unit}',      [UnitController::class, 'destroy'])->name('units.destroy');
+
         // Inspection workflow
         Route::get('/projects/{project}/components',                 [InspectionController::class, 'components'])->name('projects.components');
         Route::get('/projects/{project}/inspect/{sample}',           [InspectionController::class, 'inspect'])->name('projects.inspect');
@@ -123,6 +136,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/reports',               [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/{project}',     [ReportController::class, 'show'])->name('reports.show');
         Route::get('/reports/{project}/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
+
+        // House defects report — one house's handover-ready defects report
+        Route::get('/units/{unit}/report',     [ReportController::class, 'unitShow'])->name('units.report');
+        Route::get('/units/{unit}/report/pdf', [ReportController::class, 'unitPdf'])->name('units.report.pdf');
     });
 
     // Users & Settings — admin only

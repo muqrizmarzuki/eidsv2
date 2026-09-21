@@ -17,7 +17,7 @@ class Defect extends Model implements HasMedia
     use InteractsWithMedia;
 
     protected $fillable = [
-        'project_id', 'assessment_id', 'component_name', 'location',
+        'project_id', 'unit_id', 'assessment_id', 'component_name', 'location',
         'defect_description', 'photo_path', 'severity', 'status',
         'contractor_notified_at',
     ];
@@ -185,6 +185,11 @@ class Defect extends Model implements HasMedia
     public function assessment()
     {
         return $this->belongsTo(ComponentAssessment::class, 'assessment_id');
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function getSeverityLabelAttribute(): string

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\AttachesPhotos;
 use App\Models\Defect;
 use App\Models\Project;
+use App\Models\Unit;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DefectController extends Controller
 {
@@ -49,13 +51,15 @@ class DefectController extends Controller
     public function create()
     {
         $projects = Project::visibleTo(auth()->user())->orderBy('project_name')->get(['id', 'project_name', 'project_no']);
-        return view('defects.create', compact('projects'));
+        $units    = $this->visibleUnits();
+        return view('defects.create', compact('projects', 'units'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'project_id'         => 'required|exists:projects,id',
+            'unit_id'            => ['nullable', Rule::exists('units', 'id')->where('project_id', $request->input('project_id'))],
             'component_name'     => 'required|string|max:255',
             'location'           => 'required|string|max:255',
             'defect_description' => 'required|string',
@@ -80,7 +84,8 @@ class DefectController extends Controller
         $this->guardDefectVisible($defect);
 
         $projects = Project::visibleTo(auth()->user())->orderBy('project_name')->get(['id', 'project_name', 'project_no']);
-        return view('defects.edit', compact('defect', 'projects'));
+        $units    = $this->visibleUnits();
+        return view('defects.edit', compact('defect', 'projects', 'units'));
     }
 
     public function update(Request $request, Defect $defect)
@@ -89,6 +94,7 @@ class DefectController extends Controller
 
         $data = $request->validate([
             'project_id'         => 'required|exists:projects,id',
+            'unit_id'            => ['nullable', Rule::exists('units', 'id')->where('project_id', $request->input('project_id'))],
             'component_name'     => 'required|string|max:255',
             'location'           => 'required|string|max:255',
             'defect_description' => 'required|string',
@@ -119,6 +125,14 @@ class DefectController extends Controller
 
         return redirect()->route('defects.index')
             ->with('success', 'Defect deleted.');
+    }
+
+    private function visibleUnits()
+    {
+        return Unit::whereHas('project', fn ($q) => $q->visibleTo(auth()->user()))
+            ->with('project:id,project_name')
+            ->orderBy('unit_reference')
+            ->get();
     }
 
     public function notifyContractor(Project $project)

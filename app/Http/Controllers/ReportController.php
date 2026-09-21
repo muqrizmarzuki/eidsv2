@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\Unit;
 use App\Services\ScoringService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -81,5 +82,38 @@ class ReportController extends Controller
     private function reportBlockedReason(Project $project): ?string
     {
         return null;
+    }
+
+    /**
+     * The per-house handover defects report — one house's actual defects
+     * (area, description, photos), not the project-wide CIS 7:2021 score
+     * report above. Grouped by `location` the way a paper defects report
+     * lists Area 1, Area 2, ... down the page.
+     */
+    private function buildUnitData(Unit $unit): array
+    {
+        $unit->load('project');
+        $defects = $unit->defects()->with('media')->orderBy('id')->get()->groupBy('location');
+
+        return compact('defects');
+    }
+
+    public function unitShow(Unit $unit)
+    {
+        $this->guardProjectVisible($unit->project);
+
+        $data = $this->buildUnitData($unit);
+        return view('reports.unit', array_merge(compact('unit'), $data));
+    }
+
+    public function unitPdf(Unit $unit)
+    {
+        $this->guardProjectVisible($unit->project);
+
+        $data = $this->buildUnitData($unit);
+        $pdf  = Pdf::loadView('reports.unit-pdf', array_merge(compact('unit'), $data))
+                   ->setPaper('a4', 'portrait');
+
+        return $pdf->download("defects-report-{$unit->unit_reference}.pdf");
     }
 }

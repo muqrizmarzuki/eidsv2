@@ -349,6 +349,17 @@
                 </dl>
             </div>
 
+            {{-- Houses — owner-specific handover defects reports --}}
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 text-sm font-extrabold text-gray-900">
+                    <span class="material-symbols-outlined text-eids-accent text-lg">home_work</span>
+                    Houses ({{ $project->units->count() }})
+                </div>
+                <a href="{{ route('projects.units.index', $project) }}" class="text-xs font-bold text-eids-accent hover:text-eids-primary hover:underline">
+                    Manage &rarr;
+                </a>
+            </div>
+
             {{-- QP Declarations (Skim Coat / Water-tightness — Table 2's Material & functional test) --}}
             @php
                 $qp = $project->qpDeclarations->keyBy('item_code');
@@ -371,9 +382,9 @@
                             <div class="text-sm font-bold text-gray-900">{{ $label }}</div>
                             <div class="text-xs mt-0.5 mb-2">
                                 @if($decl?->is_earned)
-                                    <span class="text-emerald-700 font-bold">Declared, evidence on file</span>
+                                    <span class="text-emerald-700 font-bold">Evidence Submitted</span>
                                 @else
-                                    <span class="text-amber-700 font-bold">Not yet declared</span>
+                                    <span class="text-amber-700 font-bold">Evidence Not Yet Submitted</span>
                                 @endif
                             </div>
                             @if(auth()->user()->canInspect())

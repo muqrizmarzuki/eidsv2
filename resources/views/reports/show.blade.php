@@ -112,29 +112,6 @@
             </dl>
         </div>
 
-        {{-- QP Declarations --}}
-        @php
-            $qp = $project->qpDeclarations->keyBy('item_code');
-            $qpItems = ['QP_SKIM_COAT' => 'Skim Coat or Prepacked Plaster', 'QP_WATER_TIGHTNESS' => 'Wet-area Water-tightness Test'];
-        @endphp
-        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 mb-6">
-            <h2 class="font-extrabold text-gray-900 text-sm mb-4 flex items-center gap-2">
-                <span class="material-symbols-outlined text-eids-accent text-lg">fact_check</span>
-                QP Declarations (Material &amp; Functional Test)
-            </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                @foreach($qpItems as $code => $label)
-                    @php $decl = $qp->get($code); @endphp
-                    <div class="flex items-center justify-between px-4 py-3 border border-gray-200 rounded-xl">
-                        <span class="text-sm font-semibold text-gray-800">{{ $label }}</span>
-                        <span class="text-xs font-extrabold {{ $decl?->is_earned ? 'text-emerald-700' : 'text-amber-700' }}">
-                            {{ $decl?->is_earned ? 'Declared' : 'Not Declared' }}
-                        </span>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-
         {{-- Component Scores Breakdown Table --}}
         <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden mb-6">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center flex-wrap gap-2">
@@ -198,7 +175,7 @@
                             <tr>
                                 <th class="px-6 py-3.5 text-left">Component</th>
                                 <th class="px-4 py-3.5 text-left">Location</th>
-                                <th class="px-4 py-3.5 text-left">Question</th>
+                                <th class="px-4 py-3.5 text-left">Inspection Criteria</th>
                                 <th class="px-6 py-3.5 text-left">Remarks</th>
                             </tr>
                         </thead>

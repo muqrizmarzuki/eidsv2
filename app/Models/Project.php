@@ -40,6 +40,11 @@ class Project extends Model
         return $this->hasMany(ProjectSample::class);
     }
 
+    public function units()
+    {
+        return $this->hasMany(Unit::class);
+    }
+
     public function assessments()
     {
         return $this->hasMany(ComponentAssessment::class);
