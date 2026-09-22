@@ -99,7 +99,7 @@ class ProjectController extends Controller
     {
         $this->guardProjectVisible($project);
 
-        $project->load(['samples', 'defects', 'creator', 'assignedInspector', 'qpDeclarations', 'assessments']);
+        $project->load(['samples', 'defects', 'creator', 'assignedInspector', 'assessments']);
         $openDefects     = $project->defects->whereIn('status', ['OPEN', 'IN_PROGRESS', 'PENDING_VERIFICATION'])->count();
         $resolvedDefects = $project->defects->where('status', 'RESOLVED')->count();
 

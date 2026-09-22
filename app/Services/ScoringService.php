@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Project;
-use App\Models\QpDeclaration;
 use App\Models\WeightageArchitecturalElement;
 use App\Models\WeightageLocation;
 use App\Models\WeightageOverall;
@@ -61,22 +60,13 @@ class ScoringService
             $el        = $entry['el'];
             $weightage = $entry['weightage'];
 
-            if ($el->scoring_mode === 'declaration') {
-                $decl     = $project->qpDeclarations->firstWhere('item_code', $code)
-                            ?? new QpDeclaration(['item_code' => $code, 'declared' => false]);
-                $earned   = $decl->is_earned;
-                $total    = 1;
-                $pass     = $earned ? 1 : 0;
-                $passRate = $earned ? 100.0 : 0.0;
-            } else {
-                $assessments = $project->assessments->where('component_code', $code)->where('na', false);
-                $total       = $assessments->count();
-                $pass        = $assessments->where('overall_sample_status', 'PASS')->count();
+            $assessments = $project->assessments->where('component_code', $code)->where('na', false);
+            $total       = $assessments->count();
+            $pass        = $assessments->where('overall_sample_status', 'PASS')->count();
 
-                $passRate = (in_array($code, self::INTERNAL_FINISH_CODES, true) && $total > 0)
-                    ? $this->locationWeightedPassRate($project, $assessments)
-                    : ($total > 0 ? ($pass / $total) * 100 : 0);
-            }
+            $passRate = (in_array($code, self::INTERNAL_FINISH_CODES, true) && $total > 0)
+                ? $this->locationWeightedPassRate($project, $assessments)
+                : ($total > 0 ? ($pass / $total) * 100 : 0);
 
             $sComp = ($passRate / 100) * $weightage;
 

@@ -50,11 +50,6 @@ class Project extends Model
         return $this->hasMany(ComponentAssessment::class);
     }
 
-    public function qpDeclarations()
-    {
-        return $this->hasMany(QpDeclaration::class);
-    }
-
     public function externalElementSettings()
     {
         return $this->hasMany(ProjectExternalElement::class);

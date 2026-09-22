@@ -11,7 +11,6 @@ use App\Models\ExternalElement;
 use App\Models\ExternalSample;
 use App\Models\Project;
 use App\Models\ProjectSample;
-use App\Models\QpDeclaration;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\WeightageArchitecturalElement;
@@ -96,7 +95,6 @@ class DatabaseSeeder extends Seeder
         $this->assessAllComponents($project1, $livingRoom, failOn: ['A2_WALL', 'A5_WINDOW']);
         $this->assessAllComponents($project1, $serviceArea, failOn: ['A1_FLOOR']);
         $this->assessAllComponents($project1, $passageway);
-        $this->declareQp($project1, skimCoat: true, waterTightness: false);
         $this->bulkPassRemaining($project1, $p1Samples->skip(4)->reject(fn ($s) => $s->id === $bedroom1->id));
 
         $this->makeDefectFor($project1, $livingRoom, 'A2_WALL', 'Internal Wall (Dinding Dalam)', 'medium', 'OPEN');
@@ -176,7 +174,6 @@ class DatabaseSeeder extends Seeder
         $this->assessAllComponents($project3, $p3LivingRoom, failOn: ['A3_CEILING']);
         $this->assessAllComponents($project3, $p3MasterBedroom, failOn: ['A6_FIXTURES']);
         $this->assessAllComponents($project3, $p3Kitchen);
-        $this->declareQp($project3, skimCoat: true, waterTightness: true);
         $this->bulkPassRemaining($project3, $p3Samples->skip(3));
 
         $this->makeDefectFor($project3, $p3LivingRoom, 'A3_CEILING', 'Ceiling (Siling)', 'low', 'RESOLVED');
@@ -453,20 +450,6 @@ class DatabaseSeeder extends Seeder
             'defect_description' => "FAIL on {$componentCode} ({$componentName}) at {$sample->label}.",
             'severity'           => $severity,
             'status'             => $status,
-        ]);
-    }
-
-    private function declareQp(Project $project, bool $skimCoat, bool $waterTightness): void
-    {
-        QpDeclaration::create([
-            'project_id' => $project->id, 'item_code' => 'QP_SKIM_COAT',
-            'declared' => $skimCoat, 'evidence_path' => $skimCoat ? 'demo/qp-skim-coat.pdf' : null,
-            'declared_at' => $skimCoat ? now() : null,
-        ]);
-        QpDeclaration::create([
-            'project_id' => $project->id, 'item_code' => 'QP_WATER_TIGHTNESS',
-            'declared' => $waterTightness, 'evidence_path' => $waterTightness ? 'demo/qp-water-tightness.pdf' : null,
-            'declared_at' => $waterTightness ? now() : null,
         ]);
     }
 

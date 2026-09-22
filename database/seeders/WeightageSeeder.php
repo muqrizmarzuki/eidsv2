@@ -64,8 +64,6 @@ class WeightageSeeder extends Seeder
             ['A8_EXT_WALL',        'External Wall (Dinding Luar)',  'External finishes',            10, 'sample_average', 'building', false, 8],
             ['A9_APRON_DRAIN',     'Apron and Perimeter Drain',     'External finishes',             3, 'sample_average', 'building', true,  9],
             ['A10_CAR_PARK',       'Car Park / Car Porch',          'External finishes',             3, 'sample_average', 'building', true,  10],
-            ['QP_SKIM_COAT',       'Skim Coat or Prepacked Plaster','Material and functional test',  3, 'declaration',    'room',     false, 11],
-            ['QP_WATER_TIGHTNESS', 'Wet-area Water-tightness Test', 'Material and functional test',  3, 'declaration',    'room',     false, 12],
         ];
         foreach ($elements as [$code, $name, $group, $pct, $mode, $scope, $optional, $sort]) {
             WeightageArchitecturalElement::updateOrCreate(

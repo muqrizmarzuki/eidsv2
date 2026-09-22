@@ -360,50 +360,6 @@
                 </a>
             </div>
 
-            {{-- QP Declarations (Skim Coat / Water-tightness — Table 2's Material & functional test) --}}
-            @php
-                $qp = $project->qpDeclarations->keyBy('item_code');
-                $qpItems = [
-                    'QP_SKIM_COAT'       => 'Skim Coat or Prepacked Plaster',
-                    'QP_WATER_TIGHTNESS' => 'Wet-area Water-tightness Test',
-                ];
-            @endphp
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h2 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
-                        <span class="material-symbols-outlined text-eids-accent text-lg">fact_check</span>
-                        QP Declarations
-                    </h2>
-                </div>
-                <div class="divide-y divide-gray-100">
-                    @foreach($qpItems as $code => $label)
-                        @php $decl = $qp->get($code); @endphp
-                        <div class="px-6 py-4">
-                            <div class="text-sm font-bold text-gray-900">{{ $label }}</div>
-                            <div class="text-xs mt-0.5 mb-2">
-                                @if($decl?->is_earned)
-                                    <span class="text-emerald-700 font-bold">Evidence Submitted</span>
-                                @else
-                                    <span class="text-amber-700 font-bold">Evidence Not Yet Submitted</span>
-                                @endif
-                            </div>
-                            @if(auth()->user()->canInspect())
-                                <form method="POST" action="{{ route('projects.qp-declarations.update', $project) }}" enctype="multipart/form-data" class="flex items-center gap-2">
-                                    @csrf
-                                    <input type="hidden" name="item_code" value="{{ $code }}">
-                                    <input type="hidden" name="declared" value="1">
-                                    <input type="file" name="evidence" accept=".pdf,image/*" required
-                                           class="text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-eids-primary/10 file:text-eids-primary">
-                                    <button type="submit" class="min-h-[36px] px-3 py-1.5 bg-eids-primary text-white text-xs font-bold rounded-lg hover:bg-eids-dark transition shrink-0">
-                                        Declare
-                                    </button>
-                                </form>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
         </div>
     </div>
 

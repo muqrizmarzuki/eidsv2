@@ -10,7 +10,6 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\QpDeclarationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UnitController;
@@ -93,8 +92,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/projects/{project}/components',                 [InspectionController::class, 'components'])->name('projects.components');
         Route::get('/projects/{project}/inspect/{sample}',           [InspectionController::class, 'inspect'])->name('projects.inspect');
         Route::post('/projects/{project}/inspect/{sample}',          [InspectionController::class, 'storeAssessment'])->name('projects.inspect.store');
-
-        Route::post('/projects/{project}/qp-declarations', [QpDeclarationController::class, 'update'])->name('projects.qp-declarations.update');
 
         // External works (Annex C)
         Route::get('/projects/{project}/external',                       [ExternalInspectionController::class, 'elements'])->name('projects.external');
