@@ -1,14 +1,25 @@
 @props([
-    'id'      => 'notify-modal',
-    'title'   => 'Confirm',
-    'message' => 'Are you sure you want to proceed?',
-    'confirm' => 'Confirm',
-    'cancel'  => 'Cancel',
-    'icon'    => 'info',
+    'id'           => 'notify-modal',
+    'title'        => 'Confirm',
+    'message'      => 'Are you sure you want to proceed?',
+    'confirm'      => 'Confirm',
+    'cancel'       => 'Cancel',
+    'icon'         => 'info',
+    'confirmClass' => 'bg-eids-primary hover:bg-eids-dark text-white',
 ])
 
 <div
-    x-data="{ open: false, formAction: '', formMethod: 'POST', fields: {}, title: '{{ addslashes($title) }}', message: '{{ addslashes($message) }}' }"
+    x-data="{
+        open: false,
+        formAction: '',
+        formMethod: 'POST',
+        fields: {},
+        title: '{{ addslashes($title) }}',
+        message: '{{ addslashes($message) }}',
+        confirmText: '{{ addslashes($confirm) }}',
+        iconName: '{{ addslashes($icon) }}',
+        confirmClass: '{{ addslashes($confirmClass) }}',
+    }"
     x-on:open-notify.window="
         if ($event.detail.id === '{{ $id }}') {
             formAction = $event.detail.action ?? '';
@@ -16,6 +27,9 @@
             fields = $event.detail.fields ?? {};
             title = $event.detail.title ?? '{{ addslashes($title) }}';
             message = $event.detail.message ?? '{{ addslashes($message) }}';
+            confirmText = $event.detail.confirm ?? '{{ addslashes($confirm) }}';
+            iconName = $event.detail.icon ?? '{{ addslashes($icon) }}';
+            confirmClass = $event.detail.confirmClass ?? '{{ addslashes($confirmClass) }}';
             open = true;
         }
     "
@@ -41,7 +55,7 @@
 
         <div class="flex items-center gap-4 mb-4">
             <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-eids-primary/10 text-eids-primary">
-                <span class="material-symbols-outlined filled text-xl">{{ $icon }}</span>
+                <span class="material-symbols-outlined filled text-xl" x-text="iconName"></span>
             </div>
             <div>
                 <h3 id="{{ $id }}-title" class="font-bold text-gray-900 text-base leading-tight" x-text="title"></h3>
@@ -63,9 +77,11 @@
                 {{ $cancel }}
             </button>
             <button type="submit"
-                    class="min-h-[44px] px-6 py-2.5 text-xs font-bold text-white rounded-xl shadow-sm transition focus:outline-none focus:ring-2 focus:ring-eids-accent bg-eids-primary hover:bg-eids-dark">
-                {{ $confirm }}
+                    :class="confirmClass"
+                    class="min-h-[44px] px-6 py-2.5 text-xs font-bold rounded-xl shadow-sm transition focus:outline-none focus:ring-2 focus:ring-eids-accent">
+                <span x-text="confirmText"></span>
             </button>
         </form>
     </div>
 </div>
+

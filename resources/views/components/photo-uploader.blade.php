@@ -2,6 +2,7 @@
     'photos' => null,
     'label'  => 'Photo Evidence (Optional)',
     'max'    => 10,
+    'name'   => 'photos',
 ])
 
 @php
@@ -46,7 +47,7 @@
     <div class="relative border-2 border-dashed border-gray-300 rounded-2xl hover:border-eids-accent transition bg-gray-50/50 mt-2"
          :class="queued.length ? 'border-eids-accent bg-emerald-50/30' : ''"
          x-show="remaining > 0">
-        <input x-ref="input" type="file" name="photos[]" accept="image/*" multiple @change="pick($event)"
+        <input x-ref="input" type="file" name="{{ $name }}[]" accept="image/*" multiple @change="pick($event)"
                class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
         <div class="flex flex-col items-center justify-center py-7 text-center px-4">
             <span class="material-symbols-outlined text-gray-400 text-3xl mb-1">add_a_photo</span>
@@ -66,12 +67,13 @@
     <p x-show="busy" x-cloak class="mt-2 text-[11px] text-gray-500 font-medium">Preparing photos&hellip;</p>
     <p x-show="error" x-cloak x-text="error" class="mt-2 text-[11px] text-red-600 font-bold"></p>
 
-    @error('photos')
+    @error($name)
         <p class="mt-2 text-[11px] text-red-600 font-bold">{{ $message }}</p>
     @enderror
-    @foreach($errors->get('photos.*') as $messages)
+    @foreach($errors->get($name . '.*') as $messages)
         @foreach($messages as $message)
             <p class="mt-1 text-[11px] text-red-600 font-bold">{{ $message }}</p>
         @endforeach
     @endforeach
 </div>
+

@@ -91,7 +91,7 @@
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Defect Status</label>
                         <div class="w-full min-h-[44px] px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 flex items-center">
-                            <span class="inline-flex px-3 py-1 border rounded-full text-xs font-extrabold {{ $defect->status_badge_class }}">
+                            <span class="inline-flex items-center px-3 py-1 border rounded-full text-xs font-extrabold whitespace-nowrap {{ $defect->status_badge_class }}">
                                 {{ $defect->status_label }}
                             </span>
                         </div>
@@ -101,7 +101,24 @@
                     </div>
                 </div>
 
-                <x-photo-uploader label="Defect Photo Evidence" :photos="$defect->getMedia('photos')" />
+                <x-photo-uploader label="Defect Photo Evidence (Before - Inspector)" :photos="$defect->getMedia('photos')" />
+
+                @if($defect->getMedia('rectification_photos')->isNotEmpty() || !empty($defect->rectification_notes))
+                    <div class="mt-6 pt-6 border-t border-gray-100">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                Bukti Pembaikan (After - Contractor)
+                            </span>
+                        </div>
+                        @if($defect->rectification_notes)
+                            <div class="mb-4 bg-emerald-50/50 p-3.5 rounded-xl border border-emerald-200/60">
+                                <span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider block mb-1">Catatan Pembaikan Kontraktor:</span>
+                                <p class="text-xs text-emerald-800 font-medium">{{ $defect->rectification_notes }}</p>
+                            </div>
+                        @endif
+                        <x-photo-uploader name="rectification_photos" label="Gambar Bukti Pembaikan (After)" :photos="$defect->getMedia('rectification_photos')" />
+                    </div>
+                @endif
             </div>
         </div>
 

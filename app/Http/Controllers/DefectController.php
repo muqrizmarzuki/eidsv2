@@ -166,9 +166,16 @@ class DefectController extends Controller
     {
         $this->guardDefectVisible($defect);
 
-        $data = $request->validate([
-            'to' => 'required|in:OPEN,IN_PROGRESS,PENDING_VERIFICATION,RESOLVED',
-        ]);
+        $rules = [
+            'to'                  => 'required|in:OPEN,IN_PROGRESS,PENDING_VERIFICATION,RESOLVED',
+            'rectification_notes' => 'nullable|string|max:1000',
+        ];
+
+        if ($request->input('to') === 'PENDING_VERIFICATION') {
+            $rules = array_merge($rules, $this->rectificationPhotoRules($defect));
+        }
+
+        $data = $request->validate($rules, $this->rectificationPhotoMessages());
 
         $allowedTargets = self::TRANSITIONS[$defect->status] ?? [];
         abort_unless(in_array($data['to'], $allowedTargets, true), 422, 'Invalid status transition.');
@@ -178,8 +185,17 @@ class DefectController extends Controller
             abort_unless(in_array($edge, self::CONTRACTOR_ALLOWED_EDGES, true), 403, 'Contractors cannot perform this transition.');
         }
 
-        $defect->update(['status' => $data['to']]);
+        $updatePayload = ['status' => $data['to']];
+        if ($request->has('rectification_notes')) {
+            $updatePayload['rectification_notes'] = $data['rectification_notes'];
+        }
 
-        return redirect()->back()->with('success', "Defect status updated to {$data['to']}.");
+        $defect->update($updatePayload);
+
+        if ($request->hasFile('rectification_photos')) {
+            $this->attachPhotosToCollection($request->file('rectification_photos'), 'rectification_photos', $defect);
+        }
+
+        return redirect()->back()->with('success', "Defect status updated to {$defect->fresh()->status_label}.");
     }
 }

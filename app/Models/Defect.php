@@ -18,7 +18,7 @@ class Defect extends Model implements HasMedia
 
     protected $fillable = [
         'project_id', 'unit_id', 'assessment_id', 'component_name', 'location',
-        'defect_description', 'photo_path', 'severity', 'status',
+        'defect_description', 'rectification_notes', 'photo_path', 'severity', 'status',
         'contractor_notified_at',
     ];
 
@@ -27,19 +27,14 @@ class Defect extends Model implements HasMedia
     ];
 
     /**
-     * Up to three photos per record — the ceiling is enforced at validation
-     * (AttachesPhotos::photoRules) so an over-limit upload is refused outright
-     * rather than silently pushing the oldest evidence out of the collection.
-     *
-     * No conversions are registered on purpose. Nothing in the app renders a
-     * derived size, and generating them would make every upload download the
-     * original back from R2, resize it, and push two more objects — expensive
-     * work inside a serverless request. Register them here if a thumbnail is
-     * ever actually needed, and give the queue a worker.
+     * Photos per record:
+     * - 'photos': original defect evidence taken during inspection (Before)
+     * - 'rectification_photos': repair proof uploaded by contractor/team (After)
      */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('photos');
+        $this->addMediaCollection('rectification_photos');
     }
 
     public function getPhotoUrlAttribute(): ?string
@@ -117,6 +112,50 @@ class Defect extends Model implements HasMedia
     public function getPhotoBase64Attribute(): ?string
     {
         return $this->photos_base64->first();
+    }
+
+    public function getBeforePhotosAttribute(): Collection
+    {
+        return $this->getMedia('photos');
+    }
+
+    public function getAfterPhotosAttribute(): Collection
+    {
+        return $this->getMedia('rectification_photos');
+    }
+
+    public function getRectificationPhotoUrlAttribute(): ?string
+    {
+        if ($this->hasMedia('rectification_photos')) {
+            return $this->getFirstMediaUrl('rectification_photos');
+        }
+        return null;
+    }
+
+    public function getRectificationPhotoUrlsAttribute(): Collection
+    {
+        if ($this->hasMedia('rectification_photos')) {
+            return $this->getMedia('rectification_photos')->map(fn (Media $media) => $media->getUrl())->values();
+        }
+
+        return collect();
+    }
+
+    public function getRectificationPhotosBase64Attribute(): Collection
+    {
+        if ($this->hasMedia('rectification_photos')) {
+            return $this->getMedia('rectification_photos')
+                ->map(fn (Media $media) => $this->mediaDataUri($media))
+                ->filter()
+                ->values();
+        }
+
+        return collect();
+    }
+
+    public function getHasRectificationAttribute(): bool
+    {
+        return $this->hasMedia('rectification_photos') || !empty($this->rectification_notes);
     }
 
     /** Reads one media item off its own disk (R2 in production), local copy as backstop. */

@@ -248,24 +248,32 @@
 
         {{-- Annex: Defect Photographic Evidence Gallery --}}
         @php
-            // One tile per photo — a defect with three photos shows three tiles.
+            // One tile per photo: defects can have both Before (defect) and After (rectified) photos.
             $defectNo   = 0;
             $photoCards = $project->defects->flatMap(function ($defect) use (&$defectNo) {
-                $urls = $defect->photo_urls;
-
-                if ($urls->isEmpty()) {
-                    return collect();
-                }
-
                 $defectNo++;
+                $beforeUrls = $defect->photo_urls;
+                $afterUrls  = $defect->rectification_photo_urls;
 
-                return $urls->map(fn ($url, $i) => [
+                $beforeCards = $beforeUrls->map(fn ($url, $i) => [
                     'defect' => $defect,
                     'url'    => $url,
+                    'phase'  => 'BEFORE',
                     'number' => $defectNo,
                     'index'  => $i + 1,
-                    'total'  => $urls->count(),
+                    'total'  => $beforeUrls->count(),
                 ]);
+
+                $afterCards = $afterUrls->map(fn ($url, $i) => [
+                    'defect' => $defect,
+                    'url'    => $url,
+                    'phase'  => 'AFTER',
+                    'number' => $defectNo,
+                    'index'  => $i + 1,
+                    'total'  => $afterUrls->count(),
+                ]);
+
+                return $beforeCards->concat($afterCards);
             })->values();
         @endphp
         @if($photoCards->isNotEmpty())
@@ -286,10 +294,13 @@
                         <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50/30 flex flex-col group">
                             <div class="relative aspect-4/3 bg-gray-100 overflow-hidden border-b border-gray-200">
                                 <a href="{{ $card['url'] }}" target="_blank" title="Click to view full photo" class="block w-full h-full">
-                                    <img src="{{ $card['url'] }}" alt="Defect photo for {{ $defect->component_name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-200" />
+                                    <img src="{{ $card['url'] }}" alt="Photo for {{ $defect->component_name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-200" />
                                 </a>
                                 <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-xs text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md">
                                     Defect #{{ $card['number'] }}@if($card['total'] > 1) &middot; Photo {{ $card['index'] }}/{{ $card['total'] }}@endif
+                                </span>
+                                <span class="absolute top-2 right-2 text-[9px] font-black px-2 py-0.5 rounded-md shadow-xs {{ $card['phase'] === 'AFTER' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white' }}">
+                                    {{ $card['phase'] === 'AFTER' ? 'AFTER · RECTIFIED' : 'BEFORE · DEFECT' }}
                                 </span>
                             </div>
                             <div class="p-4 flex-1 flex flex-col justify-between">
@@ -300,6 +311,11 @@
                                         {{ $defect->location }}
                                     </div>
                                     <p class="text-gray-700 text-xs line-clamp-3 leading-relaxed">{{ $defect->defect_description }}</p>
+                                    @if($card['phase'] === 'AFTER' && $defect->rectification_notes)
+                                        <div class="mt-2.5 p-2 bg-emerald-50/80 rounded-lg border border-emerald-200/60 text-[11px] text-emerald-900 font-medium">
+                                            <span class="font-bold">Catatan Pembaikan:</span> {{ $defect->rectification_notes }}
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="mt-3 pt-3 border-t border-gray-200/60 flex items-center justify-between gap-1">
                                     <span class="inline-flex px-2 py-0.5 border rounded-full font-extrabold uppercase tracking-wider text-[9px] {{ $sevCls[$defect->severity] ?? '' }}">

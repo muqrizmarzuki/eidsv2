@@ -123,8 +123,8 @@ Route::middleware('auth')->group(function () {
     });
 
     // Photo evidence — one media item at a time, from the inspection form or a
-    // defect form. Contractors may view evidence but never remove it.
-    Route::middleware('role:admin,inspector')->group(function () {
+    // defect form. Contractors may delete their own rectification photos.
+    Route::middleware('role:admin,inspector,contractor')->group(function () {
         Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
     });
 

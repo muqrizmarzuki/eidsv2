@@ -16,7 +16,7 @@ class MediaController extends Controller
 {
     public function destroy(Request $request, Media $media)
     {
-        abort_unless($media->collection_name === 'photos', 404);
+        abort_unless(in_array($media->collection_name, ['photos', 'rectification_photos'], true), 404);
 
         // Visibility is a property of the record the photo hangs off, not of the
         // media row — so authorise through the owner, never the media id.
@@ -27,6 +27,12 @@ class MediaController extends Controller
             $owner instanceof Defect              => $this->guardDefectVisible($owner),
             default                               => abort(404),
         };
+
+        // Contractors can only delete rectification photos on defects that are not yet resolved
+        if (auth()->user()->role === 'contractor') {
+            abort_unless($owner instanceof Defect && $media->collection_name === 'rectification_photos', 403);
+            abort_if($owner->status === 'RESOLVED', 403, 'Cannot delete photos from resolved defects.');
+        }
 
         $media->delete();
 

@@ -43,28 +43,50 @@ trait AttachesPhotos
         ];
     }
 
+    private function rectificationPhotoRules(?HasMedia $owner = null): array
+    {
+        $free = max(0, self::MAX_PHOTOS - ($owner?->getMedia('rectification_photos')->count() ?? 0));
+
+        return [
+            'rectification_photos'   => ['nullable', 'array', "max:{$free}"],
+            'rectification_photos.*' => ['image', 'max:' . self::MAX_PHOTO_KB],
+        ];
+    }
+
+    private function rectificationPhotoMessages(): array
+    {
+        return [
+            'rectification_photos.max'   => 'A maximum of ' . self::MAX_PHOTOS . ' rectification photos is allowed.',
+            'rectification_photos.*.max' => 'Each photo must be 3 MB or smaller.',
+            'rectification_photos.*.image' => 'Each file must be an image.',
+        ];
+    }
+
     /**
-     * Attaches uploaded photos to the `photos` collection of every given model.
-     *
-     * A PHP upload lives in a single request-scoped temp file (/tmp/phpXXXX) and
-     * media library *moves* it onto the media disk — it unlinks the source once
-     * the copy lands. A second `addMedia()` on the same upload would then find
-     * nothing there and throw `FileDoesNotExist`, which is exactly what happened
-     * when a FAILed assessment tried to attach the same photo to its defect.
-     * `preservingOriginal()` copies instead of moving, so the temp file survives
-     * every attachment; PHP deletes it when the request ends.
+     * Attaches uploaded photos to the specified collection of every given model.
      *
      * @param  array<int, UploadedFile>  $photos
      */
-    private function attachPhotos(array $photos, HasMedia ...$models): void
+    private function attachPhotosToCollection(array $photos, string $collection, HasMedia ...$models): void
     {
         foreach ($photos as $photo) {
             foreach ($models as $model) {
                 $model
                     ->addMedia($photo)
                     ->preservingOriginal()
-                    ->toMediaCollection('photos');
+                    ->toMediaCollection($collection);
             }
         }
     }
+
+    /**
+     * Attaches uploaded photos to the `photos` collection of every given model.
+     *
+     * @param  array<int, UploadedFile>  $photos
+     */
+    private function attachPhotos(array $photos, HasMedia ...$models): void
+    {
+        $this->attachPhotosToCollection($photos, 'photos', ...$models);
+    }
 }
+

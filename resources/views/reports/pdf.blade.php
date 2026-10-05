@@ -254,26 +254,33 @@
 
 {{-- Defect Photo Annex --}}
 @php
-    // One card per photo: a defect with three photos gets three full-size tiles
-    // rather than three thumbnails crammed into one. dompdf cannot fetch from
-    // R2, so each source is a base64 data URI.
+    // One card per photo: defects can have both Before (defect) and After (rectified) photos.
+    // dompdf cannot fetch from R2, so each source is a base64 data URI.
     $defectNo    = 0;
     $photoCards  = $project->defects->flatMap(function ($defect) use (&$defectNo) {
-        $sources = $defect->photos_base64;
-
-        if ($sources->isEmpty()) {
-            return collect();
-        }
-
         $defectNo++;
+        $beforeSources = $defect->photos_base64;
+        $afterSources  = $defect->rectification_photos_base64;
 
-        return $sources->map(fn ($src, $i) => [
+        $beforeCards = $beforeSources->map(fn ($src, $i) => [
             'defect' => $defect,
             'src'    => $src,
+            'phase'  => 'BEFORE',
             'number' => $defectNo,
             'index'  => $i + 1,
-            'total'  => $sources->count(),
+            'total'  => $beforeSources->count(),
         ]);
+
+        $afterCards = $afterSources->map(fn ($src, $i) => [
+            'defect' => $defect,
+            'src'    => $src,
+            'phase'  => 'AFTER',
+            'number' => $defectNo,
+            'index'  => $i + 1,
+            'total'  => $afterSources->count(),
+        ]);
+
+        return $beforeCards->concat($afterCards);
     })->values();
 @endphp
 
@@ -299,6 +306,13 @@
                                     @endif
                                 </div>
                                 <div style="padding: 9px 10px;">
+                                    <div style="margin-bottom: 4px;">
+                                        @if($card['phase'] === 'AFTER')
+                                            <span style="display: inline-block; padding: 1.5px 5px; font-size: 7px; font-weight: bold; background: #dcfce7; color: #15803d; border: 1px solid #86efac; border-radius: 3px; vertical-align: middle;">AFTER · RECTIFIED</span>
+                                        @else
+                                            <span style="display: inline-block; padding: 1.5px 5px; font-size: 7px; font-weight: bold; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; border-radius: 3px; vertical-align: middle;">BEFORE · DEFECT</span>
+                                        @endif
+                                    </div>
                                     <div style="font-family: 'DejaVu Serif', serif; font-weight: bold; font-size: 9.5px; color: #101828; margin-bottom: 3px;">
                                         Defect #{{ $card['number'] }}: {{ $defect->component_name }}@if($card['total'] > 1) <span style="font-weight: normal; color: #57606a;">&middot; Photo {{ $card['index'] }} of {{ $card['total'] }}</span>@endif
                                     </div>
@@ -310,6 +324,11 @@
                                     <div style="font-size: 8.5px; color: #24292f; line-height: 1.35;">
                                         {{ Str::limit($defect->defect_description, 140) }}
                                     </div>
+                                    @if($card['phase'] === 'AFTER' && $defect->rectification_notes)
+                                        <div style="font-size: 8px; color: #15803d; margin-top: 4px; font-style: italic;">
+                                            Rectification Note: {{ Str::limit($defect->rectification_notes, 120) }}
+                                        </div>
+                                    @endif
                                 </div>
                             </td>
                         @endforeach

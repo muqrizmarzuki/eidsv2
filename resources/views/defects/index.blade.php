@@ -87,9 +87,10 @@
                         <tr>
                             <th class="px-6 py-4 text-left">Defect / Location</th>
                             <th class="px-4 py-4 text-left hidden md:table-cell">Project</th>
-                            <th class="px-4 py-4 text-left hidden sm:table-cell">Severity</th>
-                            <th class="px-4 py-4 text-left">Status</th>
-                            <th class="px-6 py-4 text-right">Actions</th>
+                            <th class="px-4 py-4 text-left whitespace-nowrap">Evidence (Before &amp; After)</th>
+                            <th class="px-4 py-4 text-left hidden sm:table-cell whitespace-nowrap">Severity</th>
+                            <th class="px-4 py-4 text-left whitespace-nowrap">Status</th>
+                            <th class="px-6 py-4 text-right whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -113,6 +114,36 @@
                                 $role = auth()->user()->role;
                                 $canAdvance = in_array($role, ['admin', 'inspector', 'contractor']);
                                 $canConfirmOrReject = in_array($role, ['admin', 'inspector']);
+
+                                $beforePhotos = $defect->getMedia('photos');
+                                $afterPhotos  = $defect->getMedia('rectification_photos');
+                                $beforeCount  = $beforePhotos->count();
+                                $afterCount   = $afterPhotos->count();
+
+                                $defectData = [
+                                    'id'                 => $defect->id,
+                                    'component_name'     => $defect->component_name,
+                                    'location'           => $defect->location,
+                                    'defect_description' => $defect->defect_description,
+                                    'rectification_notes'=> $defect->rectification_notes ?? '',
+                                    'severity_label'     => $defect->severity_label,
+                                    'severity_class'     => $sevCls[$defect->severity] ?? '',
+                                    'status'             => $defect->status,
+                                    'status_label'       => $stLabel[$defect->status] ?? $defect->status,
+                                    'status_class'       => $stCls[$defect->status] ?? '',
+                                    'project_name'       => $defect->project?->project_name ?? '-',
+                                    'project_no'         => $defect->project?->project_no ?? '-',
+                                    'before_photos'      => $beforePhotos->map(fn($m) => [
+                                        'id'  => $m->id,
+                                        'url' => $m->getUrl(),
+                                    ])->values(),
+                                    'after_photos'       => $afterPhotos->map(fn($m) => [
+                                        'id'  => $m->id,
+                                        'url' => $m->getUrl(),
+                                    ])->values(),
+                                    'advance_url'        => route('defects.advance', $defect),
+                                    'can_rectify'        => $canAdvance && $defect->status === 'IN_PROGRESS',
+                                ];
                             @endphp
                             <tr class="hover:bg-gray-50/80 transition group">
                                 <td class="px-6 py-4">
@@ -141,13 +172,66 @@
                                         <span class="text-gray-400 text-xs">—</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-4 hidden sm:table-cell">
-                                    <span class="inline-flex px-3 py-1 border rounded-full text-xs font-extrabold {{ $sevCls[$defect->severity] ?? 'bg-gray-100 text-gray-600' }}">
+
+                                {{-- Evidence: Before & After Photo Preview --}}
+                                <td class="px-4 py-4">
+                                    <div class="flex items-center gap-2">
+                                        {{-- Before thumbnail --}}
+                                        @if($beforeCount > 0)
+                                            <button type="button"
+                                                    @click="$dispatch('open-evidence-modal', {{ json_encode($defectData) }})"
+                                                    class="group relative w-11 h-11 rounded-xl overflow-hidden border border-rose-300 bg-rose-50 shadow-2xs hover:scale-105 hover:ring-2 hover:ring-rose-400 transition shrink-0"
+                                                    title="Lihat Gambar Kerosakan Asal (Before)">
+                                                <img src="{{ $beforePhotos->first()->getUrl() }}" alt="Before" class="w-full h-full object-cover">
+                                                <span class="absolute bottom-0 inset-x-0 bg-rose-700/90 text-white text-[8px] font-black text-center py-0.5 leading-none tracking-tight">
+                                                    BEFORE
+                                                </span>
+                                            </button>
+                                        @else
+                                            <span class="w-11 h-11 rounded-xl border border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center text-gray-400 shrink-0" title="Tiada foto inspector">
+                                                <span class="material-symbols-outlined text-base">no_photography</span>
+                                            </span>
+                                        @endif
+
+                                        <span class="material-symbols-outlined text-gray-300 text-xs shrink-0">arrow_forward</span>
+
+                                        {{-- After thumbnail --}}
+                                        @if($afterCount > 0)
+                                            <button type="button"
+                                                    @click="$dispatch('open-evidence-modal', {{ json_encode($defectData) }})"
+                                                    class="group relative w-11 h-11 rounded-xl overflow-hidden border border-emerald-300 bg-emerald-50 shadow-2xs hover:scale-105 hover:ring-2 hover:ring-emerald-400 transition shrink-0"
+                                                    title="Lihat Gambar Bukti Baik Pulih (After)">
+                                                <img src="{{ $afterPhotos->first()->getUrl() }}" alt="After" class="w-full h-full object-cover">
+                                                <span class="absolute bottom-0 inset-x-0 bg-emerald-700/90 text-white text-[8px] font-black text-center py-0.5 leading-none tracking-tight">
+                                                    AFTER
+                                                </span>
+                                            </button>
+                                        @else
+                                            <button type="button"
+                                                    @click="$dispatch('open-evidence-modal', {{ json_encode($defectData) }})"
+                                                    class="w-11 h-11 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 hover:bg-emerald-50 hover:border-emerald-300 flex flex-col items-center justify-center text-emerald-600 transition shrink-0"
+                                                    title="Belum ada bukti pembaikan. Klik untuk perincian.">
+                                                <span class="material-symbols-outlined text-base">hourglass_empty</span>
+                                            </button>
+                                        @endif
+
+                                        {{-- View Evidence / Compare button --}}
+                                        <button type="button"
+                                                @click="$dispatch('open-evidence-modal', {{ json_encode($defectData) }})"
+                                                class="p-2 text-gray-500 hover:text-eids-primary hover:bg-gray-100 rounded-xl transition flex items-center justify-center"
+                                                title="Lihat Perbandingan Before & After">
+                                            <span class="material-symbols-outlined text-lg">compare</span>
+                                        </button>
+                                    </div>
+                                </td>
+
+                                <td class="px-4 py-4 hidden sm:table-cell whitespace-nowrap">
+                                    <span class="inline-flex items-center px-3 py-1 border rounded-full text-xs font-extrabold whitespace-nowrap {{ $sevCls[$defect->severity] ?? 'bg-gray-100 text-gray-600' }}">
                                         {{ $defect->severity_label }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4">
-                                    <span class="inline-flex px-3 py-1 border rounded-full text-xs font-extrabold {{ $stCls[$defect->status] ?? '' }}">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-3 py-1 border rounded-full text-xs font-extrabold whitespace-nowrap {{ $stCls[$defect->status] ?? '' }}">
                                         {{ $stLabel[$defect->status] ?? $defect->status }}
                                     </span>
                                 </td>
@@ -159,16 +243,21 @@
                                                         id: 'confirm-status-change',
                                                         action: '{{ route('defects.advance', $defect) }}',
                                                         fields: { to: 'IN_PROGRESS' },
-                                                        title: 'Start Repair?',
-                                                        message: 'Marks this defect as In Progress. Repair work begins now.'
+                                                        title: 'Start Repair Work? / Mula Pembaikan?',
+                                                        message: 'Adakah anda pasti mahu memulakan pembaikan untuk defect ini? Status akan ditukar kepada In Progress.',
+                                                        confirm: 'Yes, Start Repair',
+                                                        confirmClass: 'bg-amber-600 hover:bg-amber-700 text-white',
+                                                        icon: 'construction'
                                                     })"
-                                                    class="px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition min-h-[36px]">
+                                                    class="px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition min-h-[36px] flex items-center gap-1.5">
+                                                <span class="material-symbols-outlined text-sm">construction</span>
                                                 Start Repair
                                             </button>
                                         @elseif($defect->status === 'IN_PROGRESS' && $canAdvance)
                                             <button type="button"
-                                                    @click="$dispatch('open-notify', { id: 'notify-inspector', action: '{{ route('defects.advance', $defect) }}', fields: { to: 'PENDING_VERIFICATION' } })"
-                                                    class="px-3 py-1.5 text-xs font-bold text-blue-800 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition min-h-[36px]">
+                                                    @click="$dispatch('open-rectify-modal', {{ json_encode($defectData) }})"
+                                                    class="px-3 py-1.5 text-xs font-bold text-blue-800 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition min-h-[36px] flex items-center gap-1.5 shadow-2xs">
+                                                <span class="material-symbols-outlined text-sm">add_a_photo</span>
                                                 Mark Settled
                                             </button>
                                         @elseif($defect->status === 'PENDING_VERIFICATION' && $canConfirmOrReject)
@@ -177,10 +266,14 @@
                                                         id: 'confirm-status-change',
                                                         action: '{{ route('defects.advance', $defect) }}',
                                                         fields: { to: 'RESOLVED' },
-                                                        title: 'Confirm Resolved?',
-                                                        message: 'Confirms the defect has been properly rectified to CIS 7:2021 standards and closes it.'
+                                                        title: 'Confirm Defect Resolved? / Sahkan Selesai?',
+                                                        message: 'Adakah anda mengesahkan bahawa kerosakan ini telah dibaik pulih mengikut piawaian CIS 7:2021? Defect ini akan ditutup sebagai Resolved.',
+                                                        confirm: 'Yes, Confirm Resolved',
+                                                        confirmClass: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+                                                        icon: 'verified'
                                                     })"
-                                                    class="px-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition min-h-[36px]">
+                                                    class="px-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition min-h-[36px] flex items-center gap-1">
+                                                <span class="material-symbols-outlined text-sm">check_circle</span>
                                                 Confirm Resolved
                                             </button>
                                             <button type="button"
@@ -188,29 +281,42 @@
                                                         id: 'notify-contractor',
                                                         action: '{{ route('defects.advance', $defect) }}',
                                                         fields: { to: 'IN_PROGRESS' },
-                                                        title: 'Reject & Notify Contractor?',
-                                                        message: 'Sends this defect back to the contractor as not properly fixed. They will see it flagged In Progress again.'
+                                                        title: 'Reject & Notify Contractor? / Tolak Pembaikan?',
+                                                        message: 'Defect ini akan dikembalikan kepada kontraktor sebagai In Progress kerana pembaikan tidak memuaskan atau memerlukan kerja semula.',
+                                                        confirm: 'Yes, Send Back to Contractor',
+                                                        confirmClass: 'bg-red-600 hover:bg-red-700 text-white',
+                                                        icon: 'restart_alt'
                                                     })"
-                                                    class="px-3 py-1.5 text-xs font-bold text-red-800 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition min-h-[36px]">
+                                                    class="px-3 py-1.5 text-xs font-bold text-red-800 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition min-h-[36px] flex items-center gap-1">
+                                                <span class="material-symbols-outlined text-sm">close</span>
                                                 Reject (Not Fixed)
                                             </button>
                                         @elseif($defect->status === 'PENDING_VERIFICATION')
-                                            <span class="px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg">
+                                            <button type="button"
+                                                    @click="$dispatch('open-evidence-modal', {{ json_encode($defectData) }})"
+                                                    class="px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition min-h-[36px] flex items-center gap-1"
+                                                    title="Lihat Bukti Yang Dihantar">
+                                                <span class="material-symbols-outlined text-sm">schedule</span>
                                                 Awaiting Verification
-                                            </span>
+                                            </button>
                                         @elseif($defect->status === 'RESOLVED' && $canConfirmOrReject)
                                             <button type="button"
                                                     @click="$dispatch('open-notify', {
                                                         id: 'confirm-status-change',
                                                         action: '{{ route('defects.advance', $defect) }}',
                                                         fields: { to: 'OPEN' },
-                                                        title: 'Reopen Defect?',
-                                                        message: 'Reopens a previously resolved defect back to Open. Use this only if the issue has recurred.'
+                                                        title: 'Reopen Defect? / Buka Semula Defect?',
+                                                        message: 'Adakah anda pasti mahu membuka semula defect ini? Status akan bertukar ke Open.',
+                                                        confirm: 'Yes, Reopen Defect',
+                                                        confirmClass: 'bg-gray-800 hover:bg-black text-white',
+                                                        icon: 'lock_open'
                                                     })"
-                                                    class="px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition min-h-[36px]">
+                                                    class="px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition min-h-[36px] flex items-center gap-1">
+                                                <span class="material-symbols-outlined text-sm">lock_open</span>
                                                 Reopen
                                             </button>
                                         @endif
+
                                         @if(auth()->user()->canInspect())
                                             <a href="{{ route('defects.edit', $defect) }}"
                                                class="p-2 text-gray-500 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition min-h-[36px] flex items-center justify-center" title="Edit Defect">
@@ -235,4 +341,11 @@
         @endif
     </div>
 
+    {{-- Rectification Proof Upload Modal (for contractor/inspector when marking settled) --}}
+    <x-modal-rectify />
+
+    {{-- Before & After Evidence Comparison Modal --}}
+    <x-modal-defect-evidence />
+
 @endsection
+
